@@ -15,3 +15,9 @@ export function formatCurrency(amount: number): string {
     currency: 'VND',
   }).format(amount);
 }
+
+/** "Trần Thị Mai · Phó Hiệu trưởng"; "—" khi không có dữ liệu (ma trận cũ chưa ghi người lập). */
+export function personLabel(person: { fullName: string; roleLabel: string | null } | null | undefined): string {
+  if (!person) return '—';
+  return person.roleLabel ? `${person.fullName} · ${person.roleLabel}` : person.fullName;
+}

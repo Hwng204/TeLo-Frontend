@@ -1,0 +1,55 @@
+.pcb-icon { font-family: 'Material Symbols Rounded'; font-weight: 400; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap; font-feature-settings: 'liga'; -webkit-font-smoothing: antialiased; user-select: none; }
+
+.pcb-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--pcb-spacing-xs); height: 44px; min-width: 100px; padding: 0 var(--pcb-spacing-md); border-radius: 10px; border: var(--pcb-stroke-default) solid transparent; font: 600 14px/20px 'Inter', sans-serif; white-space: nowrap; cursor: pointer; transition: background-color var(--sep-transition), border-color var(--sep-transition), color var(--sep-transition); }
+.pcb-btn--primary { background: var(--pcb-color-bg-accent); color: var(--pcb-color-text-on-accent); }
+.pcb-btn--primary:hover:not(:disabled) { background: var(--pcb-color-bg-accent-hover); }
+.pcb-btn--primary:active:not(:disabled) { background: var(--pcb-color-bg-accent-active); }
+.pcb-btn--secondary { background: var(--pcb-color-bg-surface); color: var(--pcb-color-text-brand); border-color: var(--pcb-color-border-focus); }
+.pcb-btn--secondary:hover:not(:disabled) { background: var(--pcb-color-bg-hover); }
+.pcb-btn--secondary:active:not(:disabled) { background: var(--pcb-color-bg-active); }
+.pcb-btn--ghost { background: var(--pcb-color-bg-surface); color: var(--pcb-color-text-brand); }
+.pcb-btn--ghost:hover:not(:disabled) { background: var(--pcb-color-bg-hover); }
+.pcb-btn--ghost:active:not(:disabled) { background: var(--pcb-color-bg-active); }
+/* Xoá là hành động không hoàn tác được: nó không được trông giống hệt nút Huỷ bên cạnh. */
+.pcb-btn--danger { background: var(--pcb-color-bg-surface); color: var(--pcb-color-text-danger); }
+.pcb-btn--danger:hover:not(:disabled) { background: var(--pcb-color-bg-danger-hover); }
+.pcb-btn--danger:active:not(:disabled) { background: #f9e7e7; }
+/* Cỡ nhỏ cho ô thao tác trong bảng và thanh phân trang, nơi nút cao 44px làm dòng phình ra. */
+.pcb-btn--sm { height: 34px; min-width: 0; padding: 0 12px; font-size: 13px; border-radius: 8px; }
+.pcb-btn:disabled, .pcb-iconbtn:disabled { opacity: .5; cursor: not-allowed; }
+.pcb-btn:focus-visible, .pcb-iconbtn:focus-visible { outline: 2px solid var(--pcb-color-border-focus); outline-offset: 2px; }
+
+.pcb-iconbtn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 10px; background: var(--pcb-color-bg-surface); color: var(--pcb-color-icon-default); cursor: pointer; transition: background-color var(--sep-transition), color var(--sep-transition); }
+.pcb-iconbtn:hover:not(:disabled) { background: var(--pcb-color-bg-hover); color: var(--pcb-color-text-brand); }
+
+.pcb-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pcb-label { font: 500 14px/20px 'Inter', sans-serif; color: var(--pcb-color-text-primary); }
+.pcb-control { position: relative; display: flex; align-items: center; gap: var(--pcb-spacing-xs); height: 44px; padding: 0 var(--pcb-spacing-sm); border: var(--pcb-stroke-default) solid var(--pcb-color-border-default); border-radius: 10px; background: var(--pcb-color-bg-surface); color: var(--pcb-color-icon-default); }
+.pcb-control { transition: border-color var(--sep-transition), box-shadow var(--sep-transition); }
+.pcb-control:hover:not(:focus-within) { border-color: #c3d6ea; }
+.pcb-control:focus-within { border-color: var(--pcb-color-border-focus); box-shadow: var(--sep-focus-ring); }
+.pcb-control--error { border-color: #d64545; }
+/* Chữ mờ đi một chút (xem input/select :disabled ở dưới) không đủ rõ để biết ô đang bị khoá; cả khung phải đổi màu. */
+.pcb-control:has(:disabled) { background: var(--pcb-color-bg-subtle); }
+.pcb-control:has(:disabled) .pcb-icon { opacity: .5; }
+.pcb-control input, .pcb-select-trigger { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: transparent; appearance: none; font: 400 14px/20px 'Inter', sans-serif; color: var(--pcb-color-text-primary); text-align: left; cursor: pointer; }
+.pcb-control input:disabled, .pcb-select-trigger:disabled { color: var(--pcb-color-text-secondary); cursor: not-allowed; }
+.pcb-select-menu { position: fixed; z-index: 1000; box-sizing: border-box; max-height: 280px; overflow-y: auto; padding: 6px; border: 1px solid #b8cfe8; border-radius: 10px; background: var(--pcb-color-bg-surface); box-shadow: 0 10px 24px rgba(34, 79, 125, .16); font: 400 14px/20px 'Inter', sans-serif; }
+.pcb-select-option { display: flex; width: 100%; min-height: 38px; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--pcb-color-text-primary); font: inherit; text-align: left; cursor: pointer; }
+.pcb-select-option:hover:not(:disabled), .pcb-select-option:focus-visible { background: #edf5ff; color: var(--pcb-color-text-brand); outline: 0; }
+.pcb-select-option--selected { background: #e5f1ff; color: var(--pcb-color-text-brand); font-weight: 500; }
+.pcb-select-option:disabled { color: var(--pcb-color-text-secondary); cursor: not-allowed; }
+.pcb-control input[type="date"] { cursor: pointer; }
+.pcb-control input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .75; }
+.pcb-hint { font: 400 12px/18px 'Inter', sans-serif; color: var(--pcb-color-text-secondary); }
+.pcb-error { font: 400 12px/18px 'Inter', sans-serif; color: #d64545; }
+
+.pcb-card { background: var(--pcb-color-bg-surface); border: 1px solid var(--pcb-color-border-default); border-radius: 10px; }
+.pcb-table-wrap { overflow-x: auto; border-radius: 10px; }
+.pcb-table { width: 100%; border-collapse: collapse; }
+.pcb-table th { padding: 12px 14px; background: var(--pcb-color-bg-subtle); font: 500 13px/18px 'Inter', sans-serif; letter-spacing: .01em; color: var(--pcb-color-text-secondary); text-align: left; vertical-align: top; }
+/* Số liệu xếp thành cột: chữ số phải cùng bề rộng, nếu không mắt phải đọc lại từng dòng. */
+/* top thay vì middle: nhiều ô xếp 2-3 dòng (mã + tên, người + vai trò...), middle làm ô 1 dòng trôi lệch xuống giữa hàng. */
+.pcb-table td { padding: 14px; vertical-align: top; border-top: 1px solid var(--pcb-color-border-default); font-variant-numeric: tabular-nums; }
+.pcb-table tbody tr { transition: background-color var(--sep-transition); }
+.pcb-table tbody tr:hover { background: var(--pcb-color-bg-row-hover); }
