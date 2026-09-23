@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User as UserIcon, Lock } from 'lucide-react';
 import { Button } from '../../../components/common/Button';
+import { isAxiosError } from 'axios';
 import { storage } from '../../../utils/storage';
+import { isPht, isTeamLead } from '../../../utils/jwt';
+import { api } from '../../../services/api';
 
 export const LoginForm: React.FC = () => {
   const navigate = useNavigate();
@@ -22,18 +25,16 @@ export const LoginForm: React.FC = () => {
 
     try {
       setIsLoading(true);
-      // Giả lập lưu token mẫu để vào dashboard
-      storage.setToken('sample_jwt_token');
-      storage.setUser({
-        id: '1',
-        username,
-        fullName: 'Quản trị viên',
-        email: 'admin@telo.edu.vn',
-        role: 'Admin',
-      });
-      navigate('/dashboard');
-    } catch {
-      setError('Đăng nhập thất bại. Vui lòng thử lại.');
+      const { accessToken } = await api.auth.login({ username: username.trim(), password });
+      storage.setToken(accessToken);
+      // Tài khoản có vai trò ma trận vào thẳng màn của mình; còn lại về bảng điều khiển.
+      navigate(isTeamLead() ? '/matrix-tasks' : isPht() ? '/matrices' : '/dashboard');
+    } catch (err) {
+      setError(
+        isAxiosError(err) && err.response?.status === 401
+          ? 'Sai tên đăng nhập hoặc mật khẩu.'
+          : 'Đăng nhập thất bại. Vui lòng thử lại.',
+      );
     } finally {
       setIsLoading(false);
     }

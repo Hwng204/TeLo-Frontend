@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { StudentTable } from '../components/StudentTable';
-import type { Student } from '../types';
+import type { Student } from '../../../types';
 import { Button } from '../../../components/common/Button';
 import { useDebounce } from '../../../hooks/useDebounce';
 

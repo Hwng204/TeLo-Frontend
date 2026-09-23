@@ -1,0 +1,80 @@
+/* SEP design tokens, copied from Figma variables (--pcb-*, --sep-*). */
+:root {
+  --pcb-color-bg-surface: #fff;
+  --pcb-color-bg-subtle: #f1f6fc;
+  --pcb-color-bg-accent: #2f6fb0;
+  --pcb-color-border-default: #dce6f0;
+  --pcb-color-border-focus: #4a90e2;
+
+  /* Trạng thái tương tác, pha từ đúng các màu trên: nút và dòng bảng phải phản hồi khi rê chuột. */
+  --pcb-color-bg-accent-hover: #28619c;
+  --pcb-color-bg-accent-active: #225585;
+  --pcb-color-bg-hover: #eaf2fb;
+  --pcb-color-bg-active: #dde9f7;
+  --pcb-color-bg-row-hover: #f7fafd;
+  --pcb-color-text-danger: #b3403f;
+  --pcb-color-bg-danger-hover: #fdf3f3;
+  --sep-focus-ring: 0 0 0 3px rgba(74, 144, 226, .32);
+  --sep-transition: 150ms ease;
+  --pcb-color-text-primary: #26364a;
+  --pcb-color-text-secondary: #44566c;
+  --pcb-color-text-brand: #2f6fb0;
+  --pcb-color-text-on-accent: #fff;
+  --pcb-color-icon-default: #44566c;
+  --pcb-spacing-xs: 8px;
+  --pcb-spacing-sm: 12px;
+  --pcb-spacing-md: 16px;
+  --pcb-stroke-default: 1px;
+
+  --sep-bg-canvas: #f7fafc;
+  --sep-bg-brand: #377dcb;
+  --sep-bg-brand-soft: #eaf4ff;
+  /* Nền sidebar, theo màu chủ đạo của bản thiết kế PCB Primary. */
+  --sep-rail-bg: #668ee1;
+  --sep-bg-lavender-soft: #f3f0ff;
+  --sep-bg-surface: #fff;
+  --sep-border-subtle: #dce6f1;
+  --sep-border-brand: #4a90e2;
+  --sep-text-secondary: #3d4d61;
+  --sep-text-brand: #2f6fb0;
+  --sep-text-on-brand: #fff;
+  --sep-radius-md: 10px;
+}
+
+/* Scoped to the SEP screens so the legacy pages keep their look. */
+.sep-app {
+  /* index.css khai báo `light dark`; ở chế độ tối của hệ điều hành, textarea và icon lịch
+     sẽ tự đổi sang nền tối trong khi token của SEP chỉ có bản sáng. */
+  color-scheme: light;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0;
+  color: var(--pcb-color-text-primary);
+  text-align: left;
+}
+.sep-app h1,
+.sep-app h2 {
+  font-family: inherit;
+  margin: 0;
+}
+
+/* Những bề mặt do trình duyệt vẽ (bôi đen, con trỏ nhập, thanh cuộn) mặc định không theo bảng màu nào.
+   Kéo chúng về đúng màu của hệ thống để màn hình trông được làm chứ không phải được lắp. */
+.sep-app ::selection {
+  background: #cfe3f8;
+  color: var(--pcb-color-text-primary);
+}
+.sep-app input,
+.sep-app textarea,
+.sep-app select {
+  caret-color: var(--pcb-color-border-focus);
+}
+.sep-app *{
+  scrollbar-width: thin;
+  scrollbar-color: #c3d6ea transparent;
+}
+/* Thanh cuộn của cả trang thuộc <html>, nằm ngoài .sep-app. */
+html:has(.sep-app) {
+  scrollbar-color: #c3d6ea transparent;
+}

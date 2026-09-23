@@ -31,5 +31,13 @@ export const storage = {
   clearAuth: (): void => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    // Đăng xuất/hết hạn không được để lại bản nháp chưa lưu của người trước trên máy dùng chung.
+    try {
+      Object.keys(sessionStorage)
+        .filter((key) => key.startsWith('matrix-draft:'))
+        .forEach((key) => sessionStorage.removeItem(key));
+    } catch {
+      // sessionStorage bị chặn: không có gì để dọn.
+    }
   },
 };
