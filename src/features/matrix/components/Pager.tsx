@@ -1,11 +1,14 @@
-import { PcbButton } from '../../../components/pcb';
+import { Icon, SelectField } from '../../../components/pcb';
+
+const PAGE_SIZES = [10, 20, 50];
 
 type Props = {
   page: number;
-  lastPage: number;
+  pageSize: number;
   totalCount: number;
   itemLabel: string;
   onChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
 };
 
 /** Số trang lân cận trang hiện tại + trang đầu/cuối, còn lại rút gọn bằng "…". */
@@ -21,35 +24,72 @@ const pageNumbers = (page: number, lastPage: number): (number | '…')[] => {
   return result;
 };
 
-/** Phân trang dùng chung: bấm thẳng vào số trang, hoặc Trước/Sau. */
-export const Pager = ({ page, lastPage, totalCount, itemLabel, onChange }: Props) => (
-  <div className="sep-pager">
-    <span className="sep-muted sep-pager__count">{totalCount} {itemLabel}</span>
+/** Chân bảng: số bản ghi mỗi trang bên trái, số trang bấm được bên phải. */
+export const Pager = ({ page, pageSize, totalCount, itemLabel, onChange, onPageSizeChange }: Props) => {
+  const lastPage = Math.max(1, Math.ceil(totalCount / pageSize));
+  return (
+    <div className="sep-pager">
+      <div className="sep-pager__size">
+        <span>Hiển thị</span>
+        <SelectField
+          label="Số bản ghi mỗi trang"
+          hideLabel
+          value={pageSize}
+          fieldClassName="sep-pager__select"
+          onChange={(event) => onPageSizeChange(Number(event.target.value))}
+        >
+          {PAGE_SIZES.map((size) => (
+            <option key={size} value={size}>
+              {size}
+            </option>
+          ))}
+        </SelectField>
+        <span>bản ghi / trang</span>
+        <span className="sep-pager__total">
+          Tổng {totalCount} {itemLabel}
+        </span>
+      </div>
 
-    <div className="sep-pager__pages">
-      <PcbButton variant="secondary" size="sm" disabled={page <= 1} onClick={() => onChange(page - 1)}>
-        Trước
-      </PcbButton>
+      <nav className="sep-pager__pages" aria-label="Phân trang">
+        <button
+          type="button"
+          className="sep-pager__step"
+          aria-label="Trang trước"
+          disabled={page <= 1}
+          onClick={() => onChange(page - 1)}
+        >
+          <Icon name="chevron_left" size={20} />
+        </button>
 
-      {pageNumbers(page, lastPage).map((p, i) =>
-        p === '…' ? (
-          <span key={`ellipsis-${i}`} className="sep-pager__ellipsis">…</span>
-        ) : (
-          <button
-            key={p}
-            type="button"
-            className={`sep-pager__page${p === page ? ' sep-pager__page--active' : ''}`}
-            aria-current={p === page ? 'page' : undefined}
-            onClick={() => onChange(p)}
-          >
-            {p}
-          </button>
-        ),
-      )}
+        {pageNumbers(page, lastPage).map((p, i) =>
+          p === '…' ? (
+            <span key={`ellipsis-${i}`} className="sep-pager__ellipsis" aria-hidden="true">
+              …
+            </span>
+          ) : (
+            <button
+              key={p}
+              type="button"
+              className={`sep-pager__page${p === page ? ' sep-pager__page--active' : ''}`}
+              aria-label={`Trang ${p}`}
+              aria-current={p === page ? 'page' : undefined}
+              onClick={() => onChange(p)}
+            >
+              {p}
+            </button>
+          ),
+        )}
 
-      <PcbButton variant="secondary" size="sm" disabled={page >= lastPage} onClick={() => onChange(page + 1)}>
-        Sau
-      </PcbButton>
+        <button
+          type="button"
+          className="sep-pager__step"
+          aria-label="Trang sau"
+          disabled={page >= lastPage}
+          onClick={() => onChange(page + 1)}
+        >
+          <Icon name="chevron_right" size={20} />
+        </button>
+      </nav>
     </div>
-  </div>
-);
+  );
+};

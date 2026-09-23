@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Field, PcbButton, PcbIconButton } from '../../../components/pcb';
+import { Field, Icon, PcbButton } from '../../../components/pcb';
 import { useAsync, useBusy } from '../../../hooks';
 import { api } from '../../../services/api';
-import type { GridRow, SaveMatrixRequest } from '../../../types';
+import type { GridRow, MatrixImportResult, SaveMatrixRequest } from '../../../types';
 import { contextLabel, resolveContextId, selectionFromContext } from '../../../utils/academicContext';
 import type { ContextSelection } from '../../../utils/academicContext';
 import { clearDraft, draftKeyFor, loadDraft, saveDraft } from '../../../utils/draftStorage';
@@ -12,18 +12,21 @@ import {
   gridTotal,
   hasRequiredTotal,
   liveCellErrors,
-  REQUIRED_TOTAL_SCORE,
+  REQUIRED_TOTAL_PERCENTAGE,
   requireNonEmpty,
   toDetails,
   toGrid,
   totalScoreHint,
   validateGrid,
   validateTotalForSubmit,
+  validateTotalScoreField,
 } from '../../../utils/matrixGrid';
 import { toProblem } from '../../../utils/problem';
 import { ContextSelects } from '../components/ContextSelects';
+import { ExcelImportPanel } from '../components/ExcelImportPanel';
+import { InfoGrid } from '../components/InfoGrid';
 import { MatrixGrid } from '../components/MatrixGrid';
-import { MatrixSummary } from '../components/MatrixSummary';
+import { PageHeader } from '../components/PageHeader';
 import '../matrix.css';
 
 /**
@@ -62,22 +65,27 @@ const MatrixEditor = () => {
   const [draftName, setDraftName] = useState<string | null>(restoredDraft?.name ?? null);
   const [draftSelection, setDraftSelection] = useState<ContextSelection | null>(restoredDraft?.selection ?? null);
   const [draftRows, setDraftRows] = useState<GridRow[] | null>(restoredDraft?.rows ?? null);
+  const [draftTotalScore, setDraftTotalScore] = useState<number | null>(restoredDraft?.totalScore ?? null);
   const [restored, setRestored] = useState(restoredDraft !== null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importNotice, setImportNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    saveDraft(draftKey, { name: draftName, selection: draftSelection, rows: draftRows });
-  }, [draftKey, draftName, draftSelection, draftRows]);
+    saveDraft(draftKey, { name: draftName, selection: draftSelection, rows: draftRows, totalScore: draftTotalScore });
+  }, [draftKey, draftName, draftSelection, draftRows, draftTotalScore]);
 
   const discardDraft = () => {
     clearDraft(draftKey);
     setDraftName(null);
     setDraftSelection(null);
     setDraftRows(null);
+    setDraftTotalScore(null);
     setProblem(null);
     setServerErrors({});
     setAttempted(false);
     setTotalRejected(false);
     setRestored(false);
+    setImportNotice(null);
     if (reviewing) setSearchParams({});
   };
 
@@ -101,6 +109,8 @@ const MatrixEditor = () => {
     );
   const academicContextId = resolveContextId(contexts, selection);
   const name = draftName ?? matrix?.name ?? '';
+  // Số nguyên dương do người lập tự đặt; gợi ý mặc định 10 cho ma trận mới.
+  const totalScore = draftTotalScore ?? matrix?.totalScore ?? 10;
 
   const lessonData = useAsync(
     async () => (academicContextId ? api.matrix.referenceData(academicContextId) : null),
@@ -121,6 +131,7 @@ const MatrixEditor = () => {
     semesterId: selection.semesterId ?? null,
     // Backend trả TaskImmutable nếu đổi taskId khi sửa, nên giữ nguyên giá trị đã lưu.
     taskId: matrix ? matrix.taskId : taskId,
+    totalScore,
     details: toDetails(rows),
   });
 
@@ -129,13 +140,15 @@ const MatrixEditor = () => {
     ...(attempted ? validateGrid(rows, name, academicContextId) : liveCellErrors(rows)),
   };
   if (totalRejected && !hasRequiredTotal(rows)) errors.total = validateTotalForSubmit(rows) ?? '';
-  const totalOk = hasRequiredTotal(rows) && toDetails(rows).length > 0;
-  // Sửa một ma trận Đã nộp: không có bước "lưu dở", tổng phải đúng 10 ngay khi lưu.
+  const totalScoreError = validateTotalScoreField(totalScore);
+  if (attempted && totalScoreError) errors.totalScore = totalScoreError;
+  const totalOk = hasRequiredTotal(rows) && toDetails(rows).length > 0 && !totalScoreError;
+  // Sửa một ma trận Đã nộp: không có bước "lưu dở", tổng phải đúng 100% ngay khi lưu.
   const submittedEdit = matrix?.status === 'SUBMITTED';
 
   /**
-   * `requireFull`: chỉ bật khi NỘP / XÁC NHẬN / sửa bản Đã nộp, lúc đó tổng phải đúng 10 và không rỗng.
-   * Lưu Nháp thì không: nháp được lưu ở mọi tổng điểm để soạn dở dang nhiều lần.
+   * `requireFull`: chỉ bật khi NỘP / XÁC NHẬN / sửa bản Đã nộp, lúc đó tổng % phải đúng 100 và không rỗng.
+   * Lưu Nháp thì không: nháp được lưu ở mọi tổng % để soạn dở dang nhiều lần.
    */
   const validate = (requireFull: boolean): boolean => {
     setAttempted(true);
@@ -146,9 +159,10 @@ const MatrixEditor = () => {
     setProblem(
       empty ??
         totalError ??
+        totalScoreError ??
         (Object.keys(found).length > 0 ? 'Vui lòng kiểm tra lại các ô được đánh dấu.' : null),
     );
-    return Object.keys(found).length === 0 && !empty && !totalError;
+    return Object.keys(found).length === 0 && !empty && !totalError && !totalScoreError;
   };
 
   const handleFailure = (error: unknown) => {
@@ -193,7 +207,58 @@ const MatrixEditor = () => {
     });
   };
 
-  if (detail.loading) return <p className="sep-empty">Đang tải…</p>;
+  /** Đổ nội dung file Excel vào bảng soạn; vẫn là bản nháp, phải qua "Xem toàn bộ ma trận" mới lưu. */
+  const applyImport = (result: MatrixImportResult) => {
+    if (rows.length > 0 && !window.confirm('Thay các dòng đang có trong bảng bằng nội dung từ file Excel?')) return;
+    // Ô nhập số không hiện được chữ ("abc"): để trống, lưới sẽ báo "Nhập số câu…" đúng ô đó.
+    const numeric = (value: string) => (Number.isFinite(Number(value)) ? value : '');
+    setDraftRows(
+      result.rows.map((row) => ({
+        ...row,
+        cells: Object.fromEntries(
+          Object.entries(row.cells).map(([level, cell]) => [
+            level,
+            { questionCount: numeric(cell.questionCount), percentage: numeric(cell.percentage) },
+          ]),
+        ) as GridRow['cells'],
+      })),
+    );
+    if (result.name && !name.trim()) setDraftName(result.name);
+    if (result.totalScore) setDraftTotalScore(result.totalScore);
+    setImportOpen(false);
+    setImportNotice(
+      `Đã đưa ${result.rows.length} bài học từ file vào bảng. Kiểm tra lại các ô được đánh dấu, rồi bấm "Xem toàn bộ ma trận" để lưu.`,
+    );
+  };
+
+  const title = reviewing ? 'Xem lại ma trận' : matrixId ? 'Sửa ma trận' : 'Tạo ma trận';
+  const back = () => (reviewing ? setSearchParams({}) : navigate(-1));
+
+  if (detail.loading || reference.loading || (taskId && task.loading) || (academicContextId && lessonData.loading)) {
+    return (
+      <>
+        <PageHeader title={title} onBack={back} />
+        <p className="sep-empty" role="status">Đang tải…</p>
+      </>
+    );
+  }
+
+  if (matrixId && (!matrix || !matrix.allowedActions.includes('Update'))) {
+    return (
+      <>
+        <PageHeader title={title} onBack={back} />
+        <div className="sep-page">
+          <div className="sep-alert" role="alert">
+            {!matrix ? (detail.error ? toProblem(detail.error).message : 'Không tìm thấy ma trận.') :
+              'Bạn không thể chỉnh sửa ma trận ở trạng thái hiện tại.'}
+          </div>
+          <PcbButton variant="secondary" onClick={() => navigate(matrix ? `/matrices/${matrixId}` : '/matrices')}>
+            {matrix ? 'Về chi tiết' : 'Về danh sách'}
+          </PcbButton>
+        </div>
+      </>
+    );
+  }
 
   // Chỉ khoá khi ĐÃ chọn xong ngữ cảnh và có dòng nội dung — nếu chưa chọn gì thì chưa
   // có gì để khoá, không thì người dùng thêm dòng trước sẽ không bao giờ chọn được ngữ cảnh.
@@ -202,17 +267,9 @@ const MatrixEditor = () => {
 
   return (
     <>
-      <div className="sep-page-header">
-        <PcbIconButton
-          icon="arrow_back"
-          label="Quay lại"
-          onClick={() => (reviewing ? setSearchParams({}) : navigate(-1))}
-        />
-        <h1 className="sep-page-title">
-          {reviewing ? 'Xem lại ma trận' : matrixId ? 'Sửa ma trận' : 'Tạo ma trận'}
-        </h1>
-      </div>
+      <PageHeader title={title} onBack={back} />
 
+      <div className="sep-page">
       {problem && <div className="sep-alert" role="alert">{problem}</div>}
 
       {restored && (
@@ -232,49 +289,57 @@ const MatrixEditor = () => {
 
       {reviewing && !totalOk && (
         <div className="sep-alert sep-alert--warn" role="status">
-          Tổng điểm hiện là {formatScore(total.score)}/{REQUIRED_TOTAL_SCORE}.{' '}
+          Tổng tỷ lệ điểm hiện là {formatScore(total.percentage)}%/{REQUIRED_TOTAL_PERCENTAGE}%.{' '}
           {submittedEdit
-            ? // Ma trận Đã nộp không lưu dở được: nút Lưu thay đổi bị khoá cho tới khi đủ điểm.
-              `Ma trận đã nộp nên phải đủ ${REQUIRED_TOTAL_SCORE} điểm mới lưu được thay đổi.`
-            : `Bạn vẫn lưu nháp được; cần đúng ${REQUIRED_TOTAL_SCORE} điểm mới ${delegated ? 'nộp được' : 'nộp hoặc tạo ma trận'}.`}
+            ? // Ma trận Đã nộp không lưu dở được: nút Lưu thay đổi bị khoá cho tới khi đủ %.
+              `Ma trận đã nộp nên phải đủ ${REQUIRED_TOTAL_PERCENTAGE}% mới lưu được thay đổi.`
+            : `Bạn vẫn lưu nháp được; cần đúng ${REQUIRED_TOTAL_PERCENTAGE}% mới ${delegated ? 'nộp được' : 'nộp hoặc tạo ma trận'}.`}
         </div>
       )}
 
       {reviewing ? (
-        <MatrixSummary
-          rows={[
-            ['Ma trận', name || '—'],
-            ['Phạm vi', `${contextLabel(contexts, academicContextId)}${semesterName ? ` · ${semesterName}` : ''}`],
-            ['Quy mô', `${total.questions} câu · ${formatScore(total.score)} điểm`],
-          ]}
-        />
+        <section className="sep-section">
+          <h2 className="sep-section-title">Thông tin ma trận</h2>
+          <InfoGrid
+            items={[
+              { label: 'Tên ma trận', value: name || '—', span: 'full' },
+              { label: 'Phạm vi', value: contextLabel(contexts, academicContextId), span: 'wide' },
+              { label: 'Học kỳ', value: semesterName ?? 'Không chọn' },
+              {
+                label: 'Quy mô',
+                value: `${total.questions} câu · ${formatScore(totalScore)} điểm (${formatScore(total.percentage)}%)`,
+              },
+            ]}
+          />
+        </section>
       ) : (
         <>
-          <div className="sep-actions">
-            <PcbButton variant="secondary" disabled title="Sắp có">
-              Nhập Excel
-            </PcbButton>
-          </div>
+          <section className="sep-section">
+            <h2 className="sep-section-title">Thông tin ma trận</h2>
+            <div className="sep-fields">
+              <Field
+                label="Tên ma trận"
+                value={name}
+                error={errors.name}
+                placeholder="Ví dụ: Toán 5 · Cuối học kỳ I"
+                fieldClassName="sep-span-2"
+                onChange={(event) => setDraftName(event.target.value)}
+              />
+              <Field
+                type="number"
+                min={1}
+                step={1}
+                label="Tổng điểm"
+                value={totalScore}
+                error={errors.totalScore}
+                hint={totalScoreHint(rows) ?? `${total.questions} câu · tổng tỷ lệ ${formatScore(total.percentage)}%`}
+                onChange={(event) => setDraftTotalScore(Number(event.target.value))}
+              />
+            </div>
+          </section>
 
-          <div className="pcb-card sep-form">
-            <Field
-              label="Tên ma trận"
-              value={name}
-              error={errors.name}
-              placeholder="Ví dụ: Toán 5 · Cuối học kỳ I"
-              onChange={(event) => setDraftName(event.target.value)}
-            />
-            <Field
-              label="Tổng điểm"
-              value={`${total.questions} câu · ${formatScore(total.score)} / ${REQUIRED_TOTAL_SCORE} điểm`}
-              error={errors.total}
-              hint={totalScoreHint(rows) ?? undefined}
-              readOnly
-              title="Tổng do hệ thống tính từ các dòng chi tiết"
-            />
-          </div>
-
-          <div className="pcb-card sep-card-body">
+          <section className="sep-section">
+            <h2 className="sep-section-title">Phạm vi ma trận</h2>
             <ContextSelects
               contexts={contexts}
               semesters={semesters}
@@ -290,25 +355,64 @@ const MatrixEditor = () => {
               }
               onChange={setDraftSelection}
             />
-          </div>
+          </section>
         </>
       )}
 
-      <h2 className="sep-section-title">Nội dung và mức nhận thức</h2>
-
-      {!reviewing && !academicContextId && (
-        <div className="sep-alert sep-alert--info">
-          Chọn đủ Chương trình, Môn học, Khối lớp và Năm học để hiện danh sách bài học.
+      <section className="sep-section">
+        <div className="sep-section-head">
+          <h2 className="sep-section-title">Nội dung và mức nhận thức</h2>
+          {!reviewing && (
+            <PcbButton
+              variant="secondary"
+              size="sm"
+              aria-expanded={importOpen}
+              onClick={() => {
+                setImportOpen(!importOpen);
+                setImportNotice(null);
+              }}
+            >
+              <Icon name="upload_file" size={18} />
+              Nhập từ Excel
+            </PcbButton>
+          )}
         </div>
-      )}
 
-      <MatrixGrid
-        rows={rows}
-        lessons={lessons}
-        readOnly={reviewing}
-        errors={errors}
-        onChange={setDraftRows}
-      />
+        {importNotice && !reviewing && (
+          <div className="sep-alert sep-alert--success" role="status">
+            {importNotice}
+          </div>
+        )}
+
+        {importOpen && !reviewing && (
+          <ExcelImportPanel
+            lessons={lessons}
+            contextReady={academicContextId !== null}
+            contextLabel={contextLabel(contexts, academicContextId)}
+            semesterName={semesterName ?? null}
+            name={name}
+            totalScore={totalScore}
+            hasRows={rows.length > 0}
+            onApply={applyImport}
+            onClose={() => setImportOpen(false)}
+          />
+        )}
+
+        {!reviewing && !academicContextId && !importOpen && (
+          <div className="sep-alert sep-alert--info">
+            Chọn đủ Chương trình, Môn học, Khối lớp và Năm học để hiện danh sách bài học.
+          </div>
+        )}
+
+        <MatrixGrid
+          rows={rows}
+          lessons={lessons}
+          matrixTotalScore={totalScore}
+          readOnly={reviewing}
+          errors={errors}
+          onChange={setDraftRows}
+        />
+      </section>
 
       <div className="sep-actions">
         {reviewing ? (
@@ -321,7 +425,7 @@ const MatrixEditor = () => {
               // Ma trận đang Đã nộp thì sửa xong vẫn phải đúng 10; ma trận Nháp thì lưu ở mọi tổng.
               <PcbButton
                 disabled={busy || (submittedEdit && !totalOk)}
-                title={submittedEdit && !totalOk ? `Cần đúng ${REQUIRED_TOTAL_SCORE} điểm mới lưu được` : undefined}
+                title={submittedEdit && !totalOk ? `Cần đúng ${REQUIRED_TOTAL_PERCENTAGE}% mới lưu được` : undefined}
                 onClick={() => void save(undefined, submittedEdit)}
               >
                 Lưu thay đổi
@@ -334,7 +438,7 @@ const MatrixEditor = () => {
                 {taskId ? (
                   <PcbButton
                     disabled={busy || !totalOk}
-                    title={totalOk ? undefined : `Cần đúng ${REQUIRED_TOTAL_SCORE} điểm mới nộp được`}
+                    title={totalOk ? undefined : `Cần đúng ${REQUIRED_TOTAL_PERCENTAGE}% mới nộp được`}
                     onClick={() => void save((id) => api.matrix.submit(id), true)}
                   >
                     Nộp Phó Hiệu trưởng
@@ -343,7 +447,7 @@ const MatrixEditor = () => {
                   // PHT tự tạo: backend cần tạo Nháp rồi xác nhận, người dùng chỉ thấy kết quả đã duyệt.
                   <PcbButton
                     disabled={busy || !totalOk}
-                    title={totalOk ? undefined : `Cần đúng ${REQUIRED_TOTAL_SCORE} điểm mới tạo được`}
+                    title={totalOk ? undefined : `Cần đúng ${REQUIRED_TOTAL_PERCENTAGE}% mới tạo được`}
                     onClick={() => void save((id) => api.matrix.confirm(id), true)}
                   >
                     Tạo ma trận
@@ -363,6 +467,15 @@ const MatrixEditor = () => {
             >
               Huỷ
             </PcbButton>
+            {/*
+              Lưu ngay không cần qua bước xem lại. Với ma trận theo nhiệm vụ, lần lưu đầu là lúc nhiệm vụ
+              "đã được thực hiện": từ đó PHT không xoá nhiệm vụ được nữa. Ma trận Đã nộp không lưu dở được.
+            */}
+            {!submittedEdit && (
+              <PcbButton variant="secondary" disabled={busy} onClick={() => void save()}>
+                Lưu nháp
+              </PcbButton>
+            )}
             <PcbButton
               disabled={busy}
               onClick={() => {
@@ -370,9 +483,11 @@ const MatrixEditor = () => {
               }}
             >
               Xem toàn bộ ma trận
+              <Icon name="arrow_forward" size={20} />
             </PcbButton>
           </>
         )}
+      </div>
       </div>
     </>
   );

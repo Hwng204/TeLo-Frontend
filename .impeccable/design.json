@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-23T00:00:00Z",
+  "title": "Design System: SEP · Tiểu học Phạm Công Bình",
+  "extensions": {
+    "colorMeta": {
+      "rail-blue": { "role": "primary", "displayName": "Rail Blue", "canonical": "#2f6fb0", "cssVar": "--pcb-color-bg-accent", "tonalRamp": ["#00003b", "#00235e", "#225585", "#28619c", "#2f6fb0", "#4d8dd0", "#dde9f7", "#eaf2fb"] },
+      "rail-blue-hover": { "role": "primary", "displayName": "Rail Blue Hover", "canonical": "#28619c", "cssVar": "--pcb-color-bg-accent-hover" },
+      "rail-blue-active": { "role": "primary", "displayName": "Rail Blue Pressed", "canonical": "#225585", "cssVar": "--pcb-color-bg-accent-active" },
+      "focus-blue": { "role": "primary", "displayName": "Focus Blue", "canonical": "#4a90e2", "cssVar": "--pcb-color-border-focus", "tonalRamp": ["#000044", "#001f68", "#00438e", "#1d66b5", "#458bdd", "#6ab1ff", "#c4d3e5", "#e1f0ff"] },
+      "sheet-white": { "role": "neutral", "displayName": "Sheet White", "canonical": "#ffffff", "cssVar": "--pcb-color-bg-surface" },
+      "tint-panel": { "role": "neutral", "displayName": "Ledger Tint", "canonical": "#f1f6fc", "cssVar": "--pcb-color-bg-subtle" },
+      "tint-hover": { "role": "neutral", "displayName": "Hover Tint", "canonical": "#eaf2fb", "cssVar": "--pcb-color-bg-hover" },
+      "tint-pressed": { "role": "neutral", "displayName": "Pressed Tint", "canonical": "#dde9f7", "cssVar": "--pcb-color-bg-active" },
+      "tint-row": { "role": "neutral", "displayName": "Row Hover Tint", "canonical": "#f7fafd", "cssVar": "--pcb-color-bg-row-hover" },
+      "brand-soft": { "role": "tertiary", "displayName": "Assigned Blue", "canonical": "#eaf4ff", "cssVar": "--sep-bg-brand-soft" },
+      "hairline": { "role": "neutral", "displayName": "Hairline", "canonical": "#dce6f0", "cssVar": "--pcb-color-border-default", "tonalRamp": ["#060c12", "#20272f", "#3e464e", "#5f6770", "#818a93", "#a6afb9", "#c3d6ea", "#dce6f0"] },
+      "hairline-hover": { "role": "neutral", "displayName": "Hairline Hover", "canonical": "#c3d6ea", "note": "Hard-coded in CSS; no token." },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#26364a", "cssVar": "--pcb-color-text-primary", "tonalRamp": ["#010b1c", "#18273a", "#26364a", "#44566c", "#5d6d80", "#9cb0c8", "#c4d2e5", "#e1f0ff"] },
+      "ink-secondary": { "role": "neutral", "displayName": "Ink Secondary", "canonical": "#44566c", "cssVar": "--pcb-color-text-secondary" },
+      "ink-placeholder": { "role": "neutral", "displayName": "Placeholder Ink", "canonical": "#5d6d80", "note": "Hard-coded in CSS; no token." },
+      "danger-ink": { "role": "tertiary", "displayName": "Danger Red", "canonical": "#b3403f", "cssVar": "--pcb-color-text-danger", "tonalRamp": ["#340000", "#5b0000", "#830b17", "#ab3939", "#d55f5b", "#ff847e", "#e4cac7", "#ffe7e5"] },
+      "danger-soft": { "role": "tertiary", "displayName": "Danger Soft", "canonical": "#fdf3f3", "cssVar": "--pcb-color-bg-danger-hover" },
+      "error-red": { "role": "tertiary", "displayName": "Error Red", "canonical": "#d64545", "note": "Hard-coded in CSS; a second red beside danger-ink.", "tonalRamp": ["#3b0000", "#640000", "#8e0004", "#b7252c", "#e2504f", "#ff7872", "#e4cac7", "#ffe7e5"] },
+      "amber-soft": { "role": "tertiary", "displayName": "Amber Wait Field", "canonical": "#fdf8ec" },
+      "amber-ink": { "role": "tertiary", "displayName": "Amber Wait", "canonical": "#7a5a1e", "tonalRamp": ["#1d0300", "#3c1f00", "#5d3e00", "#806025", "#a58349", "#cba86e", "#dccfbc", "#f9edd9"] },
+      "green-soft": { "role": "tertiary", "displayName": "Settled Green Field", "canonical": "#ecf7ef" },
+      "green-ink": { "role": "tertiary", "displayName": "Settled Green", "canonical": "#2b6b3f", "tonalRamp": ["#001400", "#003209", "#0d5329", "#367649", "#5a9a6b", "#7fc08f", "#c3d7c7", "#e1f5e5"] },
+      "archive-soft": { "role": "tertiary", "displayName": "Shelf Gray Field", "canonical": "#f1f0f4" },
+      "archive-ink": { "role": "tertiary", "displayName": "Shelf Gray", "canonical": "#555061", "tonalRamp": ["#0d0815", "#282332", "#474252", "#686374", "#8b8698", "#b0aabe", "#d3cde1", "#f1ebff"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "Screen title in the top bar; 18px/26px below 900px." },
+      "title": { "displayName": "Title", "purpose": "Section titles on detail and form screens." },
+      "nav": { "displayName": "Nav", "purpose": "Rail items and underline tabs; 600 when active." },
+      "body": { "displayName": "Body", "purpose": "Default text, table cells, alerts." },
+      "label": { "displayName": "Label", "purpose": "Field labels and read-only values." },
+      "table-head": { "displayName": "Table Head", "purpose": "List-table column heads in rail blue." },
+      "small": { "displayName": "Small", "purpose": "Row sublines and status pills (500)." },
+      "hint": { "displayName": "Hint", "purpose": "Field hints, errors, grid-input labels, due flags." }
+    },
+    "shadows": [
+      { "name": "menu-lift", "value": "0 10px 24px rgba(34, 79, 125, .16)", "purpose": "Custom select dropdown menus." },
+      { "name": "dialog-lift", "value": "0 18px 48px rgba(20, 61, 107, .22)", "purpose": "Modal dialogs, over a rgba(20, 61, 107, .35) backdrop." },
+      { "name": "focus-ring", "value": "0 0 0 3px rgba(74, 144, 226, .32)", "purpose": "Focus state on fields and textareas (--sep-focus-ring)." }
+    ],
+    "motion": [
+      { "name": "transition", "value": "150ms ease", "purpose": "All color, background and border state changes (--sep-transition)." },
+      { "name": "shimmer", "value": "1.4s ease infinite", "purpose": "Skeleton rows while loading; disabled under prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "narrow", "value": "900px", "purpose": "Rail forced to 72px icon-only; toolbar stacks; tables scroll; pager unsticks; fields to 1 column." },
+      { "name": "medium", "value": "1200px", "purpose": "Field grid 4 to 2 columns; context grid 5 to 3 columns." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main action of a page or toolbar, e.g. Tạo ma trận, Xác nhận ma trận.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Tạo ma trận <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg></button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; min-width: 100px; padding: 0 16px; border-radius: 10px; border: 1px solid transparent; font: 600 14px/20px 'Inter', sans-serif; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease; } .ds-btn-primary { background: var(--pcb-color-bg-accent, #2f6fb0); color: #fff; } .ds-btn-primary:hover { background: var(--pcb-color-bg-accent-hover, #28619c); } .ds-btn-primary:active { background: var(--pcb-color-bg-accent-active, #225585); } .ds-btn-primary:focus-visible { outline: 2px solid #4a90e2; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "An alternative action beside the primary one.",
+      "html": "<button class=\"ds-btn-secondary\">Xuất Excel</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; height: 44px; min-width: 100px; padding: 0 16px; border-radius: 10px; border: 1px solid #4a90e2; background: #fff; color: #2f6fb0; font: 600 14px/20px 'Inter', sans-serif; cursor: pointer; transition: background-color 150ms ease; } .ds-btn-secondary:hover { background: #eaf2fb; } .ds-btn-secondary:active { background: #dde9f7; } .ds-btn-secondary:focus-visible { outline: 2px solid #4a90e2; outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "A destructive or refusing action (Từ chối, Xoá), kept distinct from Cancel.",
+      "html": "<button class=\"ds-btn-danger\">Từ chối</button>",
+      "css": ".ds-btn-danger { display: inline-flex; align-items: center; justify-content: center; height: 44px; min-width: 100px; padding: 0 16px; border-radius: 10px; border: 0; background: #fff; color: #b3403f; font: 600 14px/20px 'Inter', sans-serif; cursor: pointer; transition: background-color 150ms ease; } .ds-btn-danger:hover { background: #fdf3f3; } .ds-btn-danger:active { background: #f9e7e7; } .ds-btn-danger:focus-visible { outline: 2px solid #4a90e2; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Label-above field with a hairline control and a focus ring.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-label\">Tên ma trận</span><span class=\"ds-control\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><path d=\"m20 20-4.5-4.5\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg><input placeholder=\"Tìm theo tên ma trận\"></span></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 8px; } .ds-label { font: 500 14px/20px 'Inter', sans-serif; color: #26364a; } .ds-control { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 1px solid #dce6f0; border-radius: 10px; background: #fff; color: #44566c; transition: border-color 150ms ease, box-shadow 150ms ease; } .ds-control:hover:not(:focus-within) { border-color: #c3d6ea; } .ds-control:focus-within { border-color: #4a90e2; box-shadow: 0 0 0 3px rgba(74, 144, 226, .32); } .ds-control input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: 400 14px/20px 'Inter', sans-serif; color: #26364a; } .ds-control input::placeholder { color: #5d6d80; }"
+    },
+    {
+      "name": "Rail Navigation",
+      "kind": "nav",
+      "refersTo": "nav-rail",
+      "description": "Solid blue rail; the active item is a white pill merged into the page by two concave corners.",
+      "html": "<nav class=\"ds-rail\"><a class=\"ds-nav\" href=\"#\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/></svg>Tổng quan</a><a class=\"ds-nav ds-nav-active\" href=\"#\" aria-current=\"page\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 4h16v16H4zM4 10h16M10 10v10\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/></svg>Ma trận đề</a><a class=\"ds-nav\" href=\"#\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3h12v18H6zM9 8h6M9 12h6M9 16h4\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/></svg>Nhiệm vụ đã giao</a></nav>",
+      "css": ".ds-rail { display: flex; flex-direction: column; gap: 2px; width: 264px; padding: 24px 0 24px 16px; box-sizing: border-box; background: #2f6fb0; } .ds-nav { position: relative; display: flex; align-items: center; gap: 14px; height: 40px; padding: 0 16px; border-radius: 20px 0 0 20px; color: #fff; font: 500 15px/22px 'Inter', sans-serif; text-decoration: none; transition: background-color 150ms ease; } .ds-nav:hover { background: rgba(255, 255, 255, .12); } .ds-nav:focus-visible { outline: 2px solid #fff; outline-offset: -4px; } .ds-nav-active, .ds-nav-active:hover { z-index: 1; background: #fff; color: #2f6fb0; font-weight: 600; } .ds-nav-active::before, .ds-nav-active::after { content: ''; position: absolute; right: 0; width: 20px; height: 20px; pointer-events: none; } .ds-nav-active::before { top: -20px; background: radial-gradient(circle at 0 0, transparent 19.5px, #fff 20px); } .ds-nav-active::after { bottom: -20px; background: radial-gradient(circle at 0 100%, transparent 19.5px, #fff 20px); }"
+    },
+    {
+      "name": "Underline Tabs",
+      "kind": "nav",
+      "refersTo": "tab-active",
+      "description": "Status tabs that share the full width equally, with a 2px rail-blue underline on the active tab.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab ds-tab-active\" role=\"tab\" aria-selected=\"true\">Tất cả</button><button class=\"ds-tab\" role=\"tab\">Nháp</button><button class=\"ds-tab\" role=\"tab\">Đã nộp</button><button class=\"ds-tab\" role=\"tab\">Đã duyệt</button></div>",
+      "css": ".ds-tabs { display: flex; border-bottom: 1px solid #dce6f0; } .ds-tab { position: relative; flex: 1; height: 46px; padding: 0 12px; border: 0; background: transparent; color: #44566c; font: 500 15px/22px 'Inter', sans-serif; cursor: pointer; transition: color 150ms ease, background-color 150ms ease; } .ds-tab:hover { color: #26364a; background: #f7fafd; } .ds-tab:focus-visible { outline: 2px solid #4a90e2; outline-offset: -2px; } .ds-tab-active, .ds-tab-active:hover { color: #2f6fb0; font-weight: 600; background: transparent; } .ds-tab-active::after { content: ''; position: absolute; left: 8%; right: 8%; bottom: -1px; height: 2px; border-radius: 2px 2px 0 0; background: #2f6fb0; }"
+    },
+    {
+      "name": "Status Pills",
+      "kind": "chip",
+      "refersTo": "status-submitted",
+      "description": "Workflow status as soft pills: draft, assigned, submitted, approved, archived.",
+      "html": "<span class=\"ds-status\">Nháp</span> <span class=\"ds-status ds-status-assigned\">Đã giao</span> <span class=\"ds-status ds-status-submitted\">Đã nộp</span> <span class=\"ds-status ds-status-approved\">Đã duyệt</span> <span class=\"ds-status ds-status-archived\">Đã lưu trữ</span>",
+      "css": ".ds-status { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font: 500 13px/20px 'Inter', sans-serif; white-space: nowrap; background: #f1f6fc; color: #44566c; } .ds-status-assigned { background: #eaf4ff; color: #2f6fb0; } .ds-status-submitted { background: #fdf8ec; color: #7a5a1e; } .ds-status-approved { background: #ecf7ef; color: #2b6b3f; } .ds-status-archived { background: #f1f0f4; color: #555061; }"
+    },
+    {
+      "name": "Pager",
+      "kind": "custom",
+      "refersTo": "pager-page-active",
+      "description": "List footer: rows-per-page on the left, numbered 32px squares on the right.",
+      "html": "<div class=\"ds-pager\"><span>Hiển thị 10 bản ghi / trang <span class=\"ds-pager-total\">Tổng 44 ma trận</span></span><span class=\"ds-pages\"><button class=\"ds-page\" aria-label=\"Trang trước\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m15 6-6 6 6 6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/></svg></button><button class=\"ds-page ds-page-active\" aria-current=\"page\">1</button><button class=\"ds-page\">2</button><button class=\"ds-page\">3</button><button class=\"ds-page\" aria-label=\"Trang sau\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m9 6 6 6-6 6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/></svg></button></span></div>",
+      "css": ".ds-pager { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 12px 0; border-top: 1px solid #dce6f0; background: #fff; font: 400 14px/20px 'Inter', sans-serif; color: #44566c; } .ds-pager-total { margin-left: 12px; padding-left: 12px; border-left: 1px solid #dce6f0; } .ds-pages { display: flex; gap: 4px; } .ds-page { display: inline-grid; place-items: center; min-width: 32px; height: 32px; padding: 0 6px; border: 0; border-radius: 6px; background: transparent; color: #26364a; font: 500 14px/20px 'Inter', sans-serif; font-variant-numeric: tabular-nums; cursor: pointer; transition: background-color 150ms ease, color 150ms ease; } .ds-page:hover { background: #eaf2fb; color: #2f6fb0; } .ds-page:focus-visible { outline: 2px solid #4a90e2; outline-offset: 2px; } .ds-page-active, .ds-page-active:hover { background: #2f6fb0; color: #fff; font-weight: 600; }"
+    },
+    {
+      "name": "Read-only Field",
+      "kind": "card",
+      "refersTo": "read-field",
+      "description": "A label-above value on a tint-panel fill, used on detail screens.",
+      "html": "<div class=\"ds-readfield\"><span class=\"ds-label\">Quy mô</span><p class=\"ds-readvalue\">15 câu · 10 điểm</p></div>",
+      "css": ".ds-readfield { display: flex; flex-direction: column; gap: 8px; } .ds-readfield .ds-label { font: 500 14px/20px 'Inter', sans-serif; color: #26364a; } .ds-readvalue { display: flex; align-items: center; min-height: 44px; margin: 0; padding: 10px 14px; box-sizing: border-box; border: 1px solid #dce6f0; border-radius: 10px; background: #f1f6fc; font: 500 14px/22px 'Inter', sans-serif; color: #26364a; font-variant-numeric: tabular-nums; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Office Ledger",
+    "overview": "This is a school office's working ledger, set on a computer. A solid blue rail holds the school's navigation. The screen that is open is cut out of that rail in the page's own white, so the selected item runs straight into the sheet. The sheet stays plain white: no tinted canvas, no floating cards. Hairline rules, brand-blue column heads and soft tinted pills give the page its structure. Density suits people who scan rows of assignments at a desk: 14px body, tabular figures, a numbered row index, and one quiet action column.\n\nThe palette comes from the team's Figma variables (`--pcb-*`, `--sep-*` in `src/styles/tokens.css`), and Inter is the only typeface. Both are brand commitments, not choices made on this surface. The system has one accent, the rail blue, used for the rail, primary actions, active tabs, table heads and the current page number. Status gets a small set of soft color fields, and red appears only for danger and overdue dates.\n\nThe build rejects the earlier stack of floating cards on a tinted canvas with boxed, labeled filters. The sheet is one surface, and grouping comes from rules and tints rather than from lifted containers.",
+    "keyCharacteristics": [
+      "Solid rail-blue navigation with a white active pill and two concave corners that merge it into the page.",
+      "White sheet, 1px hairlines, no canvas tint behind content.",
+      "Full-width underline tabs, a one-row search-and-filter toolbar, and the primary action at the far right.",
+      "Unframed list tables with brand-blue bold heads. The matrix grid is the one framed panel, with tinted head cells.",
+      "Soft status pills that are scannable without being loud. An overdue date turns red and carries a \"Quá hạn\" flag.",
+      "10px radius on controls, 6px on pagination squares, 12px on panels and dialogs."
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "Rail blue is the only saturated hue that does not signal status. Anything that needs attention and is not a status or a danger uses rail blue or nothing.", "section": "colors" },
+      { "name": "The Status Field Rule", "body": "Workflow status always appears as a soft pill: amber means it waits on someone else, green means done, blue means in progress, gray means shelved, and neutral means draft. Never show status as bare colored text.", "section": "colors" },
+      { "name": "The Overdue Rule", "body": "Only an overdue due date turns red. It stays in its column in danger-ink and carries a \"Quá hạn\" flag with an icon. The row is never tinted red.", "section": "colors" },
+      { "name": "The Tabular Figures Rule", "body": "Table cells, read-only values and pager numbers set `font-variant-numeric: tabular-nums`. Counts, percentages and dates must line up down a column.", "section": "typography" },
+      { "name": "The Flat Sheet Rule", "body": "Nothing that sits on the page casts a shadow. A shadow means the surface floats above the page and will close.", "section": "elevation" }
+    ],
+    "dos": [
+      "**Do** take every color from `src/styles/tokens.css`. The palette and Inter are the team's Figma commitments.",
+      "**Do** mark the current screen with the white rail pill and its concave corners, and nothing else.",
+      "**Do** use rail-blue 600 heads, a 56px STT column and a shrink-to-fit icon column on list tables.",
+      "**Do** show workflow status only through the soft status pills, and overdue dates through the red date plus the \"Quá hạn\" flag.",
+      "**Do** use 44px controls on forms, 40px in toolbars, and 34px for row actions and small buttons.",
+      "**Do** keep the pager sticky at the bottom on desktop so paging works without scrolling.",
+      "**Do** show Figma features that are not built yet as disabled or inert with a \"Sắp có\" title, never as working controls."
+    ],
+    "donts": [
+      "**Don't** put a tinted canvas behind the sheet or float shadowed cards on it. Group content with hairlines and tint-panel.",
+      "**Don't** use a shadow on anything that sits on the page. Shadows are for menus and dialogs only.",
+      "**Don't** introduce a second accent hue, or reuse the red of the StarMath reference screenshots.",
+      "**Don't** tint whole rows for status or lateness.",
+      "**Don't** make a destructive button look like the neutral button beside it."
+    ]
+  }
+}

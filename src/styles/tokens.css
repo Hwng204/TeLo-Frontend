@@ -29,6 +29,8 @@
   --sep-bg-canvas: #f7fafc;
   --sep-bg-brand: #377dcb;
   --sep-bg-brand-soft: #eaf4ff;
+  /* Nền sidebar, theo màu chủ đạo của bản thiết kế PCB Primary. */
+  --sep-rail-bg: #668ee1;
   --sep-bg-lavender-soft: #f3f0ff;
   --sep-bg-surface: #fff;
   --sep-border-subtle: #dce6f1;
@@ -70,5 +72,9 @@
 }
 .sep-app *{
   scrollbar-width: thin;
+  scrollbar-color: #c3d6ea transparent;
+}
+/* Thanh cuộn của cả trang thuộc <html>, nằm ngoài .sep-app. */
+html:has(.sep-app) {
   scrollbar-color: #c3d6ea transparent;
 }

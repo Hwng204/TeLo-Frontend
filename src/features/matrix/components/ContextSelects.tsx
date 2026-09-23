@@ -31,11 +31,13 @@ type Props = {
    * để các nơi gọi cũ (danh sách, bộ lọc) không phải đổi gì.
    */
   semesterDisabled?: boolean;
-  compact?: boolean;
   emptyLabel?: string;
   error?: string;
-  /** Trả thẳng các ô chọn, không bọc lưới riêng, để trang ngoài xếp chung lưới với ô khác. */
-  bare?: boolean;
+  /**
+   * Dạng ô lọc trên thanh công cụ: không có nhãn nhìn thấy, ô trống đọc là "Tất cả <chiều>",
+   * và các ô trả thẳng ra ngoài để xếp chung hàng với ô tìm kiếm.
+   */
+  toolbar?: boolean;
 };
 
 export const ContextSelects = ({
@@ -46,12 +48,12 @@ export const ContextSelects = ({
   disabled,
   disabledHint,
   semesterDisabled,
-  compact,
   emptyLabel = 'Tất cả',
   error,
-  bare,
+  toolbar,
 }: Props) => {
   const semesterLocked = semesterDisabled ?? disabled;
+  const empty = (label: string) => (toolbar ? `Tất cả ${label.toLowerCase()}` : emptyLabel);
   const allBranches = contextBranchOptions(contexts, {});
   const branches = contextBranchOptions(contexts, value);
   const availableSemesters = value.academicYearId
@@ -73,6 +75,8 @@ export const ContextSelects = ({
       {allBranches.length > 1 && (
         <SelectField
           label="Chi nhánh"
+          hideLabel={toolbar}
+          placeholder={toolbar ? 'Chi nhánh' : undefined}
           value={value.schoolBranchId ?? ''}
           disabled={disabled}
           title={disabled ? disabledHint : undefined}
@@ -80,7 +84,7 @@ export const ContextSelects = ({
             onChange(applyBranchChange(contexts, value, event.target.value ? Number(event.target.value) : undefined))
           }
         >
-          <option value="">{emptyLabel}</option>
+          <option value="">{empty('Chi nhánh')}</option>
           {branches.map((branch) => (
             <option key={branch.id} value={branch.id}>
               {branch.label}
@@ -93,13 +97,16 @@ export const ContextSelects = ({
         <SelectField
           key={dimension}
           label={LABELS[dimension]}
+          hideLabel={toolbar}
+          // Trên thanh lọc, ô chưa chọn chỉ ghi tên chiều (mờ) cho gọn một hàng; mở ra vẫn thấy "Tất cả …".
+          placeholder={toolbar ? LABELS[dimension] : undefined}
           value={value[dimension] ?? ''}
           disabled={disabled}
           title={disabled ? disabledHint : undefined}
           error={dimension === 'academicYearId' ? error : undefined}
           onChange={(event) => changeDimension(dimension, event.target.value)}
         >
-          <option value="">{emptyLabel}</option>
+          <option value="">{empty(LABELS[dimension])}</option>
           {contextOptions(contexts, value, dimension).map((option) => (
             <option key={option.id} value={option.id}>
               {option.label}
@@ -110,6 +117,8 @@ export const ContextSelects = ({
 
       <SelectField
         label="Học kỳ"
+        hideLabel={toolbar}
+        placeholder={toolbar ? 'Học kỳ' : undefined}
         value={value.semesterId ?? ''}
         disabled={semesterLocked}
         title={semesterLocked ? disabledHint : undefined}
@@ -117,7 +126,7 @@ export const ContextSelects = ({
           onChange({ ...value, semesterId: event.target.value ? Number(event.target.value) : undefined })
         }
       >
-        <option value="">{emptyLabel}</option>
+        <option value="">{empty('Học kỳ')}</option>
         {availableSemesters.map((semester) => (
           <option key={semester.id} value={semester.id}>
             {semester.name}
@@ -130,6 +139,6 @@ export const ContextSelects = ({
     </>
   );
 
-  if (bare) return fields;
-  return <div className={compact ? 'sep-context sep-context--compact' : 'sep-context'}>{fields}</div>;
+  if (toolbar) return fields;
+  return <div className="sep-context">{fields}</div>;
 };

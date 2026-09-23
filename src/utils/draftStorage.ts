@@ -12,13 +12,14 @@ import type { ContextSelection } from './academicContext';
 import { getUserId } from './jwt';
 
 export const DRAFT_PREFIX = 'matrix-draft:';
-const VERSION = 1;
+const VERSION = 2;
 
-/** Ba phần người dùng có thể đã chạm vào; `null` nghĩa là chưa đụng, vẫn lấy giá trị từ server. */
+/** Bốn phần người dùng có thể đã chạm vào; `null` nghĩa là chưa đụng, vẫn lấy giá trị từ server. */
 export interface MatrixDraft {
   name: string | null;
   selection: ContextSelection | null;
   rows: GridRow[] | null;
+  totalScore: number | null;
 }
 
 interface StoredDraft extends MatrixDraft {
@@ -34,7 +35,8 @@ const isDraft = (value: unknown): value is StoredDraft => {
     draft.v === VERSION &&
     (draft.name === null || typeof draft.name === 'string') &&
     (draft.selection === null || typeof draft.selection === 'object') &&
-    (draft.rows === null || Array.isArray(draft.rows))
+    (draft.rows === null || Array.isArray(draft.rows)) &&
+    (draft.totalScore === null || typeof draft.totalScore === 'number')
   );
 };
 
@@ -44,7 +46,7 @@ export const loadDraft = (key: string): MatrixDraft | null => {
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
     if (!isDraft(parsed)) return null;
-    return { name: parsed.name, selection: parsed.selection, rows: parsed.rows };
+    return { name: parsed.name, selection: parsed.selection, rows: parsed.rows, totalScore: parsed.totalScore };
   } catch {
     return null;
   }
@@ -53,7 +55,7 @@ export const loadDraft = (key: string): MatrixDraft | null => {
 export const saveDraft = (key: string, draft: MatrixDraft): void => {
   try {
     // Chưa chạm gì thì không có gì để giữ; xoá để khỏi khôi phục một bản rỗng.
-    if (draft.name === null && draft.selection === null && draft.rows === null) {
+    if (draft.name === null && draft.selection === null && draft.rows === null && draft.totalScore === null) {
       sessionStorage.removeItem(key);
       return;
     }

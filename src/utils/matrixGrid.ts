@@ -1,7 +1,11 @@
 /**
  * Backend lưu chi tiết ma trận dạng phẳng: mỗi bản ghi là một ô (bài học × mức nhận thức).
  * Giao diện lại hiển thị dạng lưới: mỗi dòng một bài học, ba cột mức nhận thức,
- * mỗi cột hai ô nhập (Câu, Điểm). File này lo việc chuyển đổi hai chiều và kiểm tra dữ liệu.
+ * mỗi cột hai ô nhập (Câu, Tỷ lệ %). File này lo việc chuyển đổi hai chiều và kiểm tra dữ liệu.
+ *
+ * Thang điểm theo tỷ lệ %: người dùng gõ thẳng `percentage` (0, 100] cho mỗi ô — không còn
+ * phải nhân/chia gì khi round-trip với backend. Điểm ô và điểm mỗi câu là giá trị SUY RA từ
+ * `Tổng điểm ma trận × percentage / 100` (xem cellScore()), chỉ để hiển thị.
  *
  * Đây là chỗ duy nhất trong module ma trận có logic sai được một cách im lặng,
  * nên có self-check đi kèm: matrixGrid.selfcheck.ts.
@@ -22,16 +26,20 @@ export const LEVEL_LABELS: Record<CognitiveLevel, string> = {
   VAN_DUNG: 'Vận dụng',
 };
 
-/** Trần điểm mỗi ô, khớp cột decimal(5,2) và kiểm tra của backend. */
-export const MAX_SCORE = 999.99;
-/** Tổng điểm cả ma trận phải đúng bằng số này khi Nộp / Xác nhận / sửa bản Đã nộp (backend: InvalidTotalScore). */
-export const REQUIRED_TOTAL_SCORE = 10;
+/** Trần tỷ lệ % mỗi ô — không có ô nào chiếm quá 100% một mình. */
+export const MAX_PERCENTAGE = 100;
+/** Tổng % cả ma trận phải đúng bằng số này khi Nộp / Xác nhận / sửa bản Đã nộp (backend: InvalidTotalScore). */
+export const REQUIRED_TOTAL_PERCENTAGE = 100;
 export const MAX_NAME_LENGTH = 255;
+/** Khớp cột decimal(5,2) của backend: tối đa 2 chữ số thập phân. */
+export const PERCENTAGE_DECIMALS = 2;
+/** Tối đa 4 chữ số khi HIỂN THỊ điểm mỗi câu suy ra (giá trị chia có thể không tròn). */
+export const PER_QUESTION_DECIMALS = 4;
 
 const emptyCells = (): Record<CognitiveLevel, GridCell> => ({
-  NHAN_BIET: { questionCount: '', allocatedScore: '' },
-  THONG_HIEU: { questionCount: '', allocatedScore: '' },
-  VAN_DUNG: { questionCount: '', allocatedScore: '' },
+  NHAN_BIET: { questionCount: '', percentage: '' },
+  THONG_HIEU: { questionCount: '', percentage: '' },
+  VAN_DUNG: { questionCount: '', percentage: '' },
 });
 
 /**
@@ -47,7 +55,7 @@ export const newRow = (lessonId = 0): GridRow => ({
 
 const isBlank = (value: string) => value.trim() === '';
 export const isCellEmpty = (cell: GridCell) =>
-  isBlank(cell.questionCount) && isBlank(cell.allocatedScore);
+  isBlank(cell.questionCount) && isBlank(cell.percentage);
 
 /** Chấp nhận cả dấu phẩy thập phân vì người dùng Việt hay gõ "2,5". */
 const normalize = (value: string) => value.trim().replace(',', '.');
@@ -58,37 +66,34 @@ const parseCount = (value: string): number | null => {
   return Number(text);
 };
 
-/**
- * Ô "Điểm" trên giao diện là ĐIỂM MỖI CÂU. Backend lại lưu tổng điểm của cả ô
- * (allocatedScore = điểm mỗi câu × số câu), nên toGrid/toDetails chuyển đổi hai chiều.
- * Cho phép tới 4 chữ số thập phân để điểm mỗi câu của dữ liệu cũ (ví dụ 1 điểm chia
- * 3 câu = 0,3333) vẫn nạp và lưu lại được.
- */
-export const PER_QUESTION_DECIMALS = 4;
-
-const parseScore = (value: string): number | null => {
+const parsePercentage = (value: string): number | null => {
   const text = normalize(value);
-  if (!new RegExp(`^\\d+(\\.\\d{1,${PER_QUESTION_DECIMALS}})?$`).test(text)) return null;
+  if (!new RegExp(`^\\d+(\\.\\d{1,${PERCENTAGE_DECIMALS}})?$`).test(text)) return null;
   return Number(text);
 };
 
-/** Tổng điểm một ô = điểm mỗi câu × số câu, làm tròn 2 chữ số như cột decimal(5,2) của backend. */
-export const cellTotal = (cell: GridCell): number => {
+export const hasValidCellValues = (cell: GridCell): boolean => {
   const count = parseCount(cell.questionCount);
-  const each = parseScore(cell.allocatedScore);
-  if (count === null || each === null) return 0;
-  return Math.round(each * count * 100) / 100;
+  const percentage = parsePercentage(cell.percentage);
+  return count !== null && count > 0 && percentage !== null && percentage > 0 && percentage <= MAX_PERCENTAGE;
 };
 
-/** Cộng điểm theo số nguyên phần trăm, nếu không 0.1 + 0.2 sẽ ra 0.30000000000000004. */
-const sumScores = (values: number[]) =>
+/** % của một ô, hoặc 0 nếu chưa gõ/không hợp lệ — dùng khi cộng tổng. */
+export const cellPercentage = (cell: GridCell): number => parsePercentage(cell.percentage) ?? 0;
+
+/** Cộng theo số nguyên phần trăm (× 100), nếu không 0.1 + 0.2 sẽ ra 0.30000000000000004. */
+const sumValues = (values: number[]) =>
   values.reduce((total, value) => total + Math.round(value * 100), 0) / 100;
 
 export const formatScore = (value: number) =>
   value.toLocaleString('vi-VN', { maximumFractionDigits: 2 });
 
+/** Điểm ô suy ra = Tổng điểm ma trận × % / 100, làm tròn 2 chữ số. */
+export const cellScore = (matrixTotalScore: number, cell: GridCell): number =>
+  Math.round(matrixTotalScore * cellPercentage(cell)) / 100;
+
 /**
- * Điểm mỗi câu suy ra từ tổng ô và số câu, dùng để hiển thị.
+ * Điểm mỗi câu suy ra từ điểm ô và số câu, dùng để hiển thị.
  * Tối đa 4 chữ số thập phân; thêm "≈" khi làm tròn rồi nhân lại KHÔNG ra đúng tổng
  * (1 điểm / 3 câu → "≈ 0,3333"), để không ai đọc 3 × 0,33 = 0,99 rồi tưởng tổng sai.
  */
@@ -118,8 +123,7 @@ export const toGrid = (details: MatrixDetail[], lessonOrder: number[]): GridRow[
     }
     row.cells[detail.cognitiveLevel] = {
       questionCount: String(detail.questionCount),
-      // Backend lưu tổng điểm của ô; giao diện nhập điểm mỗi câu.
-      allocatedScore: String(Number((detail.allocatedScore / detail.questionCount).toFixed(PER_QUESTION_DECIMALS))),
+      percentage: String(detail.percentage),
     };
   }
 
@@ -134,7 +138,7 @@ export const toGrid = (details: MatrixDetail[], lessonOrder: number[]): GridRow[
 /**
  * Lưới → phẳng. Chỉ bỏ ô mà CẢ HAI trường đều rỗng.
  * Ô điền một nửa được giữ lại để validateGrid báo lỗi; nếu bỏ ở đây thì người dùng
- * gõ số câu rồi quên điểm sẽ thấy dòng biến mất sau khi lưu mà không có thông báo nào.
+ * gõ số câu rồi quên % điểm sẽ thấy dòng biến mất sau khi lưu mà không có thông báo nào.
  */
 export const toDetails = (rows: GridRow[]): MatrixDetailRequest[] =>
   rows.flatMap((row) =>
@@ -142,7 +146,7 @@ export const toDetails = (rows: GridRow[]): MatrixDetailRequest[] =>
       lessonId: row.lessonId,
       cognitiveLevel: level,
       questionCount: parseCount(row.cells[level].questionCount) ?? 0,
-      allocatedScore: cellTotal(row.cells[level]),
+      percentage: cellPercentage(row.cells[level]),
     })),
   );
 
@@ -150,7 +154,7 @@ export const rowTotal = (row: GridRow) => {
   const filled = LEVELS.map((level) => row.cells[level]).filter((cell) => !isCellEmpty(cell));
   return {
     questions: filled.reduce((total, cell) => total + (parseCount(cell.questionCount) ?? 0), 0),
-    score: sumScores(filled.map(cellTotal)),
+    percentage: sumValues(filled.map(cellPercentage)),
   };
 };
 
@@ -158,7 +162,7 @@ export const columnTotal = (rows: GridRow[], level: CognitiveLevel) => {
   const filled = rows.map((row) => row.cells[level]).filter((cell) => !isCellEmpty(cell));
   return {
     questions: filled.reduce((total, cell) => total + (parseCount(cell.questionCount) ?? 0), 0),
-    score: sumScores(filled.map(cellTotal)),
+    percentage: sumValues(filled.map(cellPercentage)),
   };
 };
 
@@ -166,11 +170,11 @@ export const gridTotal = (rows: GridRow[]) => {
   const totals = rows.map(rowTotal);
   return {
     questions: totals.reduce((total, row) => total + row.questions, 0),
-    score: sumScores(totals.map((row) => row.score)),
+    percentage: sumValues(totals.map((row) => row.percentage)),
   };
 };
 
-export const cellErrorKey = (rowKey: string, level: CognitiveLevel, field: 'count' | 'score') =>
+export const cellErrorKey = (rowKey: string, level: CognitiveLevel, field: 'count' | 'percentage') =>
   `${rowKey}.${level}.${field}`;
 
 export const rowErrorKey = (rowKey: string) => `${rowKey}.lesson`;
@@ -217,29 +221,23 @@ export const validateGrid = (
       // Ô điền một nửa: báo đúng vào ô còn trống thay vì kêu sai định dạng.
       const count = parseCount(cell.questionCount);
       if (isBlank(cell.questionCount)) {
-        errors[cellErrorKey(row.key, level, 'count')] = 'Nhập số câu, hoặc xoá điểm để bỏ trống ô này.';
+        errors[cellErrorKey(row.key, level, 'count')] = 'Nhập số câu, hoặc xoá % điểm để bỏ trống ô này.';
       } else if (count === null) {
         errors[cellErrorKey(row.key, level, 'count')] = 'Số câu phải là số nguyên.';
       } else if (count < 1) {
         errors[cellErrorKey(row.key, level, 'count')] = 'Số câu phải lớn hơn 0.';
       }
 
-      const score = parseScore(cell.allocatedScore);
-      const scoreKey = cellErrorKey(row.key, level, 'score');
-      if (isBlank(cell.allocatedScore)) {
-        errors[scoreKey] = 'Nhập điểm mỗi câu, hoặc xoá số câu để bỏ trống ô này.';
-      } else if (score === null) {
-        errors[scoreKey] = `Điểm mỗi câu tối đa ${PER_QUESTION_DECIMALS} chữ số thập phân.`;
-      } else if (score <= 0) {
-        errors[scoreKey] = 'Điểm mỗi câu phải lớn hơn 0.';
-      } else if (count !== null && count >= 1) {
-        // Backend giới hạn TỔNG điểm của ô (decimal(5,2)), không phải điểm mỗi câu.
-        const total = cellTotal(cell);
-        if (total > MAX_SCORE) {
-          errors[scoreKey] = `Tổng điểm của ô là ${formatScore(total)}, tối đa ${MAX_SCORE}.`;
-        } else if (total <= 0) {
-          errors[scoreKey] = 'Điểm mỗi câu quá nhỏ: tổng điểm của ô làm tròn còn 0.';
-        }
+      const percentage = parsePercentage(cell.percentage);
+      const percentageKey = cellErrorKey(row.key, level, 'percentage');
+      if (isBlank(cell.percentage)) {
+        errors[percentageKey] = 'Nhập tỷ lệ % điểm, hoặc xoá số câu để bỏ trống ô này.';
+      } else if (percentage === null) {
+        errors[percentageKey] = `Tỷ lệ % điểm tối đa ${PERCENTAGE_DECIMALS} chữ số thập phân.`;
+      } else if (percentage <= 0) {
+        errors[percentageKey] = 'Tỷ lệ % điểm phải lớn hơn 0.';
+      } else if (percentage > MAX_PERCENTAGE) {
+        errors[percentageKey] = `Tỷ lệ % điểm tối đa ${MAX_PERCENTAGE}.`;
       }
     }
   }
@@ -247,29 +245,35 @@ export const validateGrid = (
   return errors;
 };
 
-/** So theo số nguyên phần trăm để 3.3 + 3.3 + 3.4 không bị lệch bởi dấu phẩy động. */
+/** So theo số nguyên phần trăm để 33.3 + 33.3 + 33.4 không bị lệch bởi dấu phẩy động. */
 export const hasRequiredTotal = (rows: GridRow[]): boolean =>
-  Math.round(gridTotal(rows).score * 100) === REQUIRED_TOTAL_SCORE * 100;
+  Math.round(gridTotal(rows).percentage * 100) === REQUIRED_TOTAL_PERCENTAGE * 100;
 
 /**
  * Chỉ áp dụng khi NỘP / XÁC NHẬN / sửa bản Đã nộp. Lưu Nháp thì không cần: nháp được lưu
- * ở mọi tổng điểm (kể cả rỗng) để soạn dở dang nhiều lần. Backend cũng kiểm tra lại (InvalidTotalScore).
+ * ở mọi tổng % (kể cả rỗng) để soạn dở dang nhiều lần. Backend cũng kiểm tra lại (InvalidTotalScore).
  */
 export const validateTotalForSubmit = (rows: GridRow[]): string | null =>
   hasRequiredTotal(rows)
     ? null
-    : `Tổng điểm phải bằng ${REQUIRED_TOTAL_SCORE} mới nộp hoặc xác nhận được (hiện là ${formatScore(gridTotal(rows).score)}).`;
+    : `Tổng tỷ lệ điểm phải bằng ${REQUIRED_TOTAL_PERCENTAGE}% mới nộp hoặc xác nhận được (hiện là ${formatScore(gridTotal(rows).percentage)}%).`;
 
-/** Gợi ý không chặn cạnh ô "Tổng điểm" khi ma trận có dòng nhưng chưa đủ 10. */
+/** Gợi ý không chặn cạnh ô "Tổng điểm" khi ma trận có dòng nhưng chưa đủ 100%. */
 export const totalScoreHint = (rows: GridRow[]): string | null =>
   toDetails(rows).length === 0 || hasRequiredTotal(rows)
     ? null
-    : `Cần đúng ${REQUIRED_TOTAL_SCORE} điểm mới nộp hoặc xác nhận được; hiện là ${formatScore(gridTotal(rows).score)}. Vẫn lưu nháp được.`;
+    : `Cần đúng ${REQUIRED_TOTAL_PERCENTAGE}% mới nộp hoặc xác nhận được; hiện là ${formatScore(gridTotal(rows).percentage)}%. Vẫn lưu nháp được.`;
+
+/** Số nguyên dương hợp lệ cho ô "Tổng điểm ma trận", hoặc thông báo lỗi. */
+export const validateTotalScoreField = (totalScore: number): string | null =>
+  Number.isInteger(totalScore) && totalScore > 0
+    ? null
+    : 'Tổng điểm ma trận phải là số nguyên dương.';
 
 /**
- * Lỗi hiển thị ngay khi đang gõ: chỉ các ô ĐÃ có giá trị và sai (ví dụ điểm vượt trần).
- * Không báo ô còn trống, nếu không vừa gõ số câu xong đã bị la thiếu điểm.
- * Tổng điểm không nằm ở đây: nháp lưu được ở mọi tổng, chỉ có gợi ý (totalScoreHint).
+ * Lỗi hiển thị ngay khi đang gõ: chỉ các ô ĐÃ có giá trị và sai (ví dụ % vượt trần).
+ * Không báo ô còn trống, nếu không vừa gõ số câu xong đã bị la thiếu % điểm.
+ * Tổng % không nằm ở đây: nháp lưu được ở mọi tổng, chỉ có gợi ý (totalScoreHint).
  */
 export const liveCellErrors = (rows: GridRow[]): Record<string, string> => {
   const all = validateGrid(rows, 'x', 1);
@@ -278,9 +282,9 @@ export const liveCellErrors = (rows: GridRow[]): Record<string, string> => {
     for (const level of LEVELS) {
       const cell = row.cells[level];
       const count = cellErrorKey(row.key, level, 'count');
-      const score = cellErrorKey(row.key, level, 'score');
+      const percentage = cellErrorKey(row.key, level, 'percentage');
       if (all[count] && !isBlank(cell.questionCount)) live[count] = all[count];
-      if (all[score] && !isBlank(cell.allocatedScore)) live[score] = all[score];
+      if (all[percentage] && !isBlank(cell.percentage)) live[percentage] = all[percentage];
     }
   }
   return live;

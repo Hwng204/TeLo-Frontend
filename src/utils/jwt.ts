@@ -32,6 +32,18 @@ export const getUserId = (): string | null => {
   }
 };
 
+/** Tên đăng nhập (claim `name`), chỉ để hiển thị trên thanh trên cùng. */
+export const getUsername = (): string => {
+  const token = storage.getToken();
+  if (!token) return '';
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return String(payload.unique_name ?? payload.name ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ?? '');
+  } catch {
+    return '';
+  }
+};
+
 export const isTeamLead = () => getRoles().some((role) => TEAM_LEAD_ROLES.includes(role));
 export const isPht = () => getRoles().some((role) => PHT_ROLES.includes(role));
 

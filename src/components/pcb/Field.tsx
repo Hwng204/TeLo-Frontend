@@ -6,19 +6,22 @@ import { Icon } from './Icon';
 
 type ShellProps = {
   label?: string;
+  /** Giữ nhãn cho trình đọc màn hình nhưng không hiện ra (ô lọc trên thanh công cụ). */
+  hideLabel?: boolean;
   error?: string;
   /** Gợi ý không chặn, hiện dưới ô khi không có lỗi. */
   hint?: string;
   leading?: string;
   select?: boolean;
+  className?: string;
   children: (id: string) => ReactNode;
 };
 
-const Shell = ({ label, error, hint, leading, select, children }: ShellProps) => {
+const Shell = ({ label, hideLabel, error, hint, leading, select, className, children }: ShellProps) => {
   const id = useId();
   return (
-    <div className="pcb-field">
-      {label && <label className="pcb-label" htmlFor={id}>{label}</label>}
+    <div className={`pcb-field${className ? ` ${className}` : ''}`}>
+      {label && <label className={hideLabel ? 'pcb-label pcb-label--hidden' : 'pcb-label'} htmlFor={id}>{label}</label>}
       <div className={`pcb-control${error ? ' pcb-control--error' : ''}`}>
         {leading && <Icon name={leading} size={18} />}
         {children(id)}
@@ -31,21 +34,28 @@ const Shell = ({ label, error, hint, leading, select, children }: ShellProps) =>
 
 type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label?: string;
+  hideLabel?: boolean;
   error?: string;
   hint?: string;
   leading?: string;
+  /** Lớp cho khung ngoài `.pcb-field`, không phải cho thẻ input. */
+  fieldClassName?: string;
 };
 
-export const Field = ({ label, error, hint, leading, ...input }: FieldProps) => (
-  <Shell label={label} error={error} hint={hint} leading={leading}>
+export const Field = ({ label, hideLabel, error, hint, leading, fieldClassName, ...input }: FieldProps) => (
+  <Shell label={label} hideLabel={hideLabel} error={error} hint={hint} leading={leading} className={fieldClassName}>
     {(id) => <input id={id} {...input} />}
   </Shell>
 );
 
 type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
   label?: string;
+  hideLabel?: boolean;
   error?: string;
   hint?: string;
+  fieldClassName?: string;
+  /** Chữ mờ hiện trên ô khi chưa chọn gì (giá trị ''); danh sách vẫn dùng nhãn của lựa chọn rỗng. */
+  placeholder?: string;
 };
 
 type Option = { value: string; disabled: boolean; label: ReactNode };
@@ -61,8 +71,11 @@ const selectOptions = (children: ReactNode): Option[] =>
 
 export const SelectField = ({
   label,
+  hideLabel,
   error,
   hint,
+  fieldClassName,
+  placeholder,
   children,
   value,
   disabled,
@@ -133,7 +146,7 @@ export const SelectField = ({
   };
 
   return (
-    <Shell label={label} error={error} hint={hint} leading="tune" select>
+    <Shell label={label} hideLabel={hideLabel} error={error} hint={hint} className={fieldClassName} select>
       {(id) => (
         <>
           <button
@@ -167,7 +180,11 @@ export const SelectField = ({
               }
             }}
           >
-            {selected?.label}
+            {selectedValue === '' && placeholder ? (
+              <span className="pcb-select-placeholder">{placeholder}</span>
+            ) : (
+              selected?.label
+            )}
           </button>
 
           {open && position && createPortal(

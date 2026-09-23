@@ -24,7 +24,8 @@ export interface MatrixDetailRequest {
   lessonId: number;
   cognitiveLevel: CognitiveLevel;
   questionCount: number;
-  allocatedScore: number;
+  /** Tỷ lệ % điểm của dòng này trong tổng điểm ma trận (0, 100], không phải điểm tuyệt đối. */
+  percentage: number;
 }
 
 export interface SaveMatrixRequest {
@@ -32,12 +33,16 @@ export interface SaveMatrixRequest {
   academicContextId: number;
   semesterId: number | null;
   taskId: number | null;
+  /** Số nguyên dương do người lập tự đặt — không còn tính từ tổng chi tiết. */
+  totalScore: number;
   details: MatrixDetailRequest[];
 }
 
 export interface MatrixDetail extends MatrixDetailRequest {
   id: number;
   questionType: string;
+  /** Suy ra từ backend = matrix.totalScore * percentage / 100, để tránh lệch làm tròn. */
+  cellScore: number;
 }
 
 /** Một người dùng hiển thị cạnh ma trận/nhiệm vụ. `roleLabel` là null nếu họ không có vai trò ma trận. */
@@ -49,8 +54,6 @@ export interface MatrixPerson {
 
 export interface Matrix {
   id: number;
-  /** Ví dụ MT-2026-014. */
-  code: string;
   name: string;
   status: MatrixStatus;
   statusLabel: string;
@@ -74,7 +77,6 @@ export interface Matrix {
 /** Hàng trong danh sách. KHÔNG có `allowedActions` — chỉ `Matrix` mới có. */
 export interface MatrixListItem {
   id: number;
-  code: string;
   name: string;
   status: MatrixStatus;
   statusLabel: string;
@@ -95,6 +97,10 @@ export interface MatrixListQuery {
   keyword?: string;
   academicContextId?: number;
   semesterId?: number;
+  // Lọc từng chiều độc lập, không cần chọn đủ bốn chiều để ra academicContextId.
+  academicYearId?: number;
+  subjectId?: number;
+  gradeLevelId?: number;
   /** Không truyền thì backend ẩn các ma trận ARCHIVED. */
   status?: MatrixStatus;
 }
@@ -107,12 +113,14 @@ export interface Page<T> {
 }
 
 export type MatrixTaskStatus = 'ASSIGNED' | 'SUBMITTED' | 'COMPLETED';
+/** Tab lọc ở danh sách nhiệm vụ: các trạng thái thật, cộng "Quá hạn" (= Đã giao và hạn trước hôm nay). */
+export type MatrixTaskTab = MatrixTaskStatus | 'OVERDUE';
 
 /** GET /matrix-tasks/{id} — không có `createdByUserId`. */
 export interface MatrixTask {
   id: number;
-  /** Ví dụ NV-MT-014. */
-  code: string;
+  /** Tên nhiệm vụ, bắt buộc khi tạo — định danh chính, tách biệt với `description`. */
+  name: string;
   /** Người giao việc. */
   createdBy: MatrixPerson | null;
   assignedToUserId: number;
@@ -129,7 +137,7 @@ export interface MatrixTask {
 /** Hàng trong danh sách nhiệm vụ — có `createdByUserId`, ngữ cảnh thì nullable. */
 export interface MatrixTaskListItem {
   id: number;
-  code: string;
+  name: string;
   createdBy: MatrixPerson | null;
   createdByUserId: number;
   assignedToUserId: number;
@@ -148,16 +156,25 @@ export interface MatrixTaskQuery {
   pageSize?: number;
   status?: MatrixTaskStatus;
   dueBefore?: string;
-  /** Khớp yêu cầu công việc, hoặc mã nhiệm vụ (`NV-MT-9301` và `9301` đều được). */
+  /** Khớp tên nhiệm vụ hoặc yêu cầu công việc, hoặc id (gõ số). */
   keyword?: string;
   academicContextId?: number;
+  // Lọc từng chiều độc lập, không cần chọn đủ bốn chiều để ra academicContextId.
+  academicYearId?: number;
+  semesterId?: number;
+  subjectId?: number;
+  gradeLevelId?: number;
 }
+
+/** Nhóm nhiệm vụ ở hàng tab đầu màn Nhiệm vụ. Hiện backend mới có nhiệm vụ ma trận. */
+export type TaskGroup = 'MATRIX' | 'QUESTION' | 'EXAM';
 
 export interface CreateMatrixTaskRequest {
   assignedToUserId: number;
   academicContextId: number;
   semesterId: number | null;
   dueAt: string | null;
+  name: string;
   description: string | null;
 }
 
@@ -219,11 +236,8 @@ export interface MatrixReferenceData {
  */
 export interface GridCell {
   questionCount: string;
-  /**
-   * Điểm MỖI CÂU, không phải tổng điểm của ô. Backend lưu tổng (điểm mỗi câu × số câu);
-   * matrixGrid.ts đổi qua lại ở toGrid/toDetails.
-   */
-  allocatedScore: string;
+  /** Tỷ lệ % điểm người dùng gõ trực tiếp (0, 100]. Điểm ô/điểm mỗi câu suy ra từ đây, xem cellScore() trong matrixGrid.ts. */
+  percentage: string;
 }
 
 /** `key` riêng vì dòng mới thêm có lessonId = 0, dùng lessonId làm key sẽ đụng nhau. */
@@ -231,4 +245,28 @@ export interface GridRow {
   key: string;
   lessonId: number;
   cells: Record<CognitiveLevel, GridCell>;
+}
+
+// --- Nhập ma trận từ file Excel (đọc/ghi .xlsx ngay trên trình duyệt) ---
+
+/** Một ô khi ghi file .xlsx; `bold` cho dòng tiêu đề. */
+export type XlsxCell = string | number | null | { value: string | number; bold?: boolean };
+
+export interface MatrixImportIssue {
+  /** Số dòng trong file Excel (đếm từ 1), null nếu lỗi của cả file. */
+  line: number | null;
+  message: string;
+  /** true: dòng không đưa vào bảng (không nhận ra bài học/mức). false: vẫn đưa vào, cần sửa số liệu. */
+  skipped: boolean;
+}
+
+export interface MatrixImportResult {
+  /** Mỗi dòng một bài học, đã gom ba mức nhận thức; dùng thẳng cho lưới soạn. */
+  rows: GridRow[];
+  /** "Tên ma trận" / "Tổng điểm" ghi trong file (có ở file mẫu và file Xuất Excel). */
+  name: string | null;
+  totalScore: number | null;
+  issues: MatrixImportIssue[];
+  /** Số dòng trong file có điền Số câu hoặc Tỷ lệ %. */
+  filledLines: number;
 }

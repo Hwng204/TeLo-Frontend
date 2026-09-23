@@ -1,61 +1,121 @@
 @import '../components/pcb/pcb.css';
 
-.sep-shell { display: flex; min-height: 100vh; background: var(--sep-bg-canvas); }
-.sep-main { flex: 1; min-width: 0; padding: 32px; display: flex; flex-direction: column; gap: 24px; }
+/* Khung: thanh điều hướng màu thương hiệu + trang giấy trắng. Mục đang chọn được "khoét" ra khỏi
+   thanh bằng đúng màu của trang, nên nhìn vào là biết trang đang mở nối tiếp từ mục nào. */
+.sep-shell { display: flex; min-height: 100vh; background: var(--sep-bg-surface); }
+.sep-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
-/* Sidebar rộng hơn bản thiết kế (224px) và chữ lớn hơn (14px → 15px, mục con 11px → 13px)
-   vì bản thiết kế quá chật khi dùng thật. */
-.sep-sidebar { position: sticky; top: 0; align-self: flex-start; display: flex; flex-direction: column; width: 264px; height: 100vh; flex-shrink: 0; background: var(--sep-bg-brand-soft); border: 1px solid var(--sep-border-subtle); box-shadow: 2px 0 10px rgba(20, 61, 107, .08); }
-.sep-brand { display: flex; align-items: center; gap: 12px; min-height: 112px; padding: 16px 20px; background: var(--sep-bg-brand); color: var(--sep-text-on-brand); }
-.sep-brand__name { font: 600 15px/22px 'Inter', sans-serif; }
-.sep-brand__role { margin-top: 4px; font: 400 13px/18px 'Inter', sans-serif; }
+.sep-rail { position: sticky; top: 0; align-self: flex-start; display: flex; flex-direction: column; width: 264px; height: 100vh; flex-shrink: 0; background: var(--sep-rail-bg); color: var(--pcb-color-text-on-accent); }
+.sep-brand { display: flex; align-items: center; gap: 12px; height: 72px; flex-shrink: 0; padding: 0 20px; }
+.sep-brand img { flex-shrink: 0; border-radius: 50%; background: var(--sep-bg-surface); }
+.sep-brand__name { font: 600 15px/21px 'Inter', sans-serif; }
+
+/* Không hiện thanh cuộn: nó chiếm mép phải và cắt đứt chỗ mục đang chọn nối vào trang. Vẫn cuộn được bằng chuột/bàn phím;
+   mép dưới mờ dần để màn thấp vẫn thấy danh sách còn tiếp. */
+.sep-nav-list { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow-x: hidden; overflow-y: auto; padding: 4px 0 20px 16px; scrollbar-width: none; mask-image: linear-gradient(#000 calc(100% - 24px), transparent); }
+.sep-nav-list::-webkit-scrollbar { display: none; }
 .sep-nav-list > * { flex-shrink: 0; }
-.sep-nav-list { display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; padding: 16px 12px; }
 
-.sep-nav { display: flex; align-items: center; gap: 14px; width: 100%; height: 48px; padding: 0 14px; box-sizing: border-box; flex-shrink: 0; border: 1px solid transparent; border-radius: var(--sep-radius-md); background: transparent; color: var(--sep-text-secondary); font: 500 15px/22px 'Inter', sans-serif; text-align: left; text-decoration: none; white-space: nowrap; cursor: pointer; }
-.sep-nav { transition: background-color var(--sep-transition), color var(--sep-transition); }
-/* Chỉ đổi nền khi rê chuột: đổi luôn màu chữ sang xanh thương hiệu làm tương phản tụt xuống 4,25:1. */
-.sep-nav:hover { background: var(--pcb-color-bg-active); }
-.sep-nav--inert { cursor: default; }
-.sep-nav--active, .sep-nav--active:hover { background: var(--sep-bg-surface); border-color: var(--sep-border-brand); color: var(--sep-text-brand); box-shadow: 0 2px 4px rgba(26, 77, 140, .12); }
-.sep-nav--group span:nth-child(2) { flex: 1; }
-.sep-nav:focus-visible { outline: 2px solid var(--pcb-color-border-focus); outline-offset: 2px; }
+.sep-nav { position: relative; display: flex; align-items: center; gap: 14px; width: 100%; height: 40px; padding: 0 16px; box-sizing: border-box; border: 0; border-radius: 20px 0 0 20px; background: transparent; color: var(--pcb-color-text-on-accent); font: 500 15px/22px 'Inter', sans-serif; text-align: left; text-decoration: none; white-space: nowrap; cursor: pointer; transition: background-color var(--sep-transition), color var(--sep-transition); }
+.sep-nav:hover { background: rgba(255, 255, 255, .12); }
+.sep-nav:focus-visible { outline: 2px solid var(--pcb-color-text-on-accent); outline-offset: -4px; }
+/* Mục chưa có màn: vẫn hiện như bản thiết kế nhưng mờ đi, để không ai bấm rồi chờ. */
+.sep-nav--inert { cursor: default; color: rgba(255, 255, 255, .86); }
+.sep-nav--inert:hover { background: transparent; }
+.sep-nav--active, .sep-nav--active:hover { z-index: 1; background: var(--sep-bg-surface); color: var(--pcb-color-text-brand); font-weight: 600; }
+.sep-nav--active:focus-visible { outline-color: var(--pcb-color-border-focus); }
+/* Hai góc lõm trên/dưới nối mục đang chọn liền vào trang. */
+.sep-nav--active::before, .sep-nav--active::after { content: ''; position: absolute; right: 0; width: 20px; height: 20px; pointer-events: none; }
+.sep-nav--active::before { top: -20px; background: radial-gradient(circle at 0 0, transparent 19.5px, var(--sep-bg-surface) 20px); }
+.sep-nav--active::after { bottom: -20px; background: radial-gradient(circle at 0 100%, transparent 19.5px, var(--sep-bg-surface) 20px); }
+.sep-nav--group > .sep-rail__label:first-of-type { flex: 1; }
+.sep-nav__chevron { display: flex; }
 
-.sep-submenu { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 4px 20px; padding: 4px 0 4px 14px; border-left: 1px solid var(--pcb-color-border-default); background: #fff; }
-.sep-subnav { display: flex; align-items: center; height: 36px; padding: 0 8px 0 12px; border-radius: 6px; font: 400 13px/normal 'Inter', sans-serif; color: var(--pcb-color-text-secondary); }
+.sep-submenu { display: flex; flex-direction: column; gap: 2px; margin: 2px 16px 6px 34px; padding-left: 14px; border-left: 1px solid rgba(255, 255, 255, .28); }
+.sep-subnav { display: flex; align-items: center; min-height: 34px; padding: 0 8px; font: 400 13px/18px 'Inter', sans-serif; color: rgba(255, 255, 255, .78); }
 
-.sep-support { display: flex; flex-direction: column; gap: 8px; padding: 16px 12px; background: var(--sep-bg-lavender-soft); border-top: 1px solid var(--sep-border-subtle); }
+.sep-support { display: flex; flex-direction: column; gap: 2px; padding: 8px 0 12px 16px; border-top: 1px solid rgba(255, 255, 255, .18); }
+.sep-rail__toggle { position: relative; left: -8px; align-self: center; display: grid; place-items: center; width: 34px; height: 34px; margin-top: 6px; padding: 0; border: 1.5px solid rgba(255, 255, 255, .8); border-radius: 50%; background: transparent; color: var(--pcb-color-text-on-accent); cursor: pointer; transition: background-color var(--sep-transition); }
+.sep-rail__toggle:hover { background: rgba(255, 255, 255, .12); }
+.sep-rail__toggle:focus-visible { outline: 2px solid var(--pcb-color-text-on-accent); outline-offset: 2px; }
 
-/* Page building blocks shared by the matrix screens. */
-.sep-page-header { display: flex; align-items: center; gap: 16px; }
-.sep-page-title { font: 600 28px/36px 'Inter', sans-serif; letter-spacing: -.5px; color: var(--pcb-color-text-brand); }
-.sep-section-title { margin-top: 8px; font: 600 22px/30px 'Inter', sans-serif; letter-spacing: -.2px; color: var(--pcb-color-text-brand); }
+.sep-shell--collapsed .sep-rail { width: 84px; }
+.sep-shell--collapsed .sep-rail__label, .sep-shell--collapsed .sep-submenu { display: none; }
+.sep-shell--collapsed .sep-brand { justify-content: center; padding: 0; }
+.sep-shell--collapsed .sep-nav { justify-content: center; padding: 0; }
+
+/* Thanh trên cùng: tên màn bên trái, người dùng bên phải. */
+.sep-topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 0 32px 0 24px; box-sizing: border-box; background: var(--sep-bg-surface); border-bottom: 1px solid var(--pcb-color-border-default); }
+.sep-topbar .pcb-iconbtn { width: 40px; height: 40px; margin-left: -8px; }
+.sep-topbar__title { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; font: 600 22px/30px 'Inter', sans-serif; letter-spacing: -.2px; color: var(--pcb-color-text-primary); }
+.sep-topbar__title > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sep-user { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.sep-user__avatar { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--sep-bg-brand-soft); color: var(--pcb-color-text-brand); font: 600 14px/1 'Inter', sans-serif; text-transform: uppercase; }
+.sep-user__name { font: 500 14px/20px 'Inter', sans-serif; color: var(--pcb-color-text-primary); }
+.sep-user__role { font: 400 12px/16px 'Inter', sans-serif; color: var(--pcb-color-text-secondary); }
+
+.sep-page { display: flex; flex-direction: column; gap: 20px; padding: 16px 32px 40px; }
+
+/* Tab gạch chân trải hết chiều ngang, như bản tham chiếu. */
+.sep-tabs { display: flex; border-bottom: 1px solid var(--pcb-color-border-default); }
+.sep-tab { position: relative; flex: 1; min-width: 0; height: 46px; padding: 0 12px; border: 0; background: transparent; color: var(--pcb-color-text-secondary); font: 500 15px/22px 'Inter', sans-serif; white-space: nowrap; cursor: pointer; transition: color var(--sep-transition), background-color var(--sep-transition); }
+.sep-tab:hover { color: var(--pcb-color-text-primary); background: var(--pcb-color-bg-row-hover); }
+.sep-tab:focus-visible { outline: 2px solid var(--pcb-color-border-focus); outline-offset: -2px; }
+.sep-tab--active, .sep-tab--active:hover { color: var(--pcb-color-text-brand); font-weight: 600; background: transparent; }
+.sep-tab--active::after { content: ''; position: absolute; left: 8%; right: 8%; bottom: -1px; height: 2px; border-radius: 2px 2px 0 0; background: var(--pcb-color-bg-accent); }
+
+/* Tìm kiếm + bộ lọc cùng một hàng, nút chính ở góc phải. */
+.sep-toolbar { display: flex; align-items: flex-start; gap: 16px; }
+.sep-toolbar__filters { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* Ô lọc rộng theo nội dung để cả hàng vừa một dòng ở 1366-1440px. */
+.sep-toolbar__filters > .pcb-field { width: auto; min-width: 104px; }
+.sep-toolbar__filters > .sep-toolbar__search { width: 170px; }
+.sep-toolbar__actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.sep-toolbar .pcb-control { height: 40px; }
+.sep-toolbar .pcb-btn { height: 40px; }
+
+/* Lưới trường nhãn-trên-ô cho màn chi tiết và biểu mẫu. */
+.sep-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px 24px; margin: 0; }
+.sep-span-2 { grid-column: span 2; }
+.sep-span-full { grid-column: 1 / -1; }
+.sep-readfield { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.sep-readfield__value { display: flex; align-items: center; gap: 8px; min-height: 44px; margin: 0; padding: 10px 14px; box-sizing: border-box; border: 1px solid var(--pcb-color-border-default); border-radius: 10px; background: var(--pcb-color-bg-subtle); font: 500 14px/22px 'Inter', sans-serif; color: var(--pcb-color-text-primary); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.sep-readfield__value--text { align-items: flex-start; white-space: pre-line; font-weight: 400; }
+
+.sep-section { display: flex; flex-direction: column; gap: 14px; }
+.sep-section + .sep-section { margin-top: 8px; }
+.sep-section-title { margin: 0; font: 600 17px/24px 'Inter', sans-serif; color: var(--pcb-color-text-primary); }
+.sep-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
 .sep-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
-.sep-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; padding: 24px; }
-.sep-filters { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
-.sep-filters__row { display: flex; gap: 12px; }
-.sep-filters__row > * { flex: 1; }
-/* pcb-card không còn padding riêng khi bọc nhiều nhóm; mỗi nhóm tự có padding + đường kẻ phân cách. */
-.sep-summary-card { padding: 0; }
-.sep-summary { display: grid; grid-template-columns: 180px 1fr; gap: 12px 20px; padding: 20px 24px; }
-.sep-summary + .sep-summary { border-top: 1px solid var(--pcb-color-border-default); }
-.sep-summary__title { grid-column: 1 / -1; margin: 0 0 2px; font: 600 11px/16px 'Inter', sans-serif; letter-spacing: .05em; text-transform: uppercase; color: var(--pcb-color-text-secondary); }
-.sep-summary dt { font-weight: 500; color: var(--pcb-color-text-secondary); }
-.sep-summary dd { font-weight: 500; font-variant-numeric: tabular-nums; }
-.sep-summary dd { margin: 0; }
+.sep-actions__lead { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-right: auto; }
+
+@media (max-width: 1200px) {
+  .sep-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 @media (max-width: 900px) {
-  .sep-form { grid-template-columns: 1fr; }
-  .sep-filters__row { flex-direction: column; }
-  .sep-summary { grid-template-columns: 1fr; gap: 4px 0; padding: 16px; }
-  .sep-summary dd { margin-bottom: 12px; }
+  /* Màn hẹp: thanh điều hướng luôn chỉ còn icon, không có nút thu gọn. */
+  .sep-rail { width: 72px; }
+  .sep-rail__label, .sep-submenu, .sep-rail__toggle { display: none; }
+  .sep-brand { justify-content: center; padding: 0; height: 72px; }
+  .sep-nav-list, .sep-support { padding-left: 10px; }
+  .sep-nav { justify-content: center; padding: 0; }
 
-  /* Sidebar cố định sẽ bóp nát phần nội dung, nên xếp chồng theo chiều dọc. */
-  .sep-shell { flex-direction: column; }
-  .sep-sidebar { position: static; width: 100%; height: auto; }
-  .sep-nav-list { max-height: 40vh; }
-  .sep-main { padding: 16px; }
-  .sep-page-title { font-size: 22px; line-height: 30px; }
+  .sep-topbar { padding: 0 16px; }
+  .sep-topbar__title { font-size: 18px; line-height: 26px; }
+  .sep-user__text { display: none; }
+  .sep-page { padding: 12px 16px 32px; }
+  .sep-tab { font-size: 14px; padding: 0 6px; }
+  .sep-toolbar { flex-direction: column-reverse; align-items: stretch; }
+  .sep-toolbar__actions { justify-content: flex-end; }
+  /* Một cột: hai cột thì nhãn "Tất cả chương trình" bị cắt còn "Tất cả ch…", không còn đọc được. */
+  .sep-toolbar__filters { gap: 8px; }
+  .sep-toolbar__filters > .pcb-field { width: 100%; }
+  /* Bảng cuộn ngang thay vì bóp cột đến mức chữ gãy từng từ. */
+  .pcb-table-wrap > .pcb-table { min-width: 760px; }
+  .sep-fields { grid-template-columns: 1fr; }
+  .sep-span-2 { grid-column: auto; }
   .sep-actions { justify-content: stretch; }
   .sep-actions .pcb-btn { flex: 1; }
 }

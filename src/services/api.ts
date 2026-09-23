@@ -72,6 +72,8 @@ export const api = {
 
   matrixTask: {
     create: (body: CreateMatrixTaskRequest) => post<MatrixTask>('/matrix-tasks', body),
+    /** 409 TaskStarted khi Tổ trưởng đã lưu/nộp ma trận cho nhiệm vụ. */
+    remove: (id: number) => del<void>(`/matrix-tasks/${id}`),
     list: (query: MatrixTaskQuery = {}) => get<Page<MatrixTaskListItem>>('/matrix-tasks', query),
     mine: (query: MatrixTaskQuery = {}) => get<Page<MatrixTaskListItem>>('/my/matrix-tasks', query),
     get: (id: number) => get<MatrixTask>(`/matrix-tasks/${id}`),

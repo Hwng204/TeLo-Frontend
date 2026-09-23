@@ -7,8 +7,10 @@
  */
 import type { GridRow, MatrixDetail } from '../types';
 import {
+  cellScore,
   formatPerQuestion,
   gridTotal,
+  hasValidCellValues,
   hasRequiredTotal,
   liveCellErrors,
   requireNonEmpty,
@@ -23,27 +25,35 @@ const detail = (
   lessonId: number,
   cognitiveLevel: MatrixDetail['cognitiveLevel'],
   questionCount: number,
-  allocatedScore: number,
-): MatrixDetail => ({ id: 0, questionType: 'MULTIPLE_CHOICE', lessonId, cognitiveLevel, questionCount, allocatedScore });
+  percentage: number,
+): MatrixDetail => ({
+  id: 0,
+  questionType: 'MULTIPLE_CHOICE',
+  lessonId,
+  cognitiveLevel,
+  questionCount,
+  percentage,
+  cellScore: 0,
+});
 
 const row = (lessonId: number, cells: Partial<GridRow['cells']>): GridRow => ({
   key: `k${lessonId}`,
   lessonId,
   cells: {
-    NHAN_BIET: { questionCount: '', allocatedScore: '' },
-    THONG_HIEU: { questionCount: '', allocatedScore: '' },
-    VAN_DUNG: { questionCount: '', allocatedScore: '' },
+    NHAN_BIET: { questionCount: '', percentage: '' },
+    THONG_HIEU: { questionCount: '', percentage: '' },
+    VAN_DUNG: { questionCount: '', percentage: '' },
     ...cells,
   },
 });
 
 export const selfCheck = () => {
-  // 1. Đi vòng: phẳng → lưới → phẳng giữ nguyên dữ liệu.
-  const details = [detail(7, 'NHAN_BIET', 5, 2.5), detail(7, 'VAN_DUNG', 2, 1), detail(3, 'THONG_HIEU', 3, 1.5)];
+  // 1. Đi vòng: phẳng → lưới → phẳng giữ nguyên dữ liệu (% gửi thẳng, không còn nhân/chia gì).
+  const details = [detail(7, 'NHAN_BIET', 5, 25), detail(7, 'VAN_DUNG', 2, 10), detail(3, 'THONG_HIEU', 3, 15)];
   const roundTrip = toDetails(toGrid(details, [3, 7]));
   console.assert(roundTrip.length === 3, 'selfCheck 1: mất dòng khi đi vòng', roundTrip);
   console.assert(
-    roundTrip.every((r) => details.some((d) => d.lessonId === r.lessonId && d.cognitiveLevel === r.cognitiveLevel && d.questionCount === r.questionCount && d.allocatedScore === r.allocatedScore)),
+    roundTrip.every((r) => details.some((d) => d.lessonId === r.lessonId && d.cognitiveLevel === r.cognitiveLevel && d.questionCount === r.questionCount && d.percentage === r.percentage)),
     'selfCheck 1: dữ liệu đổi khi đi vòng',
     roundTrip,
   );
@@ -52,74 +62,71 @@ export const selfCheck = () => {
   console.assert(toGrid(details, [3, 7])[0].lessonId === 3, 'selfCheck 2: sai thứ tự dòng');
 
   // 3. Ô rỗng hoàn toàn bị loại, ô điền một nửa thì KHÔNG bị nuốt.
-  const halfFilled = [row(7, { NHAN_BIET: { questionCount: '5', allocatedScore: '' } })];
+  const halfFilled = [row(7, { NHAN_BIET: { questionCount: '5', percentage: '' } })];
   console.assert(toDetails(halfFilled).length === 1, 'selfCheck 3: ô điền nửa bị nuốt mất');
   console.assert(
-    validateGrid(halfFilled, 'Ma trận', 1)['k7.NHAN_BIET.score'] !== undefined,
+    validateGrid(halfFilled, 'Ma trận', 1)['k7.NHAN_BIET.percentage'] !== undefined,
     'selfCheck 3: ô điền nửa không báo lỗi',
   );
   console.assert(toDetails([row(7, {})]).length === 0, 'selfCheck 3: ô rỗng không bị loại');
+  console.assert(
+    !hasValidCellValues(halfFilled[0].cells.NHAN_BIET) &&
+      !hasValidCellValues({ questionCount: '2.5', percentage: '25' }) &&
+      !hasValidCellValues({ questionCount: '1', percentage: '101' }) &&
+      hasValidCellValues({ questionCount: '4', percentage: '25' }),
+    'selfCheck 3: chỉ hiện điểm/câu khi số câu và tỷ lệ đều hợp lệ',
+  );
 
   // 4. Hai dòng trùng bài học phải báo lỗi (backend trả DuplicateDetail).
   const duplicated = [
-    row(7, { NHAN_BIET: { questionCount: '1', allocatedScore: '1' } }),
-    { ...row(7, { VAN_DUNG: { questionCount: '1', allocatedScore: '1' } }), key: 'k7b' },
+    row(7, { NHAN_BIET: { questionCount: '1', percentage: '10' } }),
+    { ...row(7, { VAN_DUNG: { questionCount: '1', percentage: '10' } }), key: 'k7b' },
   ];
   console.assert(validateGrid(duplicated, 'Ma trận', 1)['k7b.lesson'] !== undefined, 'selfCheck 4: không bắt trùng bài học');
 
-  // 5. Cộng điểm không được dính sai số dấu phẩy động.
+  // 5. Cộng % không được dính sai số dấu phẩy động.
   const floaty = [
-    row(1, { NHAN_BIET: { questionCount: '1', allocatedScore: '0.1' } }),
-    { ...row(2, { NHAN_BIET: { questionCount: '1', allocatedScore: '0.2' } }), key: 'k2' },
+    row(1, { NHAN_BIET: { questionCount: '1', percentage: '0.1' } }),
+    { ...row(2, { NHAN_BIET: { questionCount: '1', percentage: '0.2' } }), key: 'k2' },
   ];
-  console.assert(gridTotal(floaty).score === 0.3, 'selfCheck 5: 0.1 + 0.2 sai', gridTotal(floaty).score);
+  console.assert(gridTotal(floaty).percentage === 0.3, 'selfCheck 5: 0.1 + 0.2 sai', gridTotal(floaty).percentage);
 
-  // 6. Biên của TỔNG điểm ô (điểm mỗi câu × số câu): 999,99 hợp lệ, 1000 thì không.
-  //    Dấu phẩy thập phân vẫn nhận.
-  const atLimit = [row(1, { NHAN_BIET: { questionCount: '1', allocatedScore: '999,99' } })];
-  const overLimit = [row(1, { NHAN_BIET: { questionCount: '1', allocatedScore: '1000' } })];
-  const overByCount = [row(1, { NHAN_BIET: { questionCount: '5', allocatedScore: '250' } })]; // 1250 tổng
-  console.assert(validateGrid(atLimit, 'Ma trận', 1)['k1.NHAN_BIET.score'] === undefined, 'selfCheck 6: 999,99 bị từ chối');
-  console.assert(validateGrid(overLimit, 'Ma trận', 1)['k1.NHAN_BIET.score'] !== undefined, 'selfCheck 6: 1000 được chấp nhận');
-  console.assert(validateGrid(overByCount, 'Ma trận', 1)['k1.NHAN_BIET.score'] !== undefined, 'selfCheck 6: tổng ô 1250 được chấp nhận');
-
-  // 8. Điểm nhập là ĐIỂM MỖI CÂU: tổng ô = mỗi câu × số câu, và gửi lên backend là tổng.
-  const perQuestion = [row(1, { NHAN_BIET: { questionCount: '15', allocatedScore: '0.25' } })];
-  console.assert(gridTotal(perQuestion).score === 3.75, 'selfCheck 8: 15 câu × 0.25 phải ra 3.75', gridTotal(perQuestion).score);
-  console.assert(toDetails(perQuestion)[0].allocatedScore === 3.75, 'selfCheck 8: gửi backend phải là tổng ô 3.75');
-
-  // 9. Nạp từ backend (tổng ô) rồi lưu lại phải ra đúng tổng cũ, kể cả khi chia không tròn.
-  const stored = [detail(2, 'NHAN_BIET', 3, 1), detail(2, 'VAN_DUNG', 4, 2)];
-  const back = toDetails(toGrid(stored, [2]));
-  console.assert(
-    back.find((d) => d.cognitiveLevel === 'NHAN_BIET')?.allocatedScore === 1 &&
-      back.find((d) => d.cognitiveLevel === 'VAN_DUNG')?.allocatedScore === 2,
-    'selfCheck 9: đi vòng tổng ô làm lệch điểm (1 điểm / 3 câu phải về đúng 1)',
-    back,
-  );
-  console.assert(toGrid(stored, [2])[0].cells.VAN_DUNG.allocatedScore === '0.5', 'selfCheck 9: 2 điểm / 4 câu phải hiện 0.5 điểm mỗi câu');
+  // 6. Biên của % MỖI Ô: (0, 100]. 100 hợp lệ, 100,01 thì không. Dấu phẩy thập phân vẫn nhận.
+  const atLimit = [row(1, { NHAN_BIET: { questionCount: '1', percentage: '100' } })];
+  const overLimit = [row(1, { NHAN_BIET: { questionCount: '1', percentage: '100,01' } })];
+  console.assert(validateGrid(atLimit, 'Ma trận', 1)['k1.NHAN_BIET.percentage'] === undefined, 'selfCheck 6: 100% bị từ chối');
+  console.assert(validateGrid(overLimit, 'Ma trận', 1)['k1.NHAN_BIET.percentage'] !== undefined, 'selfCheck 6: 100,01% được chấp nhận');
 
   // 7. Chặn nộp ma trận rỗng ngay ở client.
   console.assert(requireNonEmpty([]) !== null, 'selfCheck 7: ma trận rỗng không bị chặn');
   console.assert(requireNonEmpty(atLimit) === null, 'selfCheck 7: ma trận có dòng lại bị chặn');
 
-  // 10. Tổng 10 chỉ bắt khi NỘP/XÁC NHẬN. Lưu Nháp thì ở mọi tổng (kể cả rỗng): validateGrid không báo tổng.
-  const cell = (score: string) => ({ NHAN_BIET: { questionCount: '1', allocatedScore: score } });
-  const exactlyTen = [row(1, cell('3.3')), row(2, cell('3.3')), row(3, cell('3.4'))];
-  const nineNinetyNine = [row(1, cell('9.99'))];
-  const overTen = [row(1, cell('10.01'))];
-  console.assert(hasRequiredTotal(exactlyTen), 'selfCheck 10: 3.3 + 3.3 + 3.4 phải bằng đúng 10', gridTotal(exactlyTen).score);
-  console.assert(validateTotalForSubmit(exactlyTen) === null, 'selfCheck 10: đúng 10 phải nộp được');
-  console.assert(validateTotalForSubmit(nineNinetyNine) !== null, 'selfCheck 10: 9.99 không được nộp');
-  console.assert(validateTotalForSubmit(overTen) !== null, 'selfCheck 10: 10.01 không được nộp');
-  console.assert(validateTotalForSubmit([]) !== null, 'selfCheck 10: ma trận rỗng (tổng 0) không được nộp');
-  console.assert(Object.keys(validateGrid(nineNinetyNine, 'M', 1)).length === 0, 'selfCheck 10: lưu nháp 9.99 phải hợp lệ');
-  console.assert(Object.keys(validateGrid(overTen, 'M', 1)).length === 0, 'selfCheck 10: lưu nháp 10.01 phải hợp lệ');
+  // 8 & 9. Điểm ô / điểm mỗi câu là giá trị SUY RA từ Tổng điểm ma trận × % / 100 (ví dụ trong SRS:
+  // tổng 10 điểm, 4 câu, 20% → điểm ô 2, điểm mỗi câu 0,5).
+  const example = row(1, { NHAN_BIET: { questionCount: '4', percentage: '20' } });
+  console.assert(cellScore(10, example.cells.NHAN_BIET) === 2, 'selfCheck 8: 10 × 20% phải ra điểm ô 2', cellScore(10, example.cells.NHAN_BIET));
+  console.assert(
+    formatPerQuestion(cellScore(10, example.cells.NHAN_BIET), 4) === '0,5',
+    'selfCheck 9: điểm ô 2 / 4 câu phải ra 0,5 điểm mỗi câu',
+  );
+
+  // 10. Tổng 100% chỉ bắt khi NỘP/XÁC NHẬN. Lưu Nháp thì ở mọi tổng (kể cả rỗng): validateGrid không báo tổng.
+  const cell = (percentage: string) => ({ NHAN_BIET: { questionCount: '1', percentage } });
+  const exactlyOneHundred = [row(1, cell('33.3')), row(2, cell('33.3')), row(3, cell('33.4'))];
+  const ninetyNineNinetyNine = [row(1, cell('99.99'))];
+  const overOneHundred = [row(1, cell('60')), row(2, cell('60'))];
+  console.assert(hasRequiredTotal(exactlyOneHundred), 'selfCheck 10: 33.3 + 33.3 + 33.4 phải bằng đúng 100', gridTotal(exactlyOneHundred).percentage);
+  console.assert(validateTotalForSubmit(exactlyOneHundred) === null, 'selfCheck 10: đúng 100% phải nộp được');
+  console.assert(validateTotalForSubmit(ninetyNineNinetyNine) !== null, 'selfCheck 10: 99.99% không được nộp');
+  console.assert(validateTotalForSubmit(overOneHundred) !== null, 'selfCheck 10: 120% không được nộp');
+  console.assert(validateTotalForSubmit([]) !== null, 'selfCheck 10: ma trận rỗng (tổng 0%) không được nộp');
+  console.assert(Object.keys(validateGrid(ninetyNineNinetyNine, 'M', 1)).length === 0, 'selfCheck 10: lưu nháp 99.99% phải hợp lệ');
+  console.assert(Object.keys(validateGrid(overOneHundred, 'M', 1)).length === 0, 'selfCheck 10: lưu nháp 120% phải hợp lệ');
   console.assert(Object.keys(validateGrid([], 'M', 1)).length === 0, 'selfCheck 10: lưu nháp rỗng phải hợp lệ');
-  console.assert(totalScoreHint(nineNinetyNine) !== null, 'selfCheck 10: chưa đủ 10 phải có gợi ý');
-  console.assert(totalScoreHint(exactlyTen) === null, 'selfCheck 10: đủ 10 không được có gợi ý');
+  console.assert(totalScoreHint(ninetyNineNinetyNine) !== null, 'selfCheck 10: chưa đủ 100% phải có gợi ý');
+  console.assert(totalScoreHint(exactlyOneHundred) === null, 'selfCheck 10: đủ 100% không được có gợi ý');
   console.assert(totalScoreHint([]) === null, 'selfCheck 10: rỗng không cần gợi ý tổng');
-  console.assert(Object.keys(liveCellErrors(overTen)).length === 0, 'selfCheck 10: vượt 10 không còn là lỗi khi đang gõ');
+  console.assert(Object.keys(liveCellErrors(overOneHundred)).length === 0, 'selfCheck 10: vượt 100% (tổng) không còn là lỗi khi đang gõ');
 
   // 11. Điểm mỗi câu hiển thị: tròn thì đúng, không tròn thì có "≈" và tối đa 4 chữ số.
   console.assert(formatPerQuestion(2, 4) === '0,5', 'selfCheck 11: 2 điểm / 4 câu phải là 0,5', formatPerQuestion(2, 4));

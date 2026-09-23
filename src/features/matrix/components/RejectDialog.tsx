@@ -28,7 +28,7 @@ export const RejectDialog = ({ open, busy, onCancel, onConfirm }: Props) => {
   return (
     <dialog ref={ref} className="sep-dialog" onCancel={onCancel} onClose={onCancel}>
       <div className="sep-dialog__body">
-        <h2 className="sep-section-title">Từ chối ma trận</h2>
+        <h2 className="sep-dialog__title">Từ chối ma trận</h2>
         <p className="sep-muted">
           Ma trận sẽ trở về trạng thái Nháp để Tổ trưởng chỉnh sửa. Nhận xét sẽ bị xoá khi ma trận được nộp lại.
         </p>
