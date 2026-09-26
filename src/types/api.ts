@@ -12,3 +12,12 @@ export interface PaginatedResponse<T> {
   pageSize: number;
   totalPages: number;
 }
+
+export interface ProvinceOption {
+  code: string;
+  name: string;
+  hasSchools: boolean;
+  activeSchoolCount: number;
+}
+
+

@@ -18,8 +18,20 @@ import type {
   MatrixTaskListItem,
   MatrixTaskQuery,
   Page,
+  ProvinceOption,
   SaveMatrixRequest,
+  School,
+  SchoolPage,
+  CreateSchoolRequest,
+  CreateSchoolBranchRequest,
+  UpdateSchoolBranchRequest,
   Student,
+  AcademicYearPage,
+  AcademicYearDetail,
+  AcademicYearListItem,
+  CreateAcademicYearRequest,
+  UpdateAcademicYearRequest,
+  ConfigureTermsRequest,
 } from '../types';
 
 const get = async <T>(url: string, params?: object): Promise<T> => (await apiClient.get<T>(url, { params })).data;
@@ -79,10 +91,38 @@ export const api = {
     get: (id: number) => get<MatrixTask>(`/matrix-tasks/${id}`),
   },
 
+  provinces: {
+    list: () => get<ApiResponse<ProvinceOption[]>>('/provinces'),
+    sync: () => apiClient.post<ApiResponse<any>>('/provinces/sync'),
+  },
+
+  school: {
+    list: (params?: any) => get<ApiResponse<SchoolPage>>('/schools', params),
+    get: (id: string) => get<ApiResponse<School>>(`/schools/${id}`),
+    create: (body: CreateSchoolRequest) => post<ApiResponse<School>>('/schools', body),
+    update: (id: string, body: CreateSchoolRequest) => apiClient.patch<ApiResponse<School>>(`/schools/${id}`, body).then(res => res.data),
+    remove: (id: string) => del<ApiResponse<boolean>>(`/schools/${id}`),
+    createBranch: (schoolId: string, body: CreateSchoolBranchRequest) => post<ApiResponse<any>>(`/schools/${schoolId}/branches`, body),
+    updateBranch: (branchId: string, body: UpdateSchoolBranchRequest) => apiClient.patch<ApiResponse<any>>(`/branches/${branchId}`, body).then(res => res.data),
+  },
+
   students: {
     list: () => get<ApiResponse<Student[]>>('/students'),
     get: (id: string) => get<ApiResponse<Student>>(`/students/${id}`),
     create: (body: CreateStudentDto) => post<ApiResponse<Student>>('/students', body),
     remove: (id: string) => del<ApiResponse<boolean>>(`/students/${id}`),
+  },
+
+  academicYear: {
+    list: (params?: { status?: string; search?: string; page?: number; pageSize?: number }) =>
+      get<ApiResponse<AcademicYearPage>>('/academic-years', params),
+    get: (id: string) => get<ApiResponse<AcademicYearDetail>>(`/academic-years/${id}`),
+    create: (body: CreateAcademicYearRequest) => post<ApiResponse<AcademicYearListItem>>('/academic-years', body),
+    update: (id: string, body: UpdateAcademicYearRequest) =>
+      apiClient.patch<ApiResponse<AcademicYearDetail>>(`/academic-years/${id}`, body).then(r => r.data),
+    activate: (id: string) => post<ApiResponse<AcademicYearDetail>>(`/academic-years/${id}/activate`),
+    close: (id: string) => post<ApiResponse<AcademicYearDetail>>(`/academic-years/${id}/close`),
+    configureTerms: (id: string, body: ConfigureTermsRequest) =>
+      apiClient.put<ApiResponse<AcademicYearDetail>>(`/academic-years/${id}/terms`, body).then(r => r.data),
   },
 };
