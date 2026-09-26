@@ -7,16 +7,20 @@ const ROLE_KEYS = ['role', 'http://schemas.microsoft.com/ws/2008/06/identity/cla
 const TEAM_LEAD_ROLES = ['TEAM_LEAD', 'TO_TRUONG'];
 const PHT_ROLES = ['PHT', 'HIEU_TRUONG', 'PRINCIPAL'];
 
+export const parseJwt = (token: string) => {
+  try {
+    return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+  } catch {
+    return {};
+  }
+};
+
 /** Đọc mã vai trò từ access token. Chỉ để hiển thị — backend luôn kiểm tra lại. */
 export const getRoles = (): string[] => {
   const token = storage.getToken();
   if (!token) return [];
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-    return ROLE_KEYS.flatMap((key) => payload[key] ?? []);
-  } catch {
-    return [];
-  }
+  const payload = parseJwt(token);
+  return ROLE_KEYS.flatMap((key) => payload[key] ?? []);
 };
 
 /** Id người dùng trong token (claim `sub`), dùng làm khoá cho dữ liệu cục bộ theo từng tài khoản. */
