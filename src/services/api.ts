@@ -7,7 +7,6 @@ import { apiClient } from './apiClient';
 import type {
   ApiResponse,
   CreateMatrixTaskRequest,
-  CreateStudentDto,
   LoginRequest,
   LoginResponse,
   Matrix,
@@ -25,13 +24,26 @@ import type {
   CreateSchoolRequest,
   CreateSchoolBranchRequest,
   UpdateSchoolBranchRequest,
-  Student,
   AcademicYearPage,
   AcademicYearDetail,
   AcademicYearListItem,
   CreateAcademicYearRequest,
   UpdateAcademicYearRequest,
   ConfigureTermsRequest,
+  AdminSchoolOption,
+  AdminTeacherOption,
+  ClassDetail,
+  ClassListItem,
+  ClassListQuery,
+  DirectoryPage,
+  DirectoryReferenceData,
+  SaveClassRequest,
+  SaveStudentRequest,
+  StudentDetail,
+  StudentListItem,
+  StudentListQuery,
+  StudentScoreItem,
+  TransferStudentClassRequest,
 } from '../types';
 
 const get = async <T>(url: string, params?: object): Promise<T> => (await apiClient.get<T>(url, { params })).data;
@@ -47,6 +59,10 @@ const filenameFrom = (header: unknown): string => {
 const post = async <T>(url: string, body?: object): Promise<T> => (await apiClient.post<T>(url, body)).data;
 const put = async <T>(url: string, body?: object): Promise<T> => (await apiClient.put<T>(url, body)).data;
 const del = async <T>(url: string): Promise<T> => (await apiClient.delete<T>(url)).data;
+
+/** Bóc lớp vỏ ApiResponse của các API danh bạ; lỗi đã được apiClient ném ra trước khi tới đây. */
+const unwrap = async <T>(request: Promise<ApiResponse<T>>): Promise<T> => (await request).data as T;
+const directoryBase = (schoolId?: number) => (schoolId ? `/admin/schools/${schoolId}` : '');
 
 export const api = {
   auth: {
@@ -106,11 +122,41 @@ export const api = {
     updateBranch: (branchId: string, body: UpdateSchoolBranchRequest) => apiClient.patch<ApiResponse<any>>(`/branches/${branchId}`, body).then(res => res.data),
   },
 
-  students: {
-    list: () => get<ApiResponse<Student[]>>('/students'),
-    get: (id: string) => get<ApiResponse<Student>>(`/students/${id}`),
-    create: (body: CreateStudentDto) => post<ApiResponse<Student>>('/students', body),
-    remove: (id: string) => del<ApiResponse<boolean>>(`/students/${id}`),
+  /**
+   * Danh bạ lớp / học sinh. Không truyền `schoolId`: API phía trường, phạm vi lấy theo tài khoản
+   * (giáo viên chỉ thấy lớp mình chủ nhiệm). Có `schoolId`: API admin của đúng trường đó (xem + CRUD).
+   * Hai bên trả cùng kiểu dữ liệu nên các màn dùng chung một bộ hàm.
+   */
+  directory: {
+    classes: (query: ClassListQuery, schoolId?: number) =>
+      unwrap(get<ApiResponse<DirectoryPage<ClassListItem>>>(`${directoryBase(schoolId)}/classes`, query)),
+    referenceData: (academicYearId?: number, schoolId?: number) =>
+      unwrap(get<ApiResponse<DirectoryReferenceData>>(`${directoryBase(schoolId)}/classes/reference-data`, academicYearId ? { academicYearId } : undefined)),
+    classDetail: (id: number, roster: { page: number; pageSize: number }, schoolId?: number) =>
+      unwrap(get<ApiResponse<ClassDetail>>(`${directoryBase(schoolId)}/classes/${id}`, roster)),
+    students: (query: StudentListQuery, schoolId?: number) =>
+      unwrap(get<ApiResponse<DirectoryPage<StudentListItem>>>(`${directoryBase(schoolId)}/students`, query)),
+    studentDetail: (id: number, schoolId?: number) =>
+      unwrap(get<ApiResponse<StudentDetail>>(`${directoryBase(schoolId)}/students/${id}`)),
+    studentScores: (id: number, classId: number, page: { page: number; pageSize: number }, schoolId?: number) =>
+      unwrap(get<ApiResponse<DirectoryPage<StudentScoreItem>>>(`${directoryBase(schoolId)}/students/${id}/scores`, { classId, ...page })),
+
+    // Chỉ admin (schoolId bắt buộc).
+    schools: () => unwrap(get<ApiResponse<DirectoryPage<AdminSchoolOption>>>('/admin/teacher-schools', { pageSize: 100 })),
+    teachers: (schoolId: number, branchId: number) =>
+      unwrap(get<ApiResponse<DirectoryPage<AdminTeacherOption>>>(`/admin/schools/${schoolId}/branches/${branchId}/teachers`, { pageSize: 100 })),
+    createClass: (schoolId: number, body: SaveClassRequest) =>
+      unwrap(post<ApiResponse<ClassDetail>>(`/admin/schools/${schoolId}/classes`, body)),
+    updateClass: (schoolId: number, id: number, body: SaveClassRequest) =>
+      unwrap(put<ApiResponse<ClassDetail>>(`/admin/schools/${schoolId}/classes/${id}`, body)),
+    deleteClass: (schoolId: number, id: number) => del<unknown>(`/admin/schools/${schoolId}/classes/${id}`),
+    createStudent: (schoolId: number, body: SaveStudentRequest) =>
+      unwrap(post<ApiResponse<StudentDetail>>(`/admin/schools/${schoolId}/students`, body)),
+    updateStudent: (schoolId: number, id: number, body: SaveStudentRequest) =>
+      unwrap(put<ApiResponse<StudentDetail>>(`/admin/schools/${schoolId}/students/${id}`, body)),
+    transferStudent: (schoolId: number, id: number, body: TransferStudentClassRequest) =>
+      unwrap(post<ApiResponse<StudentDetail>>(`/admin/schools/${schoolId}/students/${id}/transfer-class`, body)),
+    deleteStudent: (schoolId: number, id: number) => del<unknown>(`/admin/schools/${schoolId}/students/${id}`),
   },
 
   academicYear: {

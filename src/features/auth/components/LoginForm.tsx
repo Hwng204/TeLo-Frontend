@@ -6,7 +6,7 @@ import { isAxiosError } from 'axios';
 import { storage } from '../../../utils/storage';
 import { displayToast } from '../../../utils/toast';
 import { api } from '../../../services/api';
-import { isPht, isTeamLead, parseJwt } from '../../../utils/jwt';
+import { isPht, isTeacher, isTeamLead, parseJwt } from '../../../utils/jwt';
 
 export const LoginForm: React.FC<{ onForgotPassword?: () => void }> = ({ onForgotPassword }) => {
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ export const LoginForm: React.FC<{ onForgotPassword?: () => void }> = ({ onForgo
           fullName,
         });
         displayToast('success', 'Thành công', 'Đăng nhập thành công!');
-        navigate(isTeamLead() ? '/matrix-tasks' : isPht() ? '/matrices' : '/schools');
+        navigate(isTeamLead() ? '/matrix-tasks' : isPht() ? '/matrices' : isTeacher() ? '/classes' : '/schools');
       } else {
         throw new Error('Invalid response');
       }

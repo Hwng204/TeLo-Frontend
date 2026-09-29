@@ -1,2 +1,3 @@
-export * from './components/StudentTable';
-export * from './pages/StudentsPage';
+export * from './pages/StudentListPage';
+export * from './pages/StudentDetailPage';
+export * from './pages/StudentFormPage';
