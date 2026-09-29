@@ -10,9 +10,9 @@ import { formatScore, gridTotal, REQUIRED_TOTAL_PERCENTAGE, toGrid } from '../..
 import { personLabel } from '../../../utils/formatters';
 import { isPht, isTeamLead } from '../../../utils/jwt';
 import { toProblem } from '../../../utils/problem';
-import { InfoGrid, type InfoItem } from '../components/InfoGrid';
+import { InfoGrid, type InfoItem } from '../../../components/common/InfoGrid';
 import { MatrixGrid } from '../components/MatrixGrid';
-import { PageHeader } from '../components/PageHeader';
+import { PageHeader } from '../../../components/common/PageHeader';
 import { RejectDialog } from '../components/RejectDialog';
 import '../matrix.css';
 

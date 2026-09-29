@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from '../components/pcb';
 import { storage } from '../utils/storage';
-import '../layouts/MatrixLayout.css'; // Reusing MatrixLayout's CSS classes for a unified look
+// Cùng khung và mẫu giao diện với AppShell để các màn quản trị trông thống nhất.
+import '../styles/sep-ui.css';
+import './AppShell.css';
 
 function getUserInitials(fullName?: string): string {
   if (!fullName) return 'AD';
@@ -164,7 +166,7 @@ export const AdminLayout = () => {
   return (
     <div className={`sep-app sep-shell${collapsed ? ' sep-shell--collapsed' : ''}`}>
       {/* Sidebar */}
-      <aside className="sep-rail" aria-label="Điều hướng chính" style={{ width: collapsed ? undefined : '240px' }}>
+      <aside className="sep-rail sep-rail--wide" aria-label="Điều hướng chính">
         <div className="sep-brand">
           <img src="/logo-pcb.png" alt="" width={44} height={44} />
           <div className="sep-brand__name sep-rail__label">
@@ -209,7 +211,7 @@ export const AdminLayout = () => {
         `}</style>
 
         <header className="sep-topbar" style={{ justifyContent: 'space-between', backgroundColor: '#ffffff' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569', fontSize: '13px', fontWeight: 500 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569', fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap' }}>
             <Icon name="calendar_month" size={18} />
             Năm học 2026 - 2027
           </div>
@@ -218,14 +220,14 @@ export const AdminLayout = () => {
             <div className="sep-user__avatar">
               {initials}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="sep-user__text">
               <span className="sep-user__name">{user?.fullName || 'Nguyễn Văn A'}</span>
               <span className="sep-user__role">Quản trị viên vận hành</span>
             </div>
           </div>
         </header>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }}>
+        <div className="sep-admin-content">
           <Outlet />
         </div>
       </main>

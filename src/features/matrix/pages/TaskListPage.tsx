@@ -8,13 +8,13 @@ import { contextNames } from '../../../utils/academicContext';
 import { dueState, formatDate, localDateString } from '../../../utils/formatters';
 import { isTeamLead } from '../../../utils/jwt';
 import { toProblem } from '../../../utils/problem';
-import { DimensionFilters, type DimensionFilterValue } from '../components/DimensionFilters';
-import { PageHeader } from '../components/PageHeader';
-import { Pager } from '../components/Pager';
+import { DimensionFilters, type DimensionFilterValue } from '../../../components/common/DimensionFilters';
+import { PageHeader } from '../../../components/common/PageHeader';
+import { Pager } from '../../../components/common/Pager';
 import { PersonCell } from '../components/PersonCell';
-import { RowAction, RowActionButton } from '../components/RowAction';
-import { StatusTabs } from '../components/StatusTabs';
-import { TableState } from '../components/TableState';
+import { RowAction, RowActionButton } from '../../../components/common/RowAction';
+import { StatusTabs } from '../../../components/common/StatusTabs';
+import { TableState } from '../../../components/common/TableState';
 import '../matrix.css';
 
 const GROUP_TABS: { value: TaskGroup; label: string }[] = [

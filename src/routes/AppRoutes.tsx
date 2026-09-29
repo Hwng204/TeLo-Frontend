@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AdminLayout } from '../layouts/AdminLayout';
-import { MatrixLayout } from '../layouts/MatrixLayout';
+import { AppShell } from '../layouts/AppShell';
 
 import { LoginPage } from '../features/auth/pages/LoginPage';
 import { StudentsPage } from '../features/students/pages/StudentsPage';
@@ -42,8 +42,8 @@ export const AppRoutes: React.FC = () => {
           <Route path="/login" element={<LoginPage />} />
         </Route>
 
-        {/* Màn ma trận dùng sidebar theo vai trò */}
-        <Route element={<MatrixLayout />}>
+        {/* Khung chung, sidebar theo vai trò */}
+        <Route element={<AppShell />}>
           <Route element={<RequireRole allow={PHT} />}>
             <Route path="/matrices" element={<MatrixListPage />} />
             <Route path="/matrices/new" element={<MatrixEditorPage />} />

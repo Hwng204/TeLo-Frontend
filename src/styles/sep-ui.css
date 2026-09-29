@@ -1,0 +1,170 @@
+/*
+ * Mẫu giao diện dùng chung của các màn SEP (danh sách, chi tiết, biểu mẫu).
+ * Cách dùng từng khối: xem DESIGN.md, mục "Components". Khung sidebar/topbar ở layouts/AppShell.css.
+ */
+@import '../components/pcb/pcb.css';
+
+.sep-page { display: flex; flex-direction: column; gap: 20px; padding: 16px 32px 40px; }
+/* Trong layout đã có thanh trên riêng (AdminLayout): trang không tự đệm lại, tiêu đề là một dòng trong trang. */
+.sep-page--flush { padding: 0; }
+.sep-pagehead { display: flex; align-items: center; gap: 12px; min-height: 40px; margin-bottom: 16px; }
+.sep-pagehead .pcb-iconbtn { width: 40px; height: 40px; margin-left: -8px; }
+
+/* Tab gạch chân trải hết chiều ngang, như bản tham chiếu. */
+.sep-tabs { display: flex; border-bottom: 1px solid var(--pcb-color-border-default); }
+.sep-tab { position: relative; flex: 1; min-width: 0; height: 46px; padding: 0 12px; border: 0; background: transparent; color: var(--pcb-color-text-secondary); font: 500 15px/22px 'Inter', sans-serif; white-space: nowrap; cursor: pointer; transition: color var(--sep-transition), background-color var(--sep-transition); }
+.sep-tab:hover { color: var(--pcb-color-text-primary); background: var(--pcb-color-bg-row-hover); }
+.sep-tab:focus-visible { outline: 2px solid var(--pcb-color-border-focus); outline-offset: -2px; }
+.sep-tab--active, .sep-tab--active:hover { color: var(--pcb-color-text-brand); font-weight: 600; background: transparent; }
+.sep-tab--active::after { content: ''; position: absolute; left: 8%; right: 8%; bottom: -1px; height: 2px; border-radius: 2px 2px 0 0; background: var(--pcb-color-bg-accent); }
+
+/* Tìm kiếm + bộ lọc cùng một hàng, nút chính ở góc phải. */
+.sep-toolbar { display: flex; align-items: flex-start; gap: 16px; }
+.sep-toolbar__filters { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* Ô lọc rộng theo nội dung để cả hàng vừa một dòng ở 1366-1440px. */
+.sep-toolbar__filters > .pcb-field { width: auto; min-width: 104px; }
+.sep-toolbar__filters > .sep-toolbar__search { width: 170px; }
+.sep-toolbar__actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.sep-toolbar .pcb-control { height: 40px; }
+.sep-toolbar .pcb-btn { height: 40px; }
+
+/* Lưới trường nhãn-trên-ô cho màn chi tiết và biểu mẫu. */
+.sep-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px 24px; margin: 0; }
+.sep-span-2 { grid-column: span 2; }
+.sep-span-full { grid-column: 1 / -1; }
+.sep-readfield { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.sep-readfield__value { display: flex; align-items: center; gap: 8px; min-height: 44px; margin: 0; padding: 10px 14px; box-sizing: border-box; border: 1px solid var(--pcb-color-border-default); border-radius: 10px; background: var(--pcb-color-bg-subtle); font: 500 14px/22px 'Inter', sans-serif; color: var(--pcb-color-text-primary); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.sep-readfield__value--text { align-items: flex-start; white-space: pre-line; font-weight: 400; }
+
+.sep-section { display: flex; flex-direction: column; gap: 14px; }
+.sep-section + .sep-section { margin-top: 8px; }
+.sep-section-title { margin: 0; font: 600 17px/24px 'Inter', sans-serif; color: var(--pcb-color-text-primary); }
+.sep-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+.sep-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
+.sep-actions__lead { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-right: auto; }
+
+@media (max-width: 1200px) {
+  .sep-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .sep-page { padding: 12px 16px 32px; }
+  .sep-tab { font-size: 14px; padding: 0 6px; }
+  .sep-toolbar { flex-direction: column-reverse; align-items: stretch; }
+  .sep-toolbar__actions { justify-content: flex-end; }
+  /* Một cột: hai cột thì nhãn "Tất cả chương trình" bị cắt còn "Tất cả ch…", không còn đọc được. */
+  .sep-toolbar__filters { gap: 8px; }
+  .sep-toolbar__filters > .pcb-field { width: 100%; }
+  /* Bảng cuộn ngang thay vì bóp cột đến mức chữ gãy từng từ. */
+  .pcb-table-wrap > .pcb-table { min-width: 760px; }
+  .sep-fields { grid-template-columns: 1fr; }
+  .sep-span-2 { grid-column: auto; }
+  .sep-actions { justify-content: stretch; }
+  .sep-actions .pcb-btn { flex: 1; }
+}
+
+/* ---- Thông báo, nhãn trạng thái, bảng danh sách, phân trang, trạng thái rỗng, panel, hộp thoại ---- */
+
+.sep-alert { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #f0c2c2; border-radius: var(--sep-radius-md); background: #fdf3f3; color: #8c2f2f; font: 400 14px/22px 'Inter', sans-serif; }
+.sep-alert--info { border-color: var(--pcb-color-border-default); background: var(--pcb-color-bg-subtle); color: var(--pcb-color-text-primary); }
+.sep-alert--warn { border-color: #e8d2a0; background: #fdf8ec; color: #7a5a1e; }
+/* Việc đã xong không được thông báo bằng đúng khung màu với một ghi chú trung tính. */
+.sep-alert--success { border-color: #bfe0c9; background: #ecf7ef; color: #2b6b3f; }
+/* Nút nằm trong khung thông báo phải theo cỡ của khung, không phải cỡ nút chính của trang. */
+.sep-alert .pcb-btn { height: 30px; min-width: 0; padding: 0 10px; font-size: 13px; border-radius: 8px; background: transparent; color: inherit; border-color: currentColor; margin-left: auto; }
+.sep-alert .pcb-btn:hover:not(:disabled) { background: rgba(255, 255, 255, .6); }
+
+/* Trạng thái: nhãn nền nhạt, đủ nổi để quét dọc cột nhưng không chói.
+   Vàng = đang chờ người khác xử lý, xanh lá = xong, xanh dương = đang làm, xám = đã cất. */
+.sep-status { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font: 500 13px/20px 'Inter', sans-serif; white-space: nowrap; background: var(--pcb-color-bg-subtle); color: var(--pcb-color-text-secondary); }
+/* Tông màu dùng chung cho mọi tính năng (cùng giá trị với các trạng thái của ma trận). */
+.sep-status--green { background: #ecf7ef; color: #2b6b3f; }
+.sep-status--amber { background: #fdf8ec; color: #7a5a1e; }
+.sep-status--gray { background: #f1f0f4; color: #555061; }
+.sep-status--blue { background: var(--sep-bg-brand-soft); color: var(--pcb-color-text-brand); }
+
+.sep-muted { color: var(--pcb-color-text-secondary); }
+.sep-subline { margin-top: 2px; font: 400 13px/20px 'Inter', sans-serif; color: var(--pcb-color-text-secondary); }
+.sep-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 48px 16px; text-align: center; color: var(--pcb-color-text-secondary); }
+.sep-empty__title { font: 500 15px/22px 'Inter', sans-serif; color: var(--pcb-color-text-primary); }
+
+/* Khung xương lúc đang tải: giữ nguyên hình dáng của bảng để nội dung không nhảy khi dữ liệu về. */
+.sep-skeleton-row { display: flex; gap: 16px; padding: 18px 16px; border-top: 1px solid var(--pcb-color-border-default); }
+.sep-skeleton-row:first-child { border-top: 0; }
+.sep-skeleton-row > span { flex: 1; height: 14px; border-radius: 4px; background: linear-gradient(90deg, #eef3f9 25%, #e2ebf5 37%, #eef3f9 63%); background-size: 400% 100%; animation: sep-shimmer 1.4s ease infinite; }
+.sep-loading-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@keyframes sep-shimmer { from { background-position: 100% 50%; } to { background-position: 0 50%; } }
+@media (prefers-reduced-motion: reduce) { .sep-skeleton-row > span { animation: none; } }
+.sep-nowrap { white-space: nowrap; }
+
+/* Bảng danh sách: cột STT hẹp, căn giữa; cột hành động dồn icon về một hàng. */
+.pcb-table .sep-col-index { width: 56px; text-align: center; color: var(--pcb-color-text-secondary); }
+.pcb-table th.sep-col-index { color: var(--pcb-color-text-brand); }
+.pcb-table .sep-col-name { min-width: 140px; }
+/* Nội dung dài (yêu cầu công việc) chỉ hiện 2 dòng, đầy đủ ở màn chi tiết và khi rê chuột. */
+.sep-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* Bảng nhiều cột (màn Nhiệm vụ): bớt đệm ngang để 10 cột vừa khung ở 1280px. */
+.sep-table--dense th, .sep-table--dense td { padding-left: 10px; padding-right: 10px; }
+.sep-col-actions { width: 1%; white-space: nowrap; }
+.sep-row-actions { display: flex; gap: 2px; margin: -6px 0; }
+
+/* Ô đầu bảng đóng vai trò nút "Xem": cả tên là link. */
+.sep-row-link { color: var(--pcb-color-text-primary); text-decoration: none; font-weight: 600; }
+.sep-row-link:hover { color: var(--pcb-color-text-brand); text-decoration: underline; text-underline-offset: 3px; }
+.sep-row-link:focus-visible { outline: 2px solid var(--pcb-color-border-focus); outline-offset: 2px; border-radius: 4px; }
+
+/* Chân bảng: số bản ghi mỗi trang + số trang. */
+.sep-pager { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; margin-top: -20px; padding: 12px 0; border-top: 1px solid var(--pcb-color-border-default); background: var(--sep-bg-surface); font: 400 14px/20px 'Inter', sans-serif; color: var(--pcb-color-text-secondary); }
+/* Dính đáy màn hình trên máy tính: 10 dòng cao hơn một màn, phân trang vẫn phải bấm được ngay.
+   Không dính trên màn hẹp: chân bảng xếp thành khối cao, dính lại sẽ che mất bảng. */
+@media (min-width: 901px) {
+  .sep-pager { position: sticky; bottom: 0; z-index: 2; }
+}
+.sep-pager__size { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sep-pager__select { width: 84px; }
+.sep-pager__select .pcb-control { height: 34px; border-radius: 8px; }
+.sep-pager__total { padding-left: 12px; border-left: 1px solid var(--pcb-color-border-default); }
+.sep-pager__pages { display: flex; align-items: center; gap: 4px; }
+.sep-pager__page, .sep-pager__step { display: inline-grid; place-items: center; min-width: 32px; height: 32px; padding: 0 6px; box-sizing: border-box; border: 0; border-radius: 6px; background: transparent; color: var(--pcb-color-text-primary); font: 500 14px/20px 'Inter', sans-serif; font-variant-numeric: tabular-nums; cursor: pointer; transition: background-color var(--sep-transition), color var(--sep-transition); }
+.sep-pager__page:hover, .sep-pager__step:hover:not(:disabled) { background: var(--pcb-color-bg-hover); color: var(--pcb-color-text-brand); }
+.sep-pager__step:disabled { color: #9aa8b8; cursor: not-allowed; }
+.sep-pager__page--active, .sep-pager__page--active:hover { background: var(--pcb-color-bg-accent); color: var(--pcb-color-text-on-accent); font-weight: 600; }
+.sep-pager__page:focus-visible, .sep-pager__step:focus-visible { outline: 2px solid var(--pcb-color-border-focus); outline-offset: 2px; }
+.sep-pager__ellipsis { padding: 0 4px; color: var(--pcb-color-text-secondary); }
+
+/* Khung mảnh bao bảng chi tiết ma trận, đầu cột nền nhạt (như bảng mức độ trong bản tham chiếu). */
+.sep-panel { border: 1px solid var(--pcb-color-border-default); border-radius: 12px; background: var(--sep-bg-surface); }
+.sep-panel__scroll { overflow-x: auto; border-radius: 12px 12px 0 0; }
+.sep-panel__scroll:last-child { border-radius: 12px; }
+.sep-panel__foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--pcb-color-border-default); }
+.sep-dialog { border: 1px solid var(--pcb-color-border-default); border-radius: 12px; padding: 0; max-width: 520px; width: calc(100% - 32px); box-shadow: 0 18px 48px rgba(20, 61, 107, .22); }
+.sep-dialog::backdrop { background: rgba(20, 61, 107, .35); }
+.sep-dialog__body { display: flex; flex-direction: column; gap: 12px; padding: 24px; }
+.sep-dialog__title { margin: 0; font: 600 18px/26px 'Inter', sans-serif; color: var(--pcb-color-text-primary); }
+.sep-textarea { width: 100%; box-sizing: border-box; min-height: 104px; padding: 12px 14px; border: 1px solid var(--pcb-color-border-default); border-radius: var(--sep-radius-md); background: var(--pcb-color-bg-surface); font: 400 14px/22px 'Inter', sans-serif; color: var(--pcb-color-text-primary); resize: vertical; transition: border-color var(--sep-transition), box-shadow var(--sep-transition); }
+.sep-textarea::placeholder { color: #5d6d80; }
+.sep-textarea:hover:not(:focus) { border-color: #c5d3f1; }
+.sep-textarea:focus { outline: 0; border-color: var(--pcb-color-border-focus); box-shadow: var(--sep-focus-ring); }
+
+@media (max-width: 900px) {
+  /* overflow-x kéo theo cuộn dọc vì gạch chân lệch 1px xuống dưới: khoá trục dọc, đưa gạch chân lên trong khung. */
+  .sep-tabs { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  .sep-tabs .sep-tab--active::after { bottom: 0; }
+  .sep-tab { flex: 1 0 auto; }
+  .sep-pager { flex-direction: column; align-items: flex-start; }
+  .sep-pager__total { padding-left: 0; border-left: 0; }
+}
+
+/* Popup thông báo (lỗi / ràng buộc / xác nhận) của quản lý lớp học và học sinh. */
+.sep-notice { max-width: 420px; }
+.sep-notice__body { position: relative; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 32px 28px 28px; text-align: center; }
+.sep-notice__close { position: absolute; top: 10px; right: 10px; display: inline-flex; padding: 6px; border: 0; border-radius: 8px; background: transparent; color: var(--pcb-color-icon-default); cursor: pointer; }
+.sep-notice__close:hover { background: var(--pcb-color-bg-hover); color: var(--pcb-color-text-brand); }
+.sep-notice__icon { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; color: #fff; }
+.sep-notice__icon--error { background: var(--pcb-color-text-danger); }
+.sep-notice__icon--success { background: #2f8f57; }
+.sep-notice__icon--confirm { background: var(--pcb-color-bg-accent); }
+.sep-notice__text { margin: 0; font: 600 16px/24px 'Inter', sans-serif; color: var(--pcb-color-text-primary); }
+.sep-notice__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font: 500 15px/22px 'Inter', sans-serif; color: var(--pcb-color-text-primary); }
+.sep-notice__actions { display: flex; gap: 8px; margin-top: 4px; }
