@@ -1,24 +1,26 @@
-/* SEP design tokens, copied from Figma variables (--pcb-*, --sep-*). */
+/* SEP design tokens, copied from Figma variables (--pcb-*, --sep-*).
+   Màu chủ đạo: #668ee1 (xanh của bản thiết kế PCB Primary), dùng chung cho sidebar, nút, tab, phân trang. */
 :root {
   --pcb-color-bg-surface: #fff;
-  --pcb-color-bg-subtle: #f1f6fc;
-  --pcb-color-bg-accent: #2f6fb0;
+  --pcb-color-bg-subtle: #f3f6fd;
+  --pcb-color-bg-accent: #668ee1;
   --pcb-color-border-default: #dce6f0;
-  --pcb-color-border-focus: #4a90e2;
+  --pcb-color-border-focus: #668ee1;
 
   /* Trạng thái tương tác, pha từ đúng các màu trên: nút và dòng bảng phải phản hồi khi rê chuột. */
-  --pcb-color-bg-accent-hover: #28619c;
-  --pcb-color-bg-accent-active: #225585;
-  --pcb-color-bg-hover: #eaf2fb;
-  --pcb-color-bg-active: #dde9f7;
-  --pcb-color-bg-row-hover: #f7fafd;
+  --pcb-color-bg-accent-hover: #5a80d4;
+  --pcb-color-bg-accent-active: #4e72c3;
+  --pcb-color-bg-hover: #ecf1fc;
+  --pcb-color-bg-active: #dfe7f9;
+  --pcb-color-bg-row-hover: #f7f9fe;
   --pcb-color-text-danger: #b3403f;
   --pcb-color-bg-danger-hover: #fdf3f3;
-  --sep-focus-ring: 0 0 0 3px rgba(74, 144, 226, .32);
+  --sep-focus-ring: 0 0 0 3px rgba(102, 142, 225, .35);
   --sep-transition: 150ms ease;
   --pcb-color-text-primary: #26364a;
   --pcb-color-text-secondary: #44566c;
-  --pcb-color-text-brand: #2f6fb0;
+  /* Chữ màu thương hiệu: cùng tông #668ee1 nhưng đậm hơn để đạt tương phản ~4,6:1 trên nền trắng. */
+  --pcb-color-text-brand: #4a72cc;
   --pcb-color-text-on-accent: #fff;
   --pcb-color-icon-default: #44566c;
   --pcb-spacing-xs: 8px;
@@ -27,16 +29,16 @@
   --pcb-stroke-default: 1px;
 
   --sep-bg-canvas: #f7fafc;
-  --sep-bg-brand: #377dcb;
-  --sep-bg-brand-soft: #eaf4ff;
+  --sep-bg-brand: #668ee1;
+  --sep-bg-brand-soft: #edf2fd;
   /* Nền sidebar, theo màu chủ đạo của bản thiết kế PCB Primary. */
   --sep-rail-bg: #668ee1;
   --sep-bg-lavender-soft: #f3f0ff;
   --sep-bg-surface: #fff;
   --sep-border-subtle: #dce6f1;
-  --sep-border-brand: #4a90e2;
+  --sep-border-brand: #668ee1;
   --sep-text-secondary: #3d4d61;
-  --sep-text-brand: #2f6fb0;
+  --sep-text-brand: #4a72cc;
   --sep-text-on-brand: #fff;
   --sep-radius-md: 10px;
 }
@@ -72,9 +74,9 @@
 }
 .sep-app *{
   scrollbar-width: thin;
-  scrollbar-color: #c3d6ea transparent;
+  scrollbar-color: #c5d3f1 transparent;
 }
 /* Thanh cuộn của cả trang thuộc <html>, nằm ngoài .sep-app. */
 html:has(.sep-app) {
-  scrollbar-color: #c3d6ea transparent;
+  scrollbar-color: #c5d3f1 transparent;
 }
