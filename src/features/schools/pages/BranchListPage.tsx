@@ -3,8 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Search, Building2, Users, BookOpen, Home, ChevronDown } from 'lucide-react';
 import { api } from '../../../services/api';
 import { displayToast } from '../../../utils/toast';
-import type { School, SchoolBranchSummary, CreateSchoolBranchRequest } from '../../../types';
-import { mapSchool } from '../../../types/school';
+import type { SchoolBranchSummary, CreateSchoolBranchRequest } from '../../../types';
 import { Pager } from '../../../components/common/Pager';
 import { useAsync, useDebounce } from '../../../hooks';
 import { BranchFormModal } from '../components/BranchFormModal';
@@ -298,6 +297,7 @@ export const BranchListPage: React.FC = () => {
             itemLabel="cơ sở"
             onChange={setPage}
             onPageSizeChange={setPageSize}
+            pageSizes={[6, 9]}
           />
         </div>
       )}

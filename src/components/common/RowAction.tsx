@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Icon } from '../../../components/pcb';
+import { Icon } from '../pcb';
 
 /** Icon trong cột "Hành động". Chỉ điều hướng, nên là link chứ không phải nút. */
 export const RowAction = ({ to, icon, label }: { to: string; icon: string; label: string }) => (

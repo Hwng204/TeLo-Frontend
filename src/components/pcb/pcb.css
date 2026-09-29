@@ -30,7 +30,7 @@
 .pcb-label--hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .pcb-control { position: relative; display: flex; align-items: center; gap: var(--pcb-spacing-xs); height: 44px; padding: 0 var(--pcb-spacing-sm); border: var(--pcb-stroke-default) solid var(--pcb-color-border-default); border-radius: 10px; background: var(--pcb-color-bg-surface); color: var(--pcb-color-icon-default); }
 .pcb-control { transition: border-color var(--sep-transition), box-shadow var(--sep-transition); }
-.pcb-control:hover:not(:focus-within) { border-color: #c3d6ea; }
+.pcb-control:hover:not(:focus-within) { border-color: #c5d3f1; }
 .pcb-control:focus-within { border-color: var(--pcb-color-border-focus); box-shadow: var(--sep-focus-ring); }
 .pcb-control--error { border-color: #d64545; }
 /* Chữ mờ đi một chút (xem input/select :disabled ở dưới) không đủ rõ để biết ô đang bị khoá; cả khung phải đổi màu. */
@@ -40,10 +40,10 @@
 .pcb-select-trigger { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pcb-select-placeholder { color: var(--pcb-color-text-secondary); }.pcb-control input::placeholder { color: #5d6d80; }
 .pcb-control input:disabled, .pcb-select-trigger:disabled { color: var(--pcb-color-text-secondary); cursor: not-allowed; }
-.pcb-select-menu { position: fixed; z-index: 1000; box-sizing: border-box; max-height: 280px; overflow-y: auto; padding: 6px; border: 1px solid #b8cfe8; border-radius: 10px; background: var(--pcb-color-bg-surface); box-shadow: 0 10px 24px rgba(34, 79, 125, .16); font: 400 14px/20px 'Inter', sans-serif; }
+.pcb-select-menu { position: fixed; z-index: 1000; box-sizing: border-box; max-height: 280px; overflow-y: auto; padding: 6px; border: 1px solid #c5d3f1; border-radius: 10px; background: var(--pcb-color-bg-surface); box-shadow: 0 10px 24px rgba(58, 86, 160, .16); font: 400 14px/20px 'Inter', sans-serif; }
 .pcb-select-option { display: flex; width: 100%; min-height: 38px; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--pcb-color-text-primary); font: inherit; text-align: left; cursor: pointer; }
-.pcb-select-option:hover:not(:disabled), .pcb-select-option:focus-visible { background: #edf5ff; color: var(--pcb-color-text-brand); outline: 0; }
-.pcb-select-option--selected { background: #e5f1ff; color: var(--pcb-color-text-brand); font-weight: 500; }
+.pcb-select-option:hover:not(:disabled), .pcb-select-option:focus-visible { background: var(--pcb-color-bg-hover); color: var(--pcb-color-text-brand); outline: 0; }
+.pcb-select-option--selected { background: var(--pcb-color-bg-active); color: var(--pcb-color-text-brand); font-weight: 500; }
 .pcb-select-option:disabled { color: var(--pcb-color-text-secondary); cursor: not-allowed; }
 .pcb-control input[type="date"] { cursor: pointer; }
 .pcb-control input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .75; }

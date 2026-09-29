@@ -1,10 +1,15 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AdminLayout } from '../layouts/AdminLayout';
-import { MatrixLayout } from '../layouts/MatrixLayout';
+import { AppShell } from '../layouts/AppShell';
 
 import { LoginPage } from '../features/auth/pages/LoginPage';
-import { StudentsPage } from '../features/students/pages/StudentsPage';
+import { ClassListPage } from '../features/classes/pages/ClassListPage';
+import { ClassDetailPage } from '../features/classes/pages/ClassDetailPage';
+import { ClassFormPage } from '../features/classes/pages/ClassFormPage';
+import { StudentListPage } from '../features/students/pages/StudentListPage';
+import { StudentDetailPage } from '../features/students/pages/StudentDetailPage';
+import { StudentFormPage } from '../features/students/pages/StudentFormPage';
 import { MatrixListPage } from '../features/matrix/pages/MatrixListPage';
 import { MatrixDetailPage } from '../features/matrix/pages/MatrixDetailPage';
 import { MatrixEditorPage } from '../features/matrix/pages/MatrixEditorPage';
@@ -15,22 +20,33 @@ import { AcademicYearListPage } from '../features/academicYears/pages/AcademicYe
 import { AcademicYearCreatePage } from '../features/academicYears/pages/AcademicYearCreatePage';
 import { AcademicYearConfigPage } from '../features/academicYears/pages/AcademicYearConfigPage';
 import { storage } from '../utils/storage';
-import { getRoles } from '../utils/jwt';
+import { getRoles, isDirectoryAdmin } from '../utils/jwt';
 
 /**
  * Chặn theo vai trò chỉ để giấu màn không dùng được. Backend mới là nơi quyết định:
  * nó lọc theo chi nhánh và trả allowedActions cho từng ma trận.
  */
-const RequireRole: React.FC<{ allow: string[] }> = ({ allow }) => {
+const RequireRole: React.FC<{ allow: string[]; fallback?: string }> = ({ allow, fallback = '/schools' }) => {
   if (!storage.getToken()) return <Navigate to="/login" replace />;
   if (getRoles().some((role) => allow.includes(role))) return <Outlet />;
   // Về /schools chứ không về /matrices: /matrices cũng dùng guard này nên sẽ vòng lặp vô hạn.
-  return <Navigate to="/schools" replace />;
+  return <Navigate to={fallback} replace />;
 };
 
 const PHT = ['PHT', 'HIEU_TRUONG', 'PRINCIPAL'];
 const TEAM_LEAD = ['TEAM_LEAD', 'TO_TRUONG'];
 const BOTH = [...PHT, ...TEAM_LEAD];
+const TEACHER = ['GIAO_VIEN', 'TEACHER'];
+const ADMIN = ['OperationalAdmin'];
+
+/**
+ * Lớp học / học sinh dùng chung một bộ màn cho nhà trường (chỉ xem) và admin (thêm/sửa/xoá):
+ * admin ở trong khung AdminLayout, nhà trường ở khung AppShell.
+ */
+const DirectoryShell: React.FC = () => {
+  if (!storage.getToken()) return <Navigate to="/login" replace />;
+  return isDirectoryAdmin() ? <AdminLayout /> : <AppShell />;
+};
 import { SchoolListPage } from '../features/schools/pages/SchoolListPage';
 import { BranchListPage } from '../features/schools/pages/BranchListPage';
 
@@ -42,8 +58,8 @@ export const AppRoutes: React.FC = () => {
           <Route path="/login" element={<LoginPage />} />
         </Route>
 
-        {/* Màn ma trận dùng sidebar theo vai trò */}
-        <Route element={<MatrixLayout />}>
+        {/* Khung chung, sidebar theo vai trò */}
+        <Route element={<AppShell />}>
           <Route element={<RequireRole allow={PHT} />}>
             <Route path="/matrices" element={<MatrixListPage />} />
             <Route path="/matrices/new" element={<MatrixEditorPage />} />
@@ -61,13 +77,28 @@ export const AppRoutes: React.FC = () => {
         </Route>
 
 
+        <Route element={<DirectoryShell />}>
+          <Route element={<RequireRole allow={[...PHT, ...TEACHER, ...ADMIN]} />}>
+            <Route path="/classes" element={<ClassListPage />} />
+            <Route path="/classes/:id" element={<ClassDetailPage />} />
+            <Route path="/students" element={<StudentListPage />} />
+            <Route path="/students/:id" element={<StudentDetailPage />} />
+          </Route>
+          {/* Nhà trường mở nhầm form thêm/sửa: về danh sách lớp của mình, không sang trang quản trị trường. */}
+          <Route element={<RequireRole allow={ADMIN} fallback="/classes" />}>
+            <Route path="/classes/new" element={<ClassFormPage />} />
+            <Route path="/classes/:id/edit" element={<ClassFormPage />} />
+            <Route path="/students/new" element={<StudentFormPage />} />
+            <Route path="/students/:id/edit" element={<StudentFormPage />} />
+          </Route>
+        </Route>
+
         {/* Protected App routes with AdminLayout */}
         <Route element={<AdminLayout />}>
           {/* Sau khi login, admin được điều hướng đến trang danh sách trường */}
           <Route path="/" element={<Navigate to="/schools" replace />} />
           <Route path="/schools" element={<SchoolListPage />} />
           <Route path="/schools/:schoolId/branches" element={<BranchListPage />} />
-          <Route path="/students" element={<StudentsPage />} />
           <Route path="/academic-years" element={<AcademicYearListPage />} />
           <Route path="/academic-years/new" element={<AcademicYearCreatePage />} />
           <Route path="/academic-years/:id" element={<AcademicYearConfigPage />} />

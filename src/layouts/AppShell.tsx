@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from '../components/pcb';
-import { isTeamLead } from '../utils/jwt';
+import { isTeacher, isTeamLead } from '../utils/jwt';
 import { storage } from '../utils/storage';
-import './MatrixLayout.css';
+// Mẫu giao diện dùng chung trước, rồi mới tới khung: giữ đúng thứ tự cascade như lúc còn một file.
+import '../styles/sep-ui.css';
+import './AppShell.css';
 
 /** `to` chỉ có ở màn đã dựng; các mục còn lại hiển thị như bản thiết kế nhưng không bấm được. */
 type NavEntry = { icon: string; label: string; to?: string; activeFor?: string[] };
@@ -16,6 +18,11 @@ const PHT_NAV: NavEntry[] = [
   { icon: 'fact_check', label: 'Duyệt bộ đề' },
   { icon: 'database', label: 'Ngân hàng câu hỏi' },
   { icon: 'inventory_2', label: 'Kho đề' },
+];
+// Giáo viên chỉ có lớp mình chủ nhiệm và học sinh của lớp đó.
+const TEACHER_NAV: NavEntry[] = [
+  { icon: 'groups', label: 'Lớp chủ nhiệm', to: '/classes', activeFor: ['/classes'] },
+  { icon: 'school', label: 'Học sinh', to: '/students', activeFor: ['/students'] },
 ];
 const PHT_NAV_AFTER_EXAM_GROUP: NavEntry[] = [{ icon: 'mail', label: 'Quản lý mẫu mail' }];
 const EXAM_GROUP = [
@@ -70,9 +77,11 @@ const NavItem = ({ icon, label, to, activeFor = [] }: NavEntry) => {
   );
 };
 
-export const MatrixLayout = () => {
+/** Khung chung của app: sidebar theo vai trò + vùng nội dung. Mỗi màn tự vẽ thanh trên bằng PageHeader. */
+export const AppShell = () => {
   const navigate = useNavigate();
   const teamLead = isTeamLead();
+  const teacherOnly = isTeacher();
   // Thu gọn mặc định: 9 mục con mở sẵn làm menu PHT dài gấp đôi menu Tổ trưởng.
   const [examOpen, setExamOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
@@ -105,7 +114,9 @@ export const MatrixLayout = () => {
         </div>
 
         <nav className="sep-nav-list">
-          {teamLead ? (
+          {teacherOnly ? (
+            TEACHER_NAV.map((item) => <NavItem key={item.label} {...item} />)
+          ) : teamLead ? (
             TL_NAV.map((item) => <NavItem key={item.label} {...item} />)
           ) : (
             <>

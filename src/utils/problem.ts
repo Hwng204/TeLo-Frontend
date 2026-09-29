@@ -46,12 +46,16 @@ export const toProblem = (err: unknown): Problem => {
     detail?: string;
     title?: string;
     errors?: Record<string, string[]>;
+    // Dạng ApiResponse của các API danh bạ trường: { success, message, error: { code, message, details } }.
+    message?: string;
+    error?: { code?: string; message?: string; details?: Record<string, string[]> | null };
   };
 
   let fieldErrors: Record<string, string> | undefined;
-  if (body.errors) {
+  const fieldSource = body.errors ?? body.error?.details ?? undefined;
+  if (fieldSource) {
     fieldErrors = {};
-    for (const [key, messages] of Object.entries(body.errors)) {
+    for (const [key, messages] of Object.entries(fieldSource)) {
       if (messages?.length) fieldErrors[camel(key)] = messages[0];
     }
   }
@@ -59,14 +63,16 @@ export const toProblem = (err: unknown): Problem => {
   // ValidationProblemDetails không có `detail`, nên phải lần xuống errors rồi title.
   const message =
     body.detail ||
+    body.error?.message ||
+    body.message ||
     (fieldErrors ? Object.values(fieldErrors)[0] : undefined) ||
     body.title ||
     FALLBACK;
 
-  return {
-    status,
-    code: typeof (data as { code?: unknown })?.code === 'string' ? (data as { code: string }).code : '',
-    message,
-    fieldErrors,
-  };
+  const code = typeof (data as { code?: unknown })?.code === 'string' ? (data as { code: string }).code : body.error?.code;
+  return { status, code: code ?? '', message, fieldErrors };
 };
+
+/** Dòng hiển thị trong popup: lỗi theo từng ô nếu backend nêu (rõ hơn câu chung "Dữ liệu gửi lên không hợp lệ."), không thì message. */
+export const problemLines = (problem: Problem): string[] =>
+  problem.fieldErrors && Object.keys(problem.fieldErrors).length > 0 ? Object.values(problem.fieldErrors) : [problem.message];

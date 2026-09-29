@@ -7,8 +7,8 @@ import { contextLabel } from '../../../utils/academicContext';
 import { dueState, formatDate, personLabel } from '../../../utils/formatters';
 import { isTeamLead } from '../../../utils/jwt';
 import { toProblem } from '../../../utils/problem';
-import { InfoGrid, type InfoItem } from '../components/InfoGrid';
-import { PageHeader } from '../components/PageHeader';
+import { InfoGrid, type InfoItem } from '../../../components/common/InfoGrid';
+import { PageHeader } from '../../../components/common/PageHeader';
 import '../matrix.css';
 
 /** M01-BD. */

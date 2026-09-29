@@ -24,9 +24,9 @@ import {
 import { toProblem } from '../../../utils/problem';
 import { ContextSelects } from '../components/ContextSelects';
 import { ExcelImportPanel } from '../components/ExcelImportPanel';
-import { InfoGrid } from '../components/InfoGrid';
+import { InfoGrid } from '../../../components/common/InfoGrid';
 import { MatrixGrid } from '../components/MatrixGrid';
-import { PageHeader } from '../components/PageHeader';
+import { PageHeader } from '../../../components/common/PageHeader';
 import '../matrix.css';
 
 /**

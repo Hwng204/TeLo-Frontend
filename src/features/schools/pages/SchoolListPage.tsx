@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Settings, Plus, Building2, Users, BookOpen, ArrowRight, Edit2, ChevronDown } from 'lucide-react';
+import { Search, Plus, Building2, Users, BookOpen, ArrowRight, Edit2, ChevronDown } from 'lucide-react';
 import { SchoolFormModal } from '../components/SchoolFormModal';
 import { api } from '../../../services/api';
 import { displayToast } from '../../../utils/toast';
@@ -531,6 +531,7 @@ export const SchoolListPage: React.FC = () => {
             itemLabel="trường học"
             onChange={setPage}
             onPageSizeChange={setPageSize}
+            pageSizes={[6, 9]}
           />
         </div>
       )}

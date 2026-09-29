@@ -1,6 +1,6 @@
 import { Icon, SelectField } from '../pcb';
 
-const PAGE_SIZES = [6, 9];
+const DEFAULT_PAGE_SIZES = [10, 20, 50];
 
 type Props = {
   page: number;
@@ -9,6 +9,8 @@ type Props = {
   itemLabel: string;
   onChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
+  /** Lựa chọn "Hiển thị … bản ghi / trang". Mặc định 10/20/50 cho bảng; lưới thẻ dùng số chia hết cho số cột. */
+  pageSizes?: number[];
 };
 
 /** Số trang lân cận trang hiện tại + trang đầu/cuối, còn lại rút gọn bằng "…". */
@@ -25,7 +27,15 @@ const pageNumbers = (page: number, lastPage: number): (number | '…')[] => {
 };
 
 /** Chân bảng: số bản ghi mỗi trang bên trái, số trang bấm được bên phải. */
-export const Pager = ({ page, pageSize, totalCount, itemLabel, onChange, onPageSizeChange }: Props) => {
+export const Pager = ({
+  page,
+  pageSize,
+  totalCount,
+  itemLabel,
+  onChange,
+  onPageSizeChange,
+  pageSizes = DEFAULT_PAGE_SIZES,
+}: Props) => {
   const lastPage = Math.max(1, Math.ceil(totalCount / pageSize));
   return (
     <div className="sep-pager">
@@ -38,7 +48,7 @@ export const Pager = ({ page, pageSize, totalCount, itemLabel, onChange, onPageS
           fieldClassName="sep-pager__select"
           onChange={(event) => onPageSizeChange(Number(event.target.value))}
         >
-          {PAGE_SIZES.map((size) => (
+          {pageSizes.map((size) => (
             <option key={size} value={size}>
               {size}
             </option>

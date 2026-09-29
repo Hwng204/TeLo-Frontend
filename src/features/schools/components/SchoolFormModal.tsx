@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { X, Search, ChevronDown, Check } from 'lucide-react';
 import { Button } from '../../../components/common/Button';
-import type { School, CreateSchoolRequest, ProvinceOption } from '../../../types';
+import type { School, CreateSchoolRequest } from '../../../types';
 import { api } from '../../../services/api';
 import { useAsync } from '../../../hooks/useAsync';
 

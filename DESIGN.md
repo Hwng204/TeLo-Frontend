@@ -1,19 +1,20 @@
 ---
 name: SEP · Tiểu học Phạm Công Bình
-description: Exam-matrix assignment and review console for a primary school office; team Figma palette, blue rail, white sheet.
+description: Office console for a primary school (exam matrices, tasks, school admin); one periwinkle-blue accent, blue rail, white sheet.
 colors:
-  rail-blue: "#2f6fb0"
-  rail-blue-hover: "#28619c"
-  rail-blue-active: "#225585"
-  focus-blue: "#4a90e2"
+  rail-blue: "#668ee1"
+  rail-blue-hover: "#5a80d4"
+  rail-blue-active: "#4e72c3"
+  brand-ink: "#4a72cc"
+  focus-blue: "#668ee1"
   sheet-white: "#ffffff"
-  tint-panel: "#f1f6fc"
-  tint-hover: "#eaf2fb"
-  tint-pressed: "#dde9f7"
-  tint-row: "#f7fafd"
-  brand-soft: "#eaf4ff"
+  tint-panel: "#f3f6fd"
+  tint-hover: "#ecf1fc"
+  tint-pressed: "#dfe7f9"
+  tint-row: "#f7f9fe"
+  brand-soft: "#edf2fd"
   hairline: "#dce6f0"
-  hairline-hover: "#c3d6ea"
+  hairline-hover: "#c5d3f1"
   ink: "#26364a"
   ink-secondary: "#44566c"
   ink-placeholder: "#5d6d80"
@@ -97,7 +98,7 @@ components:
     backgroundColor: "{colors.rail-blue-active}"
   button-secondary:
     backgroundColor: "{colors.sheet-white}"
-    textColor: "{colors.rail-blue}"
+    textColor: "{colors.brand-ink}"
     rounded: "{rounded.md}"
     padding: "0 16px"
     height: "44px"
@@ -105,7 +106,7 @@ components:
     backgroundColor: "{colors.tint-hover}"
   button-ghost:
     backgroundColor: "{colors.sheet-white}"
-    textColor: "{colors.rail-blue}"
+    textColor: "{colors.brand-ink}"
     rounded: "{rounded.md}"
     height: "44px"
   button-danger:
@@ -152,7 +153,7 @@ components:
     height: "40px"
   nav-item-active:
     backgroundColor: "{colors.sheet-white}"
-    textColor: "{colors.rail-blue}"
+    textColor: "{colors.brand-ink}"
   top-bar:
     backgroundColor: "{colors.sheet-white}"
     textColor: "{colors.ink}"
@@ -163,9 +164,9 @@ components:
     typography: "{typography.nav}"
     height: "46px"
   tab-active:
-    textColor: "{colors.rail-blue}"
+    textColor: "{colors.brand-ink}"
   table-head:
-    textColor: "{colors.rail-blue}"
+    textColor: "{colors.brand-ink}"
     typography: "{typography.table-head}"
     padding: "12px 16px"
   table-cell:
@@ -179,7 +180,7 @@ components:
     padding: "2px 10px"
   status-assigned:
     backgroundColor: "{colors.brand-soft}"
-    textColor: "{colors.rail-blue}"
+    textColor: "{colors.brand-ink}"
     rounded: "{rounded.pill}"
     padding: "2px 10px"
   status-submitted:
@@ -225,7 +226,7 @@ components:
 
 This is a school office's working ledger, set on a computer. A solid blue rail holds the school's navigation. The screen that is open is cut out of that rail in the page's own white, so the selected item runs straight into the sheet. The sheet stays plain white: no tinted canvas, no floating cards. Hairline rules, brand-blue column heads and soft tinted pills give the page its structure. Density suits people who scan rows of assignments at a desk: 14px body, tabular figures, a numbered row index, and one quiet action column.
 
-The palette comes from the team's Figma variables (`--pcb-*`, `--sep-*` in `src/styles/tokens.css`), and Inter is the only typeface. Both are brand commitments, not choices made on this surface. The system has one accent, the rail blue, used for the rail, primary actions, active tabs, table heads and the current page number. Status gets a small set of soft color fields, and red appears only for danger and overdue dates.
+The palette comes from the team's Figma variables (`--pcb-*`, `--sep-*` in `src/styles/tokens.css`), and Inter is the only typeface. Both are brand commitments, not choices made on this surface. The system has one accent, the rail blue `#668ee1` (the blue of the "PCB Primary" design), used for the rail, primary actions, the active tab underline and the current page number. Text in the accent hue uses brand-ink `#4a72cc`, one step darker, because `#668ee1` text on white reads at only about 3.2:1. Status gets a small set of soft color fields, and red appears only for danger and overdue dates.
 
 The build rejects the earlier stack of floating cards on a tinted canvas with boxed, labeled filters. The sheet is one surface, and grouping comes from rules and tints rather than from lifted containers.
 
@@ -242,14 +243,15 @@ The build rejects the earlier stack of floating cards on a tinted canvas with bo
 This is a single-accent blue office palette on white. Tints of the same blue mark state, and four soft color fields carry workflow status.
 
 ### Primary
-- **Rail Blue** (rail-blue): The navigation rail background, primary buttons, the active tab underline, table-head text, the brand text on links and the active nav pill, and the current pagination square. It darkens to rail-blue-hover and then rail-blue-active when a primary button is pressed.
-- **Focus Blue** (focus-blue): The focus border on fields, the outline on focus-visible controls, the text caret, and the border of secondary buttons. Keyboard focus is also marked by a 3px ring at 32% of this color.
+- **Rail Blue** (rail-blue `#668ee1`): The navigation rail background, primary buttons, the active tab underline and the current pagination square. It darkens to rail-blue-hover and then rail-blue-active when a primary button is pressed. White text on it is about 3.2:1 (below AA), kept deliberately to match the design.
+- **Brand Ink** (brand-ink `#4a72cc`): Every piece of text in the accent hue: table heads, the active tab label, the active nav item, link hover, secondary and ghost button labels, the ASSIGNED pill. About 4.6:1 on white.
+- **Focus Blue** (focus-blue, same value as rail blue): The focus border on fields, the outline on focus-visible controls, and the border of secondary buttons. Keyboard focus is also marked by a 3px ring at 35% of this color.
 
 ### Tertiary (status fields)
-- **Amber Wait** (amber-soft / amber-ink): SUBMITTED, meaning the item waits on someone else. It also colors warning alerts and the "due today" flag.
+- **Amber Wait** (amber-soft / amber-ink): SUBMITTED, meaning the item waits on someone else. It also colors warning alerts.
 - **Settled Green** (green-soft / green-ink): APPROVED and COMPLETED, plus success alerts.
 - **Shelf Gray** (archive-soft / archive-ink): ARCHIVED.
-- **Assigned Blue** (brand-soft with rail-blue text): ASSIGNED, meaning work is in progress. The same soft blue fills the user avatar.
+- **Assigned Blue** (brand-soft with brand-ink text): ASSIGNED, meaning work is in progress. The same soft blue fills the user avatar.
 - **Danger Red** (danger-ink / danger-soft): Destructive buttons and overdue due dates.
 - **Error Red** (error-red): The field error border and error message.
 
@@ -292,7 +294,7 @@ This is a single-accent blue office palette on white. Tints of the same blue mar
 
 The shell is a flex row. On the left is a sticky rail 264px wide and 100vh tall. The user can collapse it to 84px, and the choice persists in localStorage. Below 900px the rail is forced to icon-only at 72px and the collapse toggle is hidden. The main column starts with a sticky 64px top bar: back button (when present), title and optional status pill on the left, avatar with name and role on the right. The page below it is a vertical stack with a 20px gap and 16px 32px 40px padding (12px 16px 32px below 900px).
 
-A list screen follows a fixed order: underline tabs across the full width, then the toolbar, then the table, then the pager. The toolbar puts search and compact filters on one wrapping row. Filter controls size to their content (search 200px, filters at least 104px) and are 40px tall. Actions stay at the far right and never shrink. Below 900px the toolbar stacks, with actions on top and one filter per row.
+A list screen follows a fixed order: underline tabs across the full width, then the toolbar, then the table, then the pager. The toolbar puts search and compact filters on one wrapping row. Filter controls size to their content (search 170px, filters at least 104px) and are 40px tall. Actions stay at the far right and never shrink. Below 900px the toolbar stacks, with actions on top and one filter per row.
 
 Detail and form screens use a label-above field grid. The field grid has 4 columns with a 20px 24px gap, dropping to 2 columns at 1200px and 1 column at 900px. The academic-context grid has 5 columns, dropping to 3 and then 1 at the same breakpoints. Page actions sit in a row aligned right, with secondary actions pushed to the left. Below 900px each button takes an equal share of the row.
 
@@ -305,9 +307,9 @@ The pager is sticky at the bottom of the viewport above 900px. Below 900px it is
 The system is flat. The sheet, tables, panels, fields and the rail have no shadow. Depth comes from hairlines and from the tint steps (white, tint-row, tint-panel, tint-hover, tint-pressed). Shadows appear only on surfaces that float above the page.
 
 ### Shadow Vocabulary
-- **Menu lift** (`box-shadow: 0 10px 24px rgba(34, 79, 125, .16)`): Custom select dropdown menus.
+- **Menu lift** (`box-shadow: 0 10px 24px rgba(58, 86, 160, .16)`): Custom select dropdown menus.
 - **Dialog lift** (`box-shadow: 0 18px 48px rgba(20, 61, 107, .22)`): Modal dialogs, over a `rgba(20, 61, 107, .35)` backdrop.
-- **Focus ring** (`box-shadow: 0 0 0 3px rgba(74, 144, 226, .32)`): The focus state on fields and textareas. It marks state, not elevation.
+- **Focus ring** (`box-shadow: 0 0 0 3px rgba(102, 142, 225, .35)`): The focus state on fields and textareas. It marks state, not elevation.
 
 ### Named Rules
 **The Flat Sheet Rule.** Nothing that sits on the page casts a shadow. A shadow means the surface floats above the page and will close.
@@ -349,25 +351,56 @@ Buttons are firm and plainly labeled, with no shadows.
 - **Read-only field:** Same size and radius as an input, filled with tint-panel and a hairline border, text in Inter 500. Long text values keep line breaks and switch to weight 400.
 
 ### Navigation
-- **Rail:** Rail-blue background with white text. The brand block is 72px tall and holds a 44px round logo and the school name at 600, 15px. Items are 40px rows with a 22px icon, a 14px gap and Inter 500 at 15px. Hover is white at 12%. Inert items (screens not built yet) show at 72% white with no hover, keep the "(sắp có)" title, and can't be clicked.
+- **Rail:** Rail-blue background with white text. The brand block is 72px tall and holds a 44px round logo and the school name at 600, 15px. Items are 40px rows with a 22px icon, a 14px gap and Inter 500 at 15px. Hover is white at 12%. Inert items (screens not built yet) show at 86% white with no hover, keep the "(sắp có)" title, and can't be clicked.
 - **Active item:** The white left-rounded pill with concave corners described in Shapes. Its text is rail blue at weight 600.
 - **Collapsed / narrow:** Icons only, centered. Clicking a group while collapsed expands the rail first.
 - **Top bar:** Sticky, 64px, white with a hairline bottom. Holds the title (Headline role) on the left and a 36px round brand-soft avatar with name and role on the right.
-- **Underline tabs:** Tabs share the full width equally, are 46px tall, and use Inter 500 at 15px in ink-secondary. Hover tints to tint-row. The active tab is rail blue at 600 with a 2px underline. Below 900px the tab row scrolls horizontally.
+- **Underline tabs:** Tabs share the full width equally, are 46px tall, and use Inter 500 at 15px in ink-secondary. Hover tints to tint-row. The active tab label is brand-ink at 600 over a 2px rail-blue underline. Below 900px the tab row scrolls horizontally.
 
 ### Pager
 The pager is a strip at the foot of every list, sticky on desktop. On the left: "Hiển thị" [an 84px select, 34px tall, 8px radius] "bản ghi / trang", then a total count set off by a hairline. On the right: previous/next steps and numbered 32px squares with a 6px radius. The current page is filled rail blue with white text. Other pages tint on hover.
 
 ### Row Actions
-Row actions are 34px transparent icon links with an 8px radius and a 20px icon in ink-secondary. On hover the icon turns rail blue on tint-hover. They only navigate (view, open matrix), so they are links, not buttons. The row name is a 600-weight ink link that underlines in rail blue on hover.
+Row actions are 34px transparent icons with an 8px radius and a 20px icon in ink-secondary. On hover the icon turns brand-ink on tint-hover. Navigation (view, open) uses `RowAction`, which is a link; an in-place action (delete) uses `RowActionButton`, which is a button. Keep a row to two or three icons, each labelled on hover. The row name is a 600-weight ink link that underlines in rail blue on hover.
 
 ### Empty and Loading
 An empty table shows a centered message with 48px vertical padding and a 15px/500 ink title over secondary text. While loading, skeleton rows keep the table's shape with a 14px shimmer bar. The shimmer is removed under reduced motion.
+
+
+## Shared building blocks (code)
+
+Every screen that follows this system is built from the same pieces. Reuse them; add a new shared piece only when three screens need it.
+
+### Where things live
+- **Tokens:** `src/styles/tokens.css`. The only place a color may be written.
+- **Base controls:** `src/components/pcb/` (`PcbButton`, `PcbIconButton`, `Field`, `SelectField`, `Icon`).
+- **Screen patterns:** `src/components/common/` (the components in the table below).
+- **Pattern styles:** `src/styles/sep-ui.css`: page, tabs, toolbar, field grid, sections, action row, alerts, the status pill base, list table, pager, empty and skeleton states, panel, dialog, textarea.
+- **Shell:** `src/layouts/AppShell.tsx` and `AppShell.css` (rail, top bar, collapse). `AdminLayout` loads the same two stylesheets. A screen must render inside one of these two layouts so that `sep-ui.css` is loaded.
+- **Feature-only styles** stay in the feature, for example `src/features/matrix/matrix.css` (per-workflow status colors, due dates, the matrix grid, Excel import).
+
+### Components (`src/components/common/`)
+| Component | Use it for |
+|---|---|
+| `PageHeader` | The top bar of every screen: `title`, optional `onBack` (child screens) and `badge` (the status pill on detail screens). |
+| `StatusTabs` | The full-width underline tab row: a status filter on a list, or a group switch such as Ma trận / Câu hỏi / Đề thi. |
+| `DimensionFilters` | Năm học, Học kỳ, Môn học, Khối lớp toolbar filters, each independent. Place them right after the search field. |
+| `TableState` | The states under a list table: skeleton while loading, nothing extra on error, the empty message with an optional reset button. |
+| `RowAction` / `RowActionButton` | 34px icons in the "Hành động" column: a link for navigation, a button for an in-place action. |
+| `Pager` | The list foot: "Hiển thị [10/20/50] bản ghi / trang", the total, page squares. `pageSizes` overrides the choices (card grids use 6/9). |
+| `InfoGrid` | Read-only detail fields as a label-above grid; `span: 'wide'` or `'full'` for long values. |
+
+### Screen recipes
+- **List:** `PageHeader`, then `.sep-page` containing: `StatusTabs` (when the data has a status); `.sep-toolbar` with the search `Field` (`hideLabel`, `leading="search"`), the filters, a "Xoá lọc" ghost button while filtered, and the primary action in `.sep-toolbar__actions`; `.pcb-table-wrap > table.pcb-table` with `th.sep-col-index` "STT", the row name as `a.sep-row-link`, status as `.sep-status`, and `th.sep-col-actions` "Hành động"; then `TableState` and `Pager`. Go back to page 1 on every filter change. Tables with many columns add `.sep-table--dense`.
+- **Detail:** `PageHeader` with `onBack` and `badge`, `.sep-alert` notices, then `section.sep-section` with `h2.sep-section-title` and `InfoGrid`, then `.sep-actions`: secondary actions in `.sep-actions__lead` on the left, decisions on the right, destructive actions as `variant="danger"`.
+- **Form:** the same sections, fields in `.sep-fields` (4, 2, then 1 column; `.sep-span-2`, `.sep-span-full`), each error under its field plus one `.sep-alert` "Vui lòng kiểm tra lại các ô được đánh dấu." at the top, and `.sep-actions` at the bottom (Huỷ as ghost, the primary action on the right).
+- **States:** every list handles loading (skeleton), empty (a title plus how to fill it), error (an `.sep-alert`, and no "no results" text) and missing permission.
 
 ## Do's and Don'ts
 
 ### Do:
 - **Do** take every color from `src/styles/tokens.css`. The palette and Inter are the team's Figma commitments.
+- **Do** build new screens from `src/components/common/` and the recipes above instead of redrawing a header, tabs, a table or a pager.
 - **Do** mark the current screen with the white rail pill and its concave corners, and nothing else.
 - **Do** use rail-blue 600 heads, a 56px STT column and a shrink-to-fit icon column on list tables.
 - **Do** show workflow status only through the soft status pills, and overdue dates through the red date plus the "Quá hạn" flag.
@@ -379,5 +412,6 @@ An empty table shows a centered message with 48px vertical padding and a 15px/50
 - **Don't** put a tinted canvas behind the sheet or float shadowed cards on it. Group content with hairlines and tint-panel.
 - **Don't** use a shadow on anything that sits on the page. Shadows are for menus and dialogs only.
 - **Don't** introduce a second accent hue, or reuse the red of the StarMath reference screenshots.
+- **Don't** set body-size text in rail blue `#668ee1`; use brand-ink.
 - **Don't** tint whole rows for status or lateness.
 - **Don't** make a destructive button look like the neutral button beside it.

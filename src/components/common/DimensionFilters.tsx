@@ -1,6 +1,6 @@
-import { SelectField } from '../../../components/pcb';
-import type { AcademicContextOption, SemesterOption } from '../../../types';
-import { contextOptions } from '../../../utils/academicContext';
+import { SelectField } from '../pcb';
+import type { AcademicContextOption, SemesterOption } from '../../types';
+import { contextOptions } from '../../utils/academicContext';
 
 export type DimensionFilterValue = {
   academicYearId?: number;

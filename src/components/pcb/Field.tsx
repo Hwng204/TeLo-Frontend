@@ -9,6 +9,8 @@ type ShellProps = {
   /** Giữ nhãn cho trình đọc màn hình nhưng không hiện ra (ô lọc trên thanh công cụ). */
   hideLabel?: boolean;
   error?: string;
+  /** Chỉ viền đỏ, không chữ: lỗi được báo bằng popup ở nơi khác. */
+  invalid?: boolean;
   /** Gợi ý không chặn, hiện dưới ô khi không có lỗi. */
   hint?: string;
   leading?: string;
@@ -17,12 +19,12 @@ type ShellProps = {
   children: (id: string) => ReactNode;
 };
 
-const Shell = ({ label, hideLabel, error, hint, leading, select, className, children }: ShellProps) => {
+const Shell = ({ label, hideLabel, error, invalid, hint, leading, select, className, children }: ShellProps) => {
   const id = useId();
   return (
     <div className={`pcb-field${className ? ` ${className}` : ''}`}>
       {label && <label className={hideLabel ? 'pcb-label pcb-label--hidden' : 'pcb-label'} htmlFor={id}>{label}</label>}
-      <div className={`pcb-control${error ? ' pcb-control--error' : ''}`}>
+      <div className={`pcb-control${error || invalid ? ' pcb-control--error' : ''}`}>
         {leading && <Icon name={leading} size={18} />}
         {children(id)}
         {select && <Icon name="expand_more" size={18} />}
@@ -36,14 +38,15 @@ type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label?: string;
   hideLabel?: boolean;
   error?: string;
+  invalid?: boolean;
   hint?: string;
   leading?: string;
   /** Lớp cho khung ngoài `.pcb-field`, không phải cho thẻ input. */
   fieldClassName?: string;
 };
 
-export const Field = ({ label, hideLabel, error, hint, leading, fieldClassName, ...input }: FieldProps) => (
-  <Shell label={label} hideLabel={hideLabel} error={error} hint={hint} leading={leading} className={fieldClassName}>
+export const Field = ({ label, hideLabel, error, invalid, hint, leading, fieldClassName, ...input }: FieldProps) => (
+  <Shell label={label} hideLabel={hideLabel} error={error} invalid={invalid} hint={hint} leading={leading} className={fieldClassName}>
     {(id) => <input id={id} {...input} />}
   </Shell>
 );
@@ -52,6 +55,7 @@ type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
   label?: string;
   hideLabel?: boolean;
   error?: string;
+  invalid?: boolean;
   hint?: string;
   fieldClassName?: string;
   /** Chữ mờ hiện trên ô khi chưa chọn gì (giá trị ''); danh sách vẫn dùng nhãn của lựa chọn rỗng. */
@@ -73,6 +77,7 @@ export const SelectField = ({
   label,
   hideLabel,
   error,
+  invalid,
   hint,
   fieldClassName,
   placeholder,
@@ -146,7 +151,7 @@ export const SelectField = ({
   };
 
   return (
-    <Shell label={label} hideLabel={hideLabel} error={error} hint={hint} className={fieldClassName} select>
+    <Shell label={label} hideLabel={hideLabel} error={error} invalid={invalid} hint={hint} className={fieldClassName} select>
       {(id) => (
         <>
           <button
@@ -161,7 +166,7 @@ export const SelectField = ({
             aria-controls={open ? menuId : undefined}
             aria-expanded={open}
             aria-haspopup="listbox"
-            aria-invalid={Boolean(error) || undefined}
+            aria-invalid={Boolean(error || invalid) || undefined}
             aria-label={select['aria-label'] ?? label}
             onFocus={onFocus as unknown as React.FocusEventHandler<HTMLButtonElement>}
             onBlur={onBlur as unknown as React.FocusEventHandler<HTMLButtonElement>}
@@ -213,7 +218,8 @@ export const SelectField = ({
                 </button>
               ))}
             </div>,
-            document.body,
+            // Trong <dialog> mở modal, phần ngoài dialog bị vô hiệu: phải gắn menu vào chính dialog.
+            triggerRef.current?.closest('dialog') ?? document.body,
           )}
         </>
       )}

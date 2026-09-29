@@ -7,13 +7,13 @@ import type { MatrixListQuery, MatrixStatus } from '../../../types';
 import { formatScore } from '../../../utils/matrixGrid';
 import { toProblem } from '../../../utils/problem';
 import { contextNames } from '../../../utils/academicContext';
-import { DimensionFilters, type DimensionFilterValue } from '../components/DimensionFilters';
-import { PageHeader } from '../components/PageHeader';
-import { Pager } from '../components/Pager';
+import { DimensionFilters, type DimensionFilterValue } from '../../../components/common/DimensionFilters';
+import { PageHeader } from '../../../components/common/PageHeader';
+import { Pager } from '../../../components/common/Pager';
 import { PersonCell } from '../components/PersonCell';
-import { RowAction } from '../components/RowAction';
-import { StatusTabs } from '../components/StatusTabs';
-import { TableState } from '../components/TableState';
+import { RowAction } from '../../../components/common/RowAction';
+import { StatusTabs } from '../../../components/common/StatusTabs';
+import { TableState } from '../../../components/common/TableState';
 import '../matrix.css';
 
 const STATUS_TABS: { value: MatrixStatus | ''; label: string; title?: string }[] = [

@@ -8,7 +8,7 @@ import type { ContextSelection } from '../../../utils/academicContext';
 import { localDateString } from '../../../utils/formatters';
 import { toProblem } from '../../../utils/problem';
 import { ContextSelects } from '../components/ContextSelects';
-import { PageHeader } from '../components/PageHeader';
+import { PageHeader } from '../../../components/common/PageHeader';
 import '../matrix.css';
 
 /** M01-A. Ngày giao do server tự ghi, không có ô nhập. */
