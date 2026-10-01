@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from '../components/pcb';
+import { api } from '../services/api';
+import { useAsync } from '../hooks/useAsync';
+import { formatActiveAcademicYear } from '../utils/academicYear';
 import { storage } from '../utils/storage';
 // Cùng khung và mẫu giao diện với AppShell để các màn quản trị trông thống nhất.
 import '../styles/sep-ui.css';
@@ -56,6 +59,11 @@ const menuData: MenuItem[] = [
 
 const COLLAPSED_KEY = 'sep-rail-collapsed';
 
+export type AdminOutletContext = {
+  reloadActiveAcademicYear: () => void;
+  activeAcademicYearLabel: string;
+};
+
 const readCollapsed = () => {
   try {
     return localStorage.getItem(COLLAPSED_KEY) === '1';
@@ -67,7 +75,14 @@ const readCollapsed = () => {
 export const AdminLayout = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const [user, setUser] = useState<{ fullName: string; role: string } | null>(null);
+  const [user] = useState(() => storage.getUser<{ fullName: string; role: string }>());
+  const activeAcademicYear = useAsync(() => api.academicYear.current(), [pathname]);
+  const reloadActiveAcademicYear = activeAcademicYear.reload;
+
+  useEffect(() => {
+    window.addEventListener('focus', reloadActiveAcademicYear);
+    return () => window.removeEventListener('focus', reloadActiveAcademicYear);
+  }, [reloadActiveAcademicYear]);
 
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
@@ -76,17 +91,14 @@ export const AdminLayout = () => {
     'auth': true,
   });
 
-  useEffect(() => {
-    const u = storage.getUser() as any;
-    if (u) setUser(u);
-  }, []);
-
   const toggleRail = () => {
     const next = !collapsed;
     setCollapsed(next);
     try {
       localStorage.setItem(COLLAPSED_KEY, next ? '1' : '0');
-    } catch { }
+    } catch {
+      // Trình duyệt có thể chặn localStorage; trạng thái thu gọn vẫn dùng được trong phiên hiện tại.
+    }
   };
 
   const handleLogout = () => {
@@ -100,6 +112,11 @@ export const AdminLayout = () => {
   };
 
   const initials = getUserInitials(user?.fullName);
+  const activeAcademicYearLabel = activeAcademicYear.loading
+    ? 'Đang tải năm học...'
+    : activeAcademicYear.error
+      ? 'Không tải được năm học'
+      : formatActiveAcademicYear(activeAcademicYear.data?.data?.name);
 
   const renderNavGroup = (item: MenuItem, depth = 0) => {
     const isExpanded = expandedGroups[item.id];
@@ -211,9 +228,10 @@ export const AdminLayout = () => {
         `}</style>
 
         <header className="sep-topbar" style={{ justifyContent: 'space-between', backgroundColor: '#ffffff' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569', fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+          <div aria-live="polite" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569', fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap' }}>
             <Icon name="calendar_month" size={18} />
-            Năm học 2026 - 2027
+            {activeAcademicYearLabel}
+            {Boolean(activeAcademicYear.error) && <button type="button" onClick={reloadActiveAcademicYear}>Thử lại</button>}
           </div>
 
           <div className="sep-user">
@@ -228,7 +246,7 @@ export const AdminLayout = () => {
         </header>
 
         <div className="sep-admin-content">
-          <Outlet />
+          <Outlet context={{ reloadActiveAcademicYear, activeAcademicYearLabel } satisfies AdminOutletContext} />
         </div>
       </main>
     </div>

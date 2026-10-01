@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { LoginForm } from '../components/LoginForm';
 import { ForgotPasswordEmailForm } from '../components/ForgotPasswordEmailForm';
 import { ForgotPasswordOtpForm } from '../components/ForgotPasswordOtpForm';
@@ -6,12 +6,26 @@ import { ResetPasswordForm } from '../components/ResetPasswordForm';
 import { displayToast } from '../../../utils/toast';
 import { GraduationCap, Headset } from 'lucide-react';
 import bgImage from '../../../assets/LoginBackground.jpg';
+import { api } from '../../../services/api';
+import { useAsync } from '../../../hooks/useAsync';
+import { formatActiveAcademicYear } from '../../../utils/academicYear';
 
 type AuthStep = 'login' | 'forgot_password_email' | 'forgot_password_otp' | 'reset_password';
 
 export const LoginPage: React.FC = () => {
   const [step, setStep] = useState<AuthStep>('login');
   const [resetEmail, setResetEmail] = useState('');
+  const activeAcademicYear = useAsync(() => api.academicYear.current(), []);
+  const reloadActiveAcademicYear = activeAcademicYear.reload;
+  useEffect(() => {
+    window.addEventListener('focus', reloadActiveAcademicYear);
+    return () => window.removeEventListener('focus', reloadActiveAcademicYear);
+  }, [reloadActiveAcademicYear]);
+  const activeAcademicYearLabel = activeAcademicYear.loading
+    ? 'Đang tải năm học...'
+    : activeAcademicYear.error
+      ? 'Chưa xác định năm học'
+      : formatActiveAcademicYear(activeAcademicYear.data?.data?.name);
 
   const renderForm = () => {
     switch (step) {
@@ -111,7 +125,7 @@ export const LoginPage: React.FC = () => {
           <div style={{ flex: 1, textAlign: 'left', maxWidth: '650px', marginLeft: '20px' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(0, 0, 0, 0.4)', padding: '8px 20px', borderRadius: '9999px', color: 'white', fontSize: '14px', marginBottom: '28px', border: '1px solid rgba(255,255,255,0.1)' }}>
               <span style={{ width: '8px', height: '8px', backgroundColor: '#34d399', borderRadius: '50%' }}></span>
-              Năm học 2026-2027 • Hệ thống trực tuyến
+              <span aria-live="polite">{activeAcademicYearLabel} • Hệ thống trực tuyến</span>
             </div>
             <h2 style={{ fontSize: '56px', fontWeight: 800, color: 'white', lineHeight: '1.25', margin: 0 }}>
               Nền tảng quản trị & <br />

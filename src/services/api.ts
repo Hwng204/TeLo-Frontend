@@ -5,6 +5,15 @@
  */
 import { apiClient } from './apiClient';
 import type {
+  IdentityQuery,
+  IdentityStatus,
+  IdentityScope,
+  IdentityUser,
+  RoleItem,
+  ModuleItem,
+  SaveRoleRequest,
+  SaveIdentityRequest,
+  UserRoles,
   ApiResponse,
   CreateMatrixTaskRequest,
   LoginRequest,
@@ -58,6 +67,7 @@ const filenameFrom = (header: unknown): string => {
 };
 const post = async <T>(url: string, body?: object): Promise<T> => (await apiClient.post<T>(url, body)).data;
 const put = async <T>(url: string, body?: object): Promise<T> => (await apiClient.put<T>(url, body)).data;
+const patch = async <T>(url: string, body?: object): Promise<T> => (await apiClient.patch<T>(url, body)).data;
 const del = async <T>(url: string): Promise<T> => (await apiClient.delete<T>(url)).data;
 
 /** Bóc lớp vỏ ApiResponse của các API danh bạ; lỗi đã được apiClient ném ra trước khi tới đây. */
@@ -65,6 +75,30 @@ const unwrap = async <T>(request: Promise<ApiResponse<T>>): Promise<T> => (await
 const directoryBase = (schoolId?: number) => (schoolId ? `/admin/schools/${schoolId}` : '');
 
 export const api = {
+  roles: {
+    list: (query: IdentityQuery = {}) => unwrap(get<ApiResponse<DirectoryPage<RoleItem>>>('/roles', query)),
+    get: (id: number) => unwrap(get<ApiResponse<RoleItem>>(`/roles/${id}`)),
+    create: (body: SaveRoleRequest) => unwrap(post<ApiResponse<RoleItem>>('/roles', body)),
+    update: (id: number, body: SaveRoleRequest & { version: number }) => unwrap(put<ApiResponse<RoleItem>>(`/roles/${id}`, body)),
+    status: (id: number, status: IdentityStatus, version: number) => unwrap(patch<ApiResponse<RoleItem>>(`/roles/${id}/status`, { status, version })),
+    remove: (id: number, version: number) => unwrap(del<ApiResponse<boolean>>(`/roles/${id}?version=${version}`)),
+    addUsers: (id: number, userIds: number[], version: number) => unwrap(post<ApiResponse<RoleItem>>(`/roles/${id}/users`, { userIds, version })),
+    removeUser: (id: number, userId: number, version: number) => unwrap(del<ApiResponse<RoleItem>>(`/roles/${id}/users/${userId}?version=${version}`)),
+  },
+  identity: {
+    users: (query: IdentityQuery = {}) => unwrap(get<ApiResponse<DirectoryPage<IdentityUser>>>('/users', query)),
+    userRoles: (id: number) => unwrap(get<ApiResponse<UserRoles>>(`/users/${id}/roles`)),
+    assignRoles: (id: number, roleIds: number[], version: number) => unwrap(put<ApiResponse<UserRoles>>(`/users/${id}/roles`, { roleIds, version })),
+    scopes: (query: { kind: 'school' | 'branch'; schoolId?: number; search?: string; page: number; pageSize: number }) => unwrap(get<ApiResponse<DirectoryPage<IdentityScope>>>('/identity/scopes', query)),
+  },
+  modules: {
+    list: (query: IdentityQuery = {}) => unwrap(get<ApiResponse<DirectoryPage<ModuleItem>>>('/modules', query)),
+    get: (id: number) => unwrap(get<ApiResponse<ModuleItem>>(`/modules/${id}`)),
+    create: (body: SaveIdentityRequest) => unwrap(post<ApiResponse<ModuleItem>>('/modules', body)),
+    update: (id: number, body: SaveIdentityRequest & { version: number }) => unwrap(put<ApiResponse<ModuleItem>>(`/modules/${id}`, body)),
+    status: (id: number, status: IdentityStatus, version: number) => unwrap(patch<ApiResponse<ModuleItem>>(`/modules/${id}/status`, { status, version })),
+    remove: (id: number, version: number) => unwrap(del<ApiResponse<boolean>>(`/modules/${id}?version=${version}`)),
+  },
   auth: {
     login: (credentials: LoginRequest) => post<LoginResponse>('/auth/login', credentials),
   },
@@ -160,6 +194,7 @@ export const api = {
   },
 
   academicYear: {
+    current: () => get<ApiResponse<AcademicYearListItem | null>>('/academic-years/current'),
     list: (params?: { status?: string; search?: string; page?: number; pageSize?: number }) =>
       get<ApiResponse<AcademicYearPage>>('/academic-years', params),
     get: (id: string) => get<ApiResponse<AcademicYearDetail>>(`/academic-years/${id}`),
@@ -168,6 +203,7 @@ export const api = {
       apiClient.patch<ApiResponse<AcademicYearDetail>>(`/academic-years/${id}`, body).then(r => r.data),
     activate: (id: string) => post<ApiResponse<AcademicYearDetail>>(`/academic-years/${id}/activate`),
     close: (id: string) => post<ApiResponse<AcademicYearDetail>>(`/academic-years/${id}/close`),
+    closeTerm: (id: string, termId: string) => post<ApiResponse<unknown>>(`/academic-years/${id}/terms/${termId}/close`),
     configureTerms: (id: string, body: ConfigureTermsRequest) =>
       apiClient.put<ApiResponse<AcademicYearDetail>>(`/academic-years/${id}/terms`, body).then(r => r.data),
   },
