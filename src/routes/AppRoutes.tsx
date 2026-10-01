@@ -19,6 +19,9 @@ import { TaskDetailPage } from '../features/matrix/pages/TaskDetailPage';
 import { AcademicYearListPage } from '../features/academicYears/pages/AcademicYearListPage';
 import { AcademicYearCreatePage } from '../features/academicYears/pages/AcademicYearCreatePage';
 import { AcademicYearConfigPage } from '../features/academicYears/pages/AcademicYearConfigPage';
+import { RoleListPage } from '../features/identity/pages/RoleListPage';
+import { ModuleListPage } from '../features/identity/pages/ModuleListPage';
+import { UserListPage } from '../features/identity/pages/UserListPage';
 import { storage } from '../utils/storage';
 import { getRoles, isDirectoryAdmin } from '../utils/jwt';
 
@@ -95,6 +98,11 @@ export const AppRoutes: React.FC = () => {
 
         {/* Protected App routes with AdminLayout */}
         <Route element={<AdminLayout />}>
+          <Route element={<RequireRole allow={['ADMIN', 'Admin', 'OperationalAdmin']} />}>
+            <Route path="/roles" element={<RoleListPage />} />
+            <Route path="/modules" element={<ModuleListPage />} />
+            <Route path="/users" element={<UserListPage />} />
+          </Route>
           {/* Sau khi login, admin được điều hướng đến trang danh sách trường */}
           <Route path="/" element={<Navigate to="/schools" replace />} />
           <Route path="/schools" element={<SchoolListPage />} />

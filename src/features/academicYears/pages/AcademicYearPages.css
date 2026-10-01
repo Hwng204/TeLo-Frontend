@@ -300,3 +300,37 @@
         flex: 1;
     }
 }
+
+.academic-field select {
+    min-height: 39px;
+    padding: 0 11px;
+    border: 1px solid #cedbe5;
+    border-radius: 5px;
+    background: #fff;
+    color: #263a4c;
+    font: inherit;
+    font-size: 13px;
+}
+
+.academic-form-lock { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 16px; }
+.academic-section > .academic-page__subtitle { margin: 0 0 16px; line-height: 1.6; }
+.academic-field input[aria-invalid="true"] { border-color: #b42318; }
+.academic-field-error { color: #b42318; font-size: 12px; line-height: 1.5; }
+.academic-error--summary { display: block; }
+.academic-error--summary ul { margin: 8px 0 0; padding-left: 20px; }
+.academic-error a { color: inherit; text-decoration: underline; }
+.academic-button { text-decoration: none; }
+.academic-button--danger { background: #fff; color: #b42318; border: 1px solid #b42318; }
+.academic-lifecycle-title { font-size: 17px; margin: 0 0 12px; }
+.academic-filters { display: flex; align-items: end; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.academic-filters > label:first-child { flex: 1; min-width: 180px; }
+.academic-table-wrap { overflow-x: auto; border: 1px solid #dce5ec; border-radius: 7px; background: #fff; }
+.academic-table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
+.academic-table th, .academic-table td { padding: 16px; border-bottom: 1px solid #e8eef2; white-space: nowrap; }
+.academic-table thead { background: #f4f7fa; color: #3a4e61; }
+.academic-table-link { color: #276fa8; font-weight: 600; }
+.academic-year-code { display: block; color: #637789; font-size: 12px; font-weight: 400; margin-top: 4px; }
+.academic-pagination { display: flex; align-items: center; justify-content: end; flex-wrap: wrap; gap: 12px; margin-top: 16px; font-size: 13px; }
+.academic-pagination > span { margin-right: auto; }
+.academic-page :is(button, a, select):focus-visible { outline: 3px solid #4389b8; outline-offset: 3px; }
+.academic-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }

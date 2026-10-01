@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { Search, Building2, Users, BookOpen, Home, ChevronDown } from 'lucide-react';
 import { api } from '../../../services/api';
 import { displayToast } from '../../../utils/toast';
@@ -7,6 +7,7 @@ import type { SchoolBranchSummary, CreateSchoolBranchRequest } from '../../../ty
 import { Pager } from '../../../components/common/Pager';
 import { useAsync, useDebounce } from '../../../hooks';
 import { BranchFormModal } from '../components/BranchFormModal';
+import type { AdminOutletContext } from '../../../layouts/AdminLayout';
 
 type ModalState =
   | { open: false }
@@ -16,6 +17,7 @@ type ModalState =
 
 export const BranchListPage: React.FC = () => {
   const { schoolId } = useParams();
+  const { activeAcademicYearLabel } = useOutletContext<AdminOutletContext>();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
@@ -102,7 +104,7 @@ export const BranchListPage: React.FC = () => {
             <span>•</span>
             <span>{school.code}</span>
             <span>•</span>
-            <span>Năm học {school.currentAcademicYear}</span>
+            <span>{activeAcademicYearLabel}</span>
           </div>
         </div>
         <button

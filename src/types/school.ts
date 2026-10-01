@@ -14,7 +14,6 @@ export interface School {
   name: string;
   status: 'ACTIVE' | 'INACTIVE';
   provinceCode?: string;
-  currentAcademicYear: string;
   branches: SchoolBranchSummary[];
 }
 
@@ -58,7 +57,6 @@ export function mapSchool(item: SchoolItem): School {
     code: item.code,
     name: item.name,
     status: (item.status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE') as School['status'],
-    currentAcademicYear: '2026-2027',
     branches: Array.from({ length: item.branchCount || 0 }, (_, i) => ({
       id: `${item.id}-${i}`,
       code: `${item.code}-B${i + 1}`,

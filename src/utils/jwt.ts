@@ -64,6 +64,16 @@ export const isTeacher = () => {
 /** Quản trị vận hành: xem và thêm/sửa/xoá lớp, học sinh của mọi trường. */
 export const isDirectoryAdmin = () => getRoles().some((role) => DIRECTORY_ADMIN_ROLES.includes(role));
 
+/** Matches the backend OperationalAdmin policy for calendar writes. */
+export const canManageAcademicYears = () => {
+  const token = storage.getToken();
+  if (!token) return false;
+  const permissions: unknown = parseJwt(token).permission;
+  return getRoles().some((role) => role === 'OperationalAdmin' || role === 'ADMIN') ||
+    permissions === 'academic_calendar.manage' ||
+    (Array.isArray(permissions) && permissions.includes('academic_calendar.manage'));
+};
+
 /** Nhãn vai trò để hiển thị. Hiệu trưởng có cùng quyền với PHT nhưng không phải là PHT. */
 export const roleLabel = (): string => {
   const roles = getRoles();
