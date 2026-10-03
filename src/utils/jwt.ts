@@ -8,7 +8,8 @@ const TEAM_LEAD_ROLES = ['TEAM_LEAD', 'TO_TRUONG'];
 const PHT_ROLES = ['PHT', 'HIEU_TRUONG', 'PRINCIPAL'];
 // Khớp SchoolDirectoryAuth trong appsettings.json.
 const TEACHER_ROLES = ['GIAO_VIEN', 'TEACHER'];
-const DIRECTORY_ADMIN_ROLES = ['OperationalAdmin'];
+const STUDENT_ROLES = ['HOC_SINH', 'STUDENT'];
+const DIRECTORY_ADMIN_ROLES = ['OperationalAdmin', 'ADMIN'];
 
 export const parseJwt = (token: string) => {
   try {
@@ -61,6 +62,10 @@ export const isTeacher = () => {
   const roles = getRoles();
   return roles.length > 0 && roles.every((role) => TEACHER_ROLES.includes(role));
 };
+export const isStudent = () => {
+  const roles = getRoles();
+  return roles.length > 0 && roles.some((role) => STUDENT_ROLES.includes(role));
+};
 /** Quản trị vận hành: xem và thêm/sửa/xoá lớp, học sinh của mọi trường. */
 export const isDirectoryAdmin = () => getRoles().some((role) => DIRECTORY_ADMIN_ROLES.includes(role));
 
@@ -81,6 +86,7 @@ export const roleLabel = (): string => {
   if (roles.includes('PHT')) return 'Phó Hiệu trưởng';
   if (roles.some((role) => TEAM_LEAD_ROLES.includes(role))) return 'Tổ trưởng';
   if (roles.some((role) => TEACHER_ROLES.includes(role))) return 'Giáo viên';
+  if (roles.some((role) => STUDENT_ROLES.includes(role))) return 'Học sinh';
   if (roles.some((role) => DIRECTORY_ADMIN_ROLES.includes(role))) return 'Quản trị viên';
   return '';
 };
