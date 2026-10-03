@@ -29,6 +29,9 @@ const EXAM_GROUP = [
   'Danh sách kỳ thi', 'Danh sách môn thi', 'Danh sách thí sinh', 'Danh sách bộ đề thi', 'Danh sách phòng thi',
   'Danh sách ca thi', 'Xếp phòng thi', 'Danh sách giám thị', 'Phân công giám thị',
 ];
+const EXAM_PATHS: Record<string, string | undefined> = {
+  'Danh sách kỳ thi': '/exams',
+};
 const TL_NAV: NavEntry[] = [
   { icon: 'menu_book', label: 'Chương trình học' },
   // Tổ trưởng xem ma trận của mình qua nhiệm vụ, nên màn ma trận vẫn thuộc mục này.
@@ -80,10 +83,11 @@ const NavItem = ({ icon, label, to, activeFor = [] }: NavEntry) => {
 /** Khung chung của app: sidebar theo vai trò + vùng nội dung. Mỗi màn tự vẽ thanh trên bằng PageHeader. */
 export const AppShell = () => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const teamLead = isTeamLead();
   const teacherOnly = isTeacher();
   // Thu gọn mặc định: 9 mục con mở sẵn làm menu PHT dài gấp đôi menu Tổ trưởng.
-  const [examOpen, setExamOpen] = useState(false);
+  const [examOpen, setExamOpen] = useState(pathname.startsWith('/exams'));
   const [collapsed, setCollapsed] = useState(readCollapsed);
 
   const toggleRail = () => {
@@ -141,11 +145,23 @@ export const AppShell = () => {
                 </button>
                 {examOpen && (
                   <div className="sep-submenu">
-                    {EXAM_GROUP.map((label) => (
-                      <span key={label} className="sep-subnav" aria-disabled="true">
-                        {label}
-                      </span>
-                    ))}
+                    {EXAM_GROUP.map((label) => {
+                      const to = EXAM_PATHS[label];
+                      if (!to) {
+                        return <span key={label} className="sep-subnav" aria-disabled="true">{label}</span>;
+                      }
+                      const active = pathname === to || pathname.startsWith(`${to}/`);
+                      return (
+                        <Link
+                          key={label}
+                          to={to}
+                          className={`sep-subnav sep-subnav--link${active ? ' sep-subnav--active' : ''}`}
+                          aria-current={active ? 'page' : undefined}
+                        >
+                          {label}
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </div>

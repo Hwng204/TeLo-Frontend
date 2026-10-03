@@ -31,6 +31,9 @@
 
 .sep-submenu { display: flex; flex-direction: column; gap: 2px; margin: 2px 16px 6px 34px; padding-left: 14px; border-left: 1px solid rgba(255, 255, 255, .28); }
 .sep-subnav { display: flex; align-items: center; min-height: 34px; padding: 0 8px; font: 400 13px/18px 'Inter', sans-serif; color: rgba(255, 255, 255, .78); }
+.sep-subnav--link { border-radius: 7px; text-decoration: none; transition: background-color var(--sep-transition), color var(--sep-transition); }
+.sep-subnav--link:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.sep-subnav--active { background: rgba(255, 255, 255, .18); color: #fff; font-weight: 600; }
 
 .sep-support { display: flex; flex-direction: column; gap: 2px; padding: 8px 0 12px 16px; border-top: 1px solid rgba(255, 255, 255, .18); }
 .sep-rail__toggle { position: relative; left: -8px; align-self: center; display: grid; place-items: center; width: 34px; height: 34px; margin-top: 6px; padding: 0; border: 1.5px solid rgba(255, 255, 255, .8); border-radius: 50%; background: transparent; color: var(--pcb-color-text-on-accent); cursor: pointer; transition: background-color var(--sep-transition); }

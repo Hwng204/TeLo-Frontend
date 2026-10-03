@@ -53,6 +53,10 @@ import type {
   StudentListQuery,
   StudentScoreItem,
   TransferStudentClassRequest,
+  CreateExamRequest,
+  ExamDetail,
+  ExamListQuery,
+  ExamPage,
 } from '../types';
 
 const get = async <T>(url: string, params?: object): Promise<T> => (await apiClient.get<T>(url, { params })).data;
@@ -206,5 +210,10 @@ export const api = {
     closeTerm: (id: string, termId: string) => post<ApiResponse<unknown>>(`/academic-years/${id}/terms/${termId}/close`),
     configureTerms: (id: string, body: ConfigureTermsRequest) =>
       apiClient.put<ApiResponse<AcademicYearDetail>>(`/academic-years/${id}/terms`, body).then(r => r.data),
+  },
+
+  exam: {
+    list: (query: ExamListQuery = {}) => get<ApiResponse<ExamPage>>('/exams', query),
+    create: (body: CreateExamRequest) => post<ApiResponse<ExamDetail>>('/exams', body),
   },
 };
