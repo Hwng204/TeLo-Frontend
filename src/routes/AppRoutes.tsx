@@ -22,6 +22,7 @@ import { AcademicYearConfigPage } from '../features/academicYears/pages/Academic
 import { RoleListPage } from '../features/identity/pages/RoleListPage';
 import { ModuleListPage } from '../features/identity/pages/ModuleListPage';
 import { UserListPage } from '../features/identity/pages/UserListPage';
+import { ExamListPage } from '../features/exams/pages/ExamListPage';
 import { storage } from '../utils/storage';
 import { getRoles, isDirectoryAdmin } from '../utils/jwt';
 
@@ -67,6 +68,7 @@ export const AppRoutes: React.FC = () => {
             <Route path="/matrices" element={<MatrixListPage />} />
             <Route path="/matrices/new" element={<MatrixEditorPage />} />
             <Route path="/matrix-tasks/new" element={<TaskAssignPage />} />
+            <Route path="/exams" element={<ExamListPage />} />
           </Route>
 
           {/* Mở cho cả hai vai: Tổ trưởng phải xem lại được ma trận mình vừa nộp. */}

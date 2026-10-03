@@ -5,3 +5,4 @@ export * from './directory';
 export * from './school';
 export * from './academicYear';
 export * from './identity';
+export * from './exam';
