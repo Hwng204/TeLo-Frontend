@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, Building2, Users, BookOpen, ArrowRight, Edit2, ChevronDown } from 'lucide-react';
 import { SchoolFormModal } from '../components/SchoolFormModal';
@@ -165,10 +165,6 @@ const SchoolCard: React.FC<{
           <span style={{ color: '#1e293b', fontWeight: 500 }}>0 Cán bộ & Giáo viên</span>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-          <span style={{ color: '#64748b' }}>Người đại diện:</span>
-          <span style={{ color: '#1e293b', fontWeight: 500 }}>Nguyễn Hữu Hưng</span>
-        </div>
       </div>
 
       {/* ── Actions ── */}
@@ -283,7 +279,19 @@ export const SchoolListPage: React.FC = () => {
   const [modal, setModal] = useState<ModalState>({ open: false });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+        setShowStatusDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const query = {
     search: debouncedSearch || undefined,
@@ -453,31 +461,81 @@ export const SchoolListPage: React.FC = () => {
           />
         </div>
 
-        <div style={{ position: 'relative', width: '220px', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+        <div ref={statusDropdownRef} style={{ position: 'relative', width: '220px', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+          <div
+            onClick={() => setShowStatusDropdown(!showStatusDropdown)}
             style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               width: '100%',
-              padding: '12px 36px 12px 16px',
+              padding: '12px 16px',
               borderRadius: '8px',
-              border: 'none',
-              backgroundColor: 'transparent',
+              backgroundColor: showStatusDropdown ? '#f8fafc' : 'transparent',
               fontSize: '14px',
               color: '#334155',
               cursor: 'pointer',
-              outline: 'none',
-              appearance: 'none',
               fontWeight: 500,
+              transition: 'background-color 0.2s',
             }}
-            onFocus={e => e.target.style.backgroundColor = '#f8fafc'}
-            onBlur={e => e.target.style.backgroundColor = 'transparent'}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f8fafc'}
+            onMouseLeave={e => { if (!showStatusDropdown) e.currentTarget.style.backgroundColor = 'transparent' }}
           >
-            <option value="ALL">Tất cả trạng thái</option>
-            <option value="ACTIVE">Đang hoạt động</option>
-            <option value="INACTIVE">Tạm dừng</option>
-          </select>
-          <ChevronDown size={16} color="#64748b" style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            {statusFilter === 'ALL' ? 'Tất cả trạng thái' : statusFilter === 'ACTIVE' ? 'Đang hoạt động' : 'Tạm dừng'}
+            <ChevronDown size={16} color="#64748b" style={{ transform: showStatusDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+          </div>
+          
+          {showStatusDropdown && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              marginTop: '4px',
+              backgroundColor: '#ffffff',
+              borderRadius: '8px',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+              zIndex: 50,
+              padding: '6px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '2px'
+            }}>
+              {[
+                { value: 'ALL', label: 'Tất cả trạng thái' },
+                { value: 'ACTIVE', label: 'Đang hoạt động' },
+                { value: 'INACTIVE', label: 'Tạm dừng' }
+              ].map((opt) => (
+                <div
+                  key={opt.value}
+                  className="status-dropdown-item"
+                  onClick={() => { setStatusFilter(opt.value); setShowStatusDropdown(false); }}
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: statusFilter === opt.value ? 600 : 500,
+                    color: statusFilter === opt.value ? '#1d4ed8' : '#334155',
+                    backgroundColor: statusFilter === opt.value ? '#eff6ff' : 'transparent',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  {opt.label}
+                  {statusFilter === opt.value && (
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#1d4ed8' }} />
+                  )}
+                </div>
+              ))}
+              <style>{`
+                .status-dropdown-item:hover { background-color: #f1f5f9; }
+                .status-dropdown-item[style*="background-color: rgb(239, 246, 255)"]:hover { background-color: #eff6ff !important; }
+              `}</style>
+            </div>
+          )}
         </div>
       </div>
 

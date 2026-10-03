@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Icon } from '../components/pcb';
 import { isTeacher, isTeamLead } from '../utils/jwt';
-import { storage } from '../utils/storage';
 // Mẫu giao diện dùng chung trước, rồi mới tới khung: giữ đúng thứ tự cascade như lúc còn một file.
 import '../styles/sep-ui.css';
 import './AppShell.css';
@@ -24,6 +23,7 @@ const TEACHER_NAV: NavEntry[] = [
   { icon: 'groups', label: 'Lớp chủ nhiệm', to: '/classes', activeFor: ['/classes'] },
   { icon: 'school', label: 'Học sinh', to: '/students', activeFor: ['/students'] },
 ];
+
 const PHT_NAV_AFTER_EXAM_GROUP: NavEntry[] = [{ icon: 'mail', label: 'Quản lý mẫu mail' }];
 const EXAM_GROUP = [
   'Danh sách kỳ thi', 'Danh sách môn thi', 'Danh sách thí sinh', 'Danh sách bộ đề thi', 'Danh sách phòng thi',
@@ -82,7 +82,6 @@ const NavItem = ({ icon, label, to, activeFor = [] }: NavEntry) => {
 
 /** Khung chung của app: sidebar theo vai trò + vùng nội dung. Mỗi màn tự vẽ thanh trên bằng PageHeader. */
 export const AppShell = () => {
-  const navigate = useNavigate();
   const { pathname } = useLocation();
   const teamLead = isTeamLead();
   const teacherOnly = isTeacher();
@@ -100,10 +99,6 @@ export const AppShell = () => {
     }
   };
 
-  const logout = () => {
-    storage.clearAuth();
-    navigate('/login');
-  };
 
   return (
     <div className={`sep-app sep-shell${collapsed ? ' sep-shell--collapsed' : ''}`}>
@@ -171,11 +166,6 @@ export const AppShell = () => {
         </nav>
 
         <div className="sep-support">
-          <NavItem icon="help" label="Trợ giúp" />
-          <button type="button" className="sep-nav" title="Đăng xuất" onClick={logout}>
-            <Icon name="logout" size={22} />
-            <span className="sep-rail__label">Đăng xuất</span>
-          </button>
           <button
             type="button"
             className="sep-rail__toggle"

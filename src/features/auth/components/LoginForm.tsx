@@ -6,7 +6,7 @@ import { isAxiosError } from 'axios';
 import { storage } from '../../../utils/storage';
 import { displayToast } from '../../../utils/toast';
 import { api } from '../../../services/api';
-import { isPht, isTeacher, isTeamLead, parseJwt } from '../../../utils/jwt';
+import { getRoles, parseJwt } from '../../../utils/jwt';
 
 export const LoginForm: React.FC<{ onForgotPassword?: () => void }> = ({ onForgotPassword }) => {
   const navigate = useNavigate();
@@ -48,7 +48,13 @@ export const LoginForm: React.FC<{ onForgotPassword?: () => void }> = ({ onForgo
           fullName,
         });
         displayToast('success', 'Thành công', 'Đăng nhập thành công!');
-        navigate(isTeamLead() ? '/matrix-tasks' : isPht() ? '/matrices' : isTeacher() ? '/classes' : '/schools');
+        const roles = getRoles();
+        const hasRole = (rolesList: string[]) => rolesList.some(r => roles.includes(r));
+        const isTL = hasRole(['TEAM_LEAD', 'TO_TRUONG']);
+        const isP = hasRole(['PHT', 'HIEU_TRUONG', 'PRINCIPAL']);
+        const isT = hasRole(['GIAO_VIEN', 'TEACHER']);
+        const isS = hasRole(['HOC_SINH', 'STUDENT']);
+        navigate(isTL ? '/matrix-tasks' : isP ? '/matrices' : isS ? '/student-dashboard' : isT ? '/classes' : '/schools');
       } else {
         throw new Error('Invalid response');
       }

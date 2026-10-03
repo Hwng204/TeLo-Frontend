@@ -281,6 +281,13 @@ export const BranchListPage: React.FC = () => {
                   }}
                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#1d4ed8'; }}
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#2563eb'; }}
+                  onClick={() => {
+                    localStorage.setItem('selected_school_id', school.id);
+                    localStorage.setItem('selected_school_name', school.name);
+                    localStorage.setItem('selected_branch_id', branch.id);
+                    localStorage.setItem('selected_branch_name', branch.name);
+                    navigate('/overview');
+                  }}
                 >
                   Vào quản lý
                 </button>

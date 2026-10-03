@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { api } from '../../../services/api';
 import { LoginForm } from '../components/LoginForm';
 import { ForgotPasswordEmailForm } from '../components/ForgotPasswordEmailForm';
 import { ForgotPasswordOtpForm } from '../components/ForgotPasswordOtpForm';
@@ -6,26 +7,27 @@ import { ResetPasswordForm } from '../components/ResetPasswordForm';
 import { displayToast } from '../../../utils/toast';
 import { GraduationCap, Headset } from 'lucide-react';
 import bgImage from '../../../assets/LoginBackground.jpg';
-import { api } from '../../../services/api';
-import { useAsync } from '../../../hooks/useAsync';
-import { formatActiveAcademicYear } from '../../../utils/academicYear';
 
 type AuthStep = 'login' | 'forgot_password_email' | 'forgot_password_otp' | 'reset_password';
 
 export const LoginPage: React.FC = () => {
   const [step, setStep] = useState<AuthStep>('login');
   const [resetEmail, setResetEmail] = useState('');
-  const activeAcademicYear = useAsync(() => api.academicYear.current(), []);
-  const reloadActiveAcademicYear = activeAcademicYear.reload;
+  const [resetOtp, setResetOtp] = useState('');
+  const [activeYearName, setActiveYearName] = useState<string>('Năm học 2026-2027');
+
   useEffect(() => {
-    window.addEventListener('focus', reloadActiveAcademicYear);
-    return () => window.removeEventListener('focus', reloadActiveAcademicYear);
-  }, [reloadActiveAcademicYear]);
-  const activeAcademicYearLabel = activeAcademicYear.loading
-    ? 'Đang tải năm học...'
-    : activeAcademicYear.error
-      ? 'Chưa xác định năm học'
-      : formatActiveAcademicYear(activeAcademicYear.data?.data?.name);
+    api.academicYear.list({ status: 'ACTIVE' }).then(res => {
+      if ((res.data?.items?.length ?? 0) > 0) {
+        setActiveYearName(`Năm học ${res.data!.items![0].name}`);
+      } else {
+        setActiveYearName('Chưa thiết lập năm học');
+      }
+    }).catch(err => {
+      console.error(err);
+      setActiveYearName('Chưa thiết lập năm học');
+    });
+  }, []);
 
   const renderForm = () => {
     switch (step) {
@@ -45,16 +47,22 @@ export const LoginPage: React.FC = () => {
         return (
           <ForgotPasswordOtpForm
             email={resetEmail}
-            onSuccess={() => setStep('reset_password')}
+            onSuccess={(otp) => {
+              setResetOtp(otp);
+              setStep('reset_password');
+            }}
             onResend={() => {
               // Handle resend logic here if needed
               console.log('Resending OTP to', resetEmail);
             }}
+            onBack={() => setStep('login')}
           />
         );
       case 'reset_password':
         return (
           <ResetPasswordForm
+            email={resetEmail}
+            otp={resetOtp}
             onSuccess={() => {
               displayToast('success', 'Thành công', 'Cập nhật mật khẩu thành công! Vui lòng đăng nhập lại.', 3);
               setStep('login');
@@ -125,7 +133,7 @@ export const LoginPage: React.FC = () => {
           <div style={{ flex: 1, textAlign: 'left', maxWidth: '650px', marginLeft: '20px' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(0, 0, 0, 0.4)', padding: '8px 20px', borderRadius: '9999px', color: 'white', fontSize: '14px', marginBottom: '28px', border: '1px solid rgba(255,255,255,0.1)' }}>
               <span style={{ width: '8px', height: '8px', backgroundColor: '#34d399', borderRadius: '50%' }}></span>
-              <span aria-live="polite">{activeAcademicYearLabel} • Hệ thống trực tuyến</span>
+              {activeYearName} • Hệ thống trực tuyến
             </div>
             <h2 style={{ fontSize: '56px', fontWeight: 800, color: 'white', lineHeight: '1.25', margin: 0 }}>
               Nền tảng quản trị & <br />

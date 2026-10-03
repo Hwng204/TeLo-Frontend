@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { Button } from '../../../components/common/Button';
 import { displayToast } from '../../../utils/toast';
+import { api } from '../../../services/api';
+import { isAxiosError } from 'axios';
 
 interface ForgotPasswordEmailFormProps {
   onSuccess: (email: string) => void;
@@ -23,11 +25,14 @@ export const ForgotPasswordEmailForm: React.FC<ForgotPasswordEmailFormProps> = (
 
     try {
       setIsLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      onSuccess(email);
-    } catch {
-      displayToast('error', 'Lỗi', 'Có lỗi xảy ra. Vui lòng thử lại.');
+      const res = await api.auth.forgotPassword({ email: email.trim() });
+      displayToast('success', 'Thành công', res.message || 'Mã OTP đã được gửi đến email của bạn.');
+      onSuccess(email.trim());
+    } catch (err: any) {
+      const errMsg = isAxiosError(err) && err.response?.data?.message 
+        ? err.response.data.message 
+        : 'Có lỗi xảy ra. Vui lòng thử lại.';
+      displayToast('error', 'Lỗi', errMsg);
     } finally {
       setIsLoading(false);
     }
