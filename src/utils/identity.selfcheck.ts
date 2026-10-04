@@ -1,4 +1,4 @@
-import { validateIdentity, validateRole, toggleSelection, identityConflict, canAssignRole, identityError, identityPageWithinRange } from './identity.ts';
+import { validateIdentity, validateRole, toggleSelection, identityConflict, canAssignRole, identityError, identityPageWithinRange, validateCreateUser, validatePassword } from './identity.ts';
 import type { IdentityUser, RoleItem } from '../types/identity.ts';
 const assert = {
   ok(value: unknown) {
@@ -79,4 +79,19 @@ assert.deepEqual(identityError({
 assert.deepEqual(identityError({ isAxiosError: true, response: { status: 400, data: { title: 'Bad Request', errors: { Name: ['Tên không hợp lệ.'] } } } }), 'Tên không hợp lệ.');
 assert.deepEqual(identityError({ isAxiosError: true, response: { status: 403, data: { detail: 'Không đủ quyền.' } } }), 'Không đủ quyền.');
 assert.deepEqual(identityError(new Error('Network failure')), 'Không kết nối được máy chủ.');
-console.log('[identity] 22 self-checks passed');
+const createUser = {
+  username: 'admin.user',
+  email: 'admin@example.com',
+  fullName: 'Quản trị viên',
+  password: 'Strong-password-123!',
+  moetIdentifier: null,
+  schoolBranchId: null,
+  status: 'ACTIVE' as const,
+  roleIds: [1],
+};
+assert.deepEqual(validateCreateUser(createUser, createUser.password), {});
+assert.ok(validateCreateUser({ ...createUser, username: 'a' }, createUser.password).username);
+assert.ok(validateCreateUser({ ...createUser, email: 'invalid' }, createUser.password).email);
+assert.ok(validateCreateUser(createUser, 'different').confirmPassword);
+assert.ok(validatePassword('weak'));
+console.log('[identity] 27 self-checks passed');

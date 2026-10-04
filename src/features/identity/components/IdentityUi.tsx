@@ -5,11 +5,12 @@ import { Pager } from '../../../components/common/Pager';
 import { identityError, identityPageWithinRange } from '../../../utils/identity';
 import type { DirectoryPage } from '../../../types';
 
-export function IdentityDialog({ title, children, onClose, busy = false }: {
+export function IdentityDialog({ title, children, onClose, busy = false, className = '' }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
-  busy?: boolean
+  busy?: boolean;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const id = useId();
@@ -20,7 +21,7 @@ export function IdentityDialog({ title, children, onClose, busy = false }: {
   }, []);
   return <dialog
     ref={ref}
-    className="sep-dialog identity-dialog"
+    className={`sep-dialog identity-dialog${className ? ` ${className}` : ''}`}
     aria-labelledby={id}
     onCancel={event => {
       event.preventDefault();

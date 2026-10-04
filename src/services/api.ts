@@ -9,6 +9,10 @@ import type {
   IdentityStatus,
   IdentityScope,
   IdentityUser,
+  UserDetail,
+  UserStatus,
+  CreateUserRequest,
+  UpdateUserRequest,
   RoleItem,
   ModuleItem,
   SaveRoleRequest,
@@ -91,6 +95,14 @@ export const api = {
   },
   identity: {
     users: (query: IdentityQuery = {}) => unwrap(get<ApiResponse<DirectoryPage<IdentityUser>>>('/users', query)),
+    user: (id: number) => unwrap(get<ApiResponse<UserDetail>>(`/users/${id}`)),
+    createUser: (body: CreateUserRequest) => unwrap(post<ApiResponse<UserDetail>>('/users', body)),
+    updateUser: (id: number, body: UpdateUserRequest) => unwrap(put<ApiResponse<UserDetail>>(`/users/${id}`, body)),
+    userStatus: (id: number, status: UserStatus, version: number) =>
+      unwrap(patch<ApiResponse<UserDetail>>(`/users/${id}/status`, { status, version })),
+    resetUserPassword: (id: number, newPassword: string, version: number) =>
+      unwrap(patch<ApiResponse<UserDetail>>(`/users/${id}/password`, { newPassword, version })),
+    removeUser: (id: number, version: number) => unwrap(del<ApiResponse<boolean>>(`/users/${id}?version=${version}`)),
     userRoles: (id: number) => unwrap(get<ApiResponse<UserRoles>>(`/users/${id}/roles`)),
     assignRoles: (id: number, roleIds: number[], version: number) => unwrap(put<ApiResponse<UserRoles>>(`/users/${id}/roles`, { roleIds, version })),
     scopes: (query: { kind: 'school' | 'branch'; schoolId?: number; search?: string; page: number; pageSize: number }) => unwrap(get<ApiResponse<DirectoryPage<IdentityScope>>>('/identity/scopes', query)),
