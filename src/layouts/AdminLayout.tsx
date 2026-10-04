@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from '../components/pcb';
 import { api } from '../services/api';
 import { useAsync } from '../hooks/useAsync';
 import { formatActiveAcademicYear } from '../utils/academicYear';
 import { storage } from '../utils/storage';
+import { BranchSelectModal } from '../components/common/BranchSelectModal';
 // Cùng khung và mẫu giao diện với AppShell để các màn quản trị trông thống nhất.
 import '../styles/sep-ui.css';
 import './AppShell.css';
@@ -76,13 +77,29 @@ export const AdminLayout = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [user] = useState(() => storage.getUser<{ fullName: string; role: string }>());
-  const activeAcademicYear = useAsync(() => api.academicYear.current(), [pathname]);
+  const activeAcademicYear = useAsync(() => api.academicYear.current().catch(e => {
+    if (e.response?.status === 404) return { data: null };
+    throw e;
+  }), [pathname]);
   const reloadActiveAcademicYear = activeAcademicYear.reload;
+  const [showBranchModal, setShowBranchModal] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     window.addEventListener('focus', reloadActiveAcademicYear);
     return () => window.removeEventListener('focus', reloadActiveAcademicYear);
   }, [reloadActiveAcademicYear]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
@@ -108,7 +125,30 @@ export const AdminLayout = () => {
 
   const toggleGroup = (id: string) => {
     if (collapsed) toggleRail();
-    setExpandedGroups(prev => ({ ...prev, [id]: !prev[id] }));
+
+    if (id === 'operation') {
+      const selectedBranchId = localStorage.getItem('selected_branch_id');
+      if (!selectedBranchId && !expandedGroups.operation) {
+        setShowBranchModal(true);
+        return;
+      }
+    }
+
+    setExpandedGroups(prev => {
+      if (id === 'system') return { ...prev, system: !prev.system, operation: false };
+      if (id === 'operation') return { ...prev, operation: !prev.operation, system: false };
+      return { ...prev, [id]: !prev[id] };
+    });
+  };
+
+  const handleBranchSelect = (schoolId: string, schoolName: string, branchId: string, branchName: string) => {
+    localStorage.setItem('selected_school_id', schoolId);
+    localStorage.setItem('selected_school_name', schoolName);
+    localStorage.setItem('selected_branch_id', branchId);
+    localStorage.setItem('selected_branch_name', branchName);
+    setShowBranchModal(false);
+    setExpandedGroups(prev => ({ ...prev, operation: true, system: false }));
+    navigate('/overview');
   };
 
   const initials = getUserInitials(user?.fullName);
@@ -198,14 +238,6 @@ export const AdminLayout = () => {
         </nav>
 
         <div className="sep-support">
-          <Link to="/help" className="sep-nav" title="Trợ giúp">
-            <Icon name="help" size={22} />
-            <span className="sep-rail__label">Trợ giúp</span>
-          </Link>
-          <button type="button" className="sep-nav" title="Đăng xuất" onClick={handleLogout}>
-            <Icon name="logout" size={22} />
-            <span className="sep-rail__label">Đăng xuất</span>
-          </button>
           <button
             type="button"
             className="sep-rail__toggle"
@@ -234,14 +266,53 @@ export const AdminLayout = () => {
             {Boolean(activeAcademicYear.error) && <button type="button" onClick={reloadActiveAcademicYear}>Thử lại</button>}
           </div>
 
-          <div className="sep-user">
+          <div className="sep-user" ref={userMenuRef} style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setShowUserMenu(!showUserMenu)}>
             <div className="sep-user__avatar">
               {initials}
             </div>
-            <div className="sep-user__text">
+            <div className="sep-user__text" style={{ paddingRight: '8px' }}>
               <span className="sep-user__name">{user?.fullName || 'Nguyễn Văn A'}</span>
               <span className="sep-user__role">Quản trị viên vận hành</span>
             </div>
+            <span style={{ color: '#64748b', display: 'flex' }}><Icon name="expand_more" size={20} /></span>
+
+            {showUserMenu && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: '8px',
+                width: '200px',
+                backgroundColor: 'white',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                border: '1px solid #e2e8f0',
+                zIndex: 50,
+                padding: '4px'
+              }}>
+                <Link to="/profile" className="sep-menu-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', fontSize: '14px', color: '#334155', textDecoration: 'none', borderRadius: '4px' }} onClick={() => setShowUserMenu(false)}>
+                  <span style={{ color: '#64748b', display: 'flex' }}><Icon name="person" size={18} /></span>
+                  Hồ sơ cá nhân
+                </Link>
+                <Link to="/change-password" className="sep-menu-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', fontSize: '14px', color: '#334155', textDecoration: 'none', borderRadius: '4px' }} onClick={() => setShowUserMenu(false)}>
+                  <span style={{ color: '#64748b', display: 'flex' }}><Icon name="lock" size={18} /></span>
+                  Đổi mật khẩu
+                </Link>
+                <div style={{ height: '1px', backgroundColor: '#e2e8f0', margin: '4px 0' }}></div>
+                <button 
+                  type="button"
+                  className="sep-menu-item"
+                  onClick={handleLogout}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', fontSize: '14px', color: '#ef4444', textDecoration: 'none', borderRadius: '4px', width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                >
+                  <Icon name="logout" size={18} />
+                  Đăng xuất
+                </button>
+                <style>{`
+                  .sep-menu-item:hover { background-color: #f1f5f9 !important; }
+                `}</style>
+              </div>
+            )}
           </div>
         </header>
 
@@ -249,6 +320,13 @@ export const AdminLayout = () => {
           <Outlet context={{ reloadActiveAcademicYear, activeAcademicYearLabel } satisfies AdminOutletContext} />
         </div>
       </main>
+      {/* Branch Select Modal */}
+      {showBranchModal && (
+        <BranchSelectModal 
+          onClose={() => setShowBranchModal(false)}
+          onSelect={handleBranchSelect}
+        />
+      )}
     </div>
   );
 };

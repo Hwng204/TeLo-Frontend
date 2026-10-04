@@ -117,6 +117,11 @@ export const api = {
   },
   auth: {
     login: (credentials: LoginRequest) => post<LoginResponse>('/auth/login', credentials),
+    forgotPassword: (body: { email: string }) => post<{ message: string }>('/auth/forgot-password', body),
+    verifyOtp: (body: { email: string; otp: string }) => post<{ message: string }>('/auth/verify-otp', body),
+    resetPassword: (body: { email: string; otp: string; newPassword: string }) => post<{ message: string }>('/auth/reset-password', body),
+    profile: () => get<{ username: string; fullName: string; email: string; status: string }>('/auth/profile'),
+    changePassword: (body: any) => post<{ message: string }>('/auth/change-password', body),
   },
 
   matrix: {
@@ -210,7 +215,10 @@ export const api = {
   },
 
   academicYear: {
-    current: () => get<ApiResponse<AcademicYearListItem | null>>('/academic-years/current'),
+    current: async (): Promise<ApiResponse<AcademicYearListItem | null>> => {
+      const res = await get<ApiResponse<AcademicYearPage>>('/academic-years', { status: 'ACTIVE' });
+      return { ...res, data: res.data?.items?.[0] ?? null };
+    },
     list: (params?: { status?: string; search?: string; page?: number; pageSize?: number }) =>
       get<ApiResponse<AcademicYearPage>>('/academic-years', params),
     get: (id: string) => get<ApiResponse<AcademicYearDetail>>(`/academic-years/${id}`),

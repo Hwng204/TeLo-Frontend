@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AdminLayout } from '../layouts/AdminLayout';
 import { AppShell } from '../layouts/AppShell';
+import { StudentLayout } from '../layouts/StudentLayout';
 
 import { LoginPage } from '../features/auth/pages/LoginPage';
 import { ClassListPage } from '../features/classes/pages/ClassListPage';
@@ -41,7 +42,7 @@ const PHT = ['PHT', 'HIEU_TRUONG', 'PRINCIPAL'];
 const TEAM_LEAD = ['TEAM_LEAD', 'TO_TRUONG'];
 const BOTH = [...PHT, ...TEAM_LEAD];
 const TEACHER = ['GIAO_VIEN', 'TEACHER'];
-const ADMIN = ['OperationalAdmin'];
+const ADMIN = ['OperationalAdmin', 'ADMIN'];
 
 /**
  * Lớp học / học sinh dùng chung một bộ màn cho nhà trường (chỉ xem) và admin (thêm/sửa/xoá):
@@ -53,6 +54,11 @@ const DirectoryShell: React.FC = () => {
 };
 import { SchoolListPage } from '../features/schools/pages/SchoolListPage';
 import { BranchListPage } from '../features/schools/pages/BranchListPage';
+import { ProfilePage } from '../features/profile/pages/ProfilePage';
+import { ChangePasswordPage } from '../features/profile/pages/ChangePasswordPage';
+import { StudentDashboardPage } from '../features/student/pages/StudentDashboardPage';
+
+const STUDENT = ['STUDENT', 'HOC_SINH'];
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -81,6 +87,16 @@ export const AppRoutes: React.FC = () => {
           </Route>
         </Route>
 
+        {/* Khung dành cho học sinh */}
+        <Route element={<StudentLayout />}>
+          <Route element={<RequireRole allow={STUDENT} />}>
+            <Route path="/student-dashboard" element={<StudentDashboardPage />} />
+            <Route path="/student-exams" element={<StudentDashboardPage />} />
+            <Route path="/student-results" element={<StudentDashboardPage />} />
+            <Route path="/student-practice" element={<StudentDashboardPage />} />
+          </Route>
+        </Route>
+
 
         <Route element={<DirectoryShell />}>
           <Route element={<RequireRole allow={[...PHT, ...TEACHER, ...ADMIN]} />}>
@@ -95,6 +111,11 @@ export const AppRoutes: React.FC = () => {
             <Route path="/classes/:id/edit" element={<ClassFormPage />} />
             <Route path="/students/new" element={<StudentFormPage />} />
             <Route path="/students/:id/edit" element={<StudentFormPage />} />
+          </Route>
+          
+          <Route element={<RequireRole allow={[...PHT, ...TEAM_LEAD, ...TEACHER, ...ADMIN, ...STUDENT]} />}>
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/change-password" element={<ChangePasswordPage />} />
           </Route>
         </Route>
 

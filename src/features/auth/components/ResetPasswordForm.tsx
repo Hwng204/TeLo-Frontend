@@ -3,12 +3,17 @@ import { Button } from '../../../components/common/Button';
 import { ArrowLeft } from 'lucide-react';
 import { displayToast } from '../../../utils/toast';
 
+import { api } from '../../../services/api';
+import { isAxiosError } from 'axios';
+
 interface ResetPasswordFormProps {
+  email: string;
+  otp: string;
   onSuccess: () => void;
   onBack?: () => void;
 }
 
-export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onSuccess, onBack }) => {
+export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ email, otp, onSuccess, onBack }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -29,11 +34,13 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onSuccess,
 
     try {
       setIsLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await api.auth.resetPassword({ email, otp, newPassword: password });
       onSuccess();
-    } catch {
-      displayToast('error', 'Lỗi', 'Có lỗi xảy ra. Vui lòng thử lại.');
+    } catch (err: any) {
+      const errMsg = isAxiosError(err) && err.response?.data?.message 
+        ? err.response.data.message 
+        : 'Có lỗi xảy ra. Vui lòng thử lại.';
+      displayToast('error', 'Lỗi', errMsg);
     } finally {
       setIsLoading(false);
     }

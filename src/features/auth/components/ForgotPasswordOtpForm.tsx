@@ -1,14 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '../../../components/common/Button';
 import { displayToast } from '../../../utils/toast';
+import { api } from '../../../services/api';
+
 
 interface ForgotPasswordOtpFormProps {
   email: string;
   onSuccess: (otp: string) => void;
   onResend: () => void;
+  onBack: () => void;
 }
 
-export const ForgotPasswordOtpForm: React.FC<ForgotPasswordOtpFormProps> = ({ onSuccess, onResend }) => {
+export const ForgotPasswordOtpForm: React.FC<ForgotPasswordOtpFormProps> = ({ email, onSuccess, onResend, onBack }) => {
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
 
   const [isLoading, setIsLoading] = useState(false);
@@ -70,11 +74,16 @@ export const ForgotPasswordOtpForm: React.FC<ForgotPasswordOtpFormProps> = ({ on
 
     try {
       setIsLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await api.auth.verifyOtp({ email, otp: otpString });
       onSuccess(otpString);
-    } catch {
-      displayToast('error', 'Lỗi', 'Mã OTP không hợp lệ. Vui lòng thử lại.');
+    } catch (err: any) {
+      console.error('Verify OTP Error:', err);
+      const errMsg = err?.response?.data?.message || err?.message || 'Mã OTP không hợp lệ. Vui lòng thử lại.';
+      displayToast('error', 'Lỗi', errMsg);
+      
+      // Clear OTP inputs on wrong attempt
+      setOtp(Array(6).fill(''));
+      inputRefs.current[0]?.focus();
     } finally {
       setIsLoading(false);
     }
@@ -153,6 +162,17 @@ export const ForgotPasswordOtpForm: React.FC<ForgotPasswordOtpFormProps> = ({ on
           >
             Gửi lại mã {timeLeft > 0 ? `(${timeLeft}s)` : ''}
           </Button>
+
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              onBack();
+            }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#3b82f6', fontSize: '14px', textDecoration: 'none', fontWeight: 500, marginTop: '8px' }}
+          >
+            <ArrowLeft size={16} /> Quay lại đăng nhập
+          </a>
         </div>
       </form>
     </div>
