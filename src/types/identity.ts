@@ -33,16 +33,42 @@ export interface RoleItem extends IdentityItem {
   userCount: number;
 }
 export interface ModuleItem extends IdentityItem { navbarCount: number; }
+export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'LOCKED';
 export interface IdentityUser {
   id: number;
   username: string;
   fullName: string;
   email: string;
-  status: string;
+  status: UserStatus;
   schoolId: number | null;
   schoolName: string | null;
   schoolBranchId: number | null;
   schoolBranchName: string | null;
+  version: number;
+}
+export interface UserDetail extends IdentityUser {
+  moetIdentifier: string | null;
+  createdAt: string;
+  isTeacher: boolean;
+  isStudent: boolean;
+  roles: RoleItem[];
+}
+export interface CreateUserRequest {
+  username: string;
+  email: string;
+  fullName: string;
+  password: string;
+  moetIdentifier: string | null;
+  schoolBranchId: number | null;
+  status: UserStatus;
+  roleIds: number[];
+}
+export interface UpdateUserRequest {
+  username: string;
+  email: string;
+  fullName: string;
+  moetIdentifier: string | null;
+  schoolBranchId: number | null;
   version: number;
 }
 export interface UserRoles {
