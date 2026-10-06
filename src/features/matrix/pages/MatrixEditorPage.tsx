@@ -400,7 +400,7 @@ const MatrixEditor = () => {
 
         {!reviewing && !academicContextId && !importOpen && (
           <div className="sep-alert sep-alert--info">
-            Chọn đủ Chương trình, Môn học, Khối lớp và Năm học để hiện danh sách bài học.
+            Chọn đủ Môn học, Khối lớp và Năm học để hiện danh sách bài học.
           </div>
         )}
 

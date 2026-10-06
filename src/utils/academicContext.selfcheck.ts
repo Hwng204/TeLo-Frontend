@@ -11,7 +11,6 @@ const context = (id: number, schoolBranchId: number): AcademicContextOption => (
   label: `Toán - Lớp 5 - 2026-2027 - Trường / Chi nhánh ${schoolBranchId}`,
   academicYearId: 4,
   schoolBranchId,
-  textbookId: 3,
   subjectId: 2,
   gradeLevelId: 1,
 });
@@ -24,20 +23,19 @@ export const academicContextSelfCheck = () => {
   );
 
   const complete: ContextSelection = {
-    textbookId: 3,
     subjectId: 2,
     gradeLevelId: 1,
     academicYearId: 4,
   };
   console.assert(
     resolveContextId(only, complete) === 10,
-    'academicContext self-check 2: đủ bốn chiều phải resolve được context duy nhất',
+    'academicContext self-check 2: đủ ba chiều phải resolve được context duy nhất',
   );
 
   const duplicated = [context(10, 1), context(20, 2)];
   console.assert(
     resolveContextId(duplicated, { ...complete, schoolBranchId: 2 }) === 20,
-    'academicContext self-check 3: chọn chi nhánh phải phân biệt được context trùng bốn chiều',
+    'academicContext self-check 3: chọn chi nhánh phải phân biệt được context trùng ba chiều',
   );
 
   console.info('[academicContext] self-check xong');

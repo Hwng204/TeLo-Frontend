@@ -37,7 +37,7 @@ export const TaskAssignPage = () => {
     const found: Record<string, string> = {};
     if (!name.trim()) found.name = 'Tên nhiệm vụ là bắt buộc.';
     if (!assignee) found.assignedToUserId = 'Chọn Tổ trưởng nhận việc.';
-    if (!academicContextId) found.academicContextId = 'Chọn đủ Chương trình, Môn học, Khối lớp và Năm học.';
+    if (!academicContextId) found.academicContextId = 'Chọn đủ Môn học, Khối lớp và Năm học.';
     setErrors(found);
     if (Object.keys(found).length > 0) {
       setProblem('Vui lòng kiểm tra lại các ô được đánh dấu.');

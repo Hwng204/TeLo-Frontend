@@ -9,7 +9,7 @@
  * vì người dùng hay chèn cột hoặc gõ "Nhan biet".
  */
 import type { GridRow, LessonOption, MatrixImportIssue, MatrixImportResult, XlsxCell } from '../types';
-import { LEVELS, LEVEL_LABELS, cellErrorKey, newRow, validateGrid } from './matrixGrid';
+import { LEVELS, LEVEL_LABELS, cellErrorKey, lessonLabel, newRow, validateGrid } from './matrixGrid';
 
 export const IMPORT_HEADERS = ['Bài học', 'Mức nhận thức', 'Loại câu hỏi', 'Số câu', 'Tỷ lệ %', 'Điểm'];
 export const IMPORT_COLUMN_WIDTHS = [36, 16, 14, 10, 10, 10];
@@ -63,7 +63,7 @@ export const templateRows = ({ name, totalScore, contextLabel, semesterName, les
   ],
   [],
   IMPORT_HEADERS.map((value) => ({ value, bold: true })),
-  ...lessons.flatMap((lesson) => LEVELS.map((level) => [lesson.title, LEVEL_LABELS[level], 'Trắc nghiệm', null, null, null])),
+  ...lessons.flatMap((lesson) => LEVELS.map((level) => [lessonLabel(lesson), LEVEL_LABELS[level], 'Trắc nghiệm', null, null, null])),
 ];
 
 const EMPTY_RESULT = { rows: [], name: null, totalScore: null, filledLines: 0 };
@@ -104,8 +104,19 @@ export const readMatrixSheet = (sheet: string[][], lessons: LessonOption[]): Mat
     }
   }
 
-  const byTitle = new Map<string, LessonOption[]>();
-  for (const lesson of lessons) byTitle.set(fold(lesson.title), [...(byTitle.get(fold(lesson.title)) ?? []), lesson]);
+  // Một bài nhận được theo ba cách viết: nhãn của file mẫu ("Bài 9. Luyện tập chung — Chương 1. …"),
+  // kiểu file Xuất Excel ("Ôn tập và bổ sung / Luyện tập chung") và tên bài trơn (chỉ khi tên đó là duy nhất).
+  const byName = new Map<string, LessonOption[]>();
+  const index = (name: string, lesson: LessonOption) => {
+    const key = fold(name);
+    const list = byName.get(key) ?? [];
+    if (key && !list.includes(lesson)) byName.set(key, [...list, lesson]);
+  };
+  for (const lesson of lessons) {
+    index(lessonLabel(lesson), lesson);
+    if (lesson.chapterTitle) index(`${lesson.chapterTitle} / ${lesson.title}`, lesson);
+    index(lesson.title, lesson);
+  }
 
   const issues: MatrixImportIssue[] = [];
   const rows = new Map<number, GridRow>();
@@ -128,8 +139,7 @@ export const readMatrixSheet = (sheet: string[][], lessons: LessonOption[]): Mat
     if (!title) return skip('Thiếu tên bài học.');
     const level = LEVEL_BY_NAME.get(fold(levelText));
     if (!level) return skip(`Mức nhận thức "${levelText}" không hợp lệ (cần Nhận biết, Thông hiểu hoặc Vận dụng).`);
-    // File Xuất Excel ghi "Chương 1 / Bài 1" (MatrixReferenceRepository), file mẫu ghi "Bài 1": nhận cả hai.
-    const matches = byTitle.get(fold(title)) ?? byTitle.get(fold(title.split(' / ').at(-1) ?? '')) ?? [];
+    const matches = byName.get(fold(title)) ?? byName.get(fold(title.split(' / ').at(-1) ?? '')) ?? [];
     if (matches.length === 0) return skip(`Không có bài "${title}" trong chương trình đã chọn.`);
     if (matches.length > 1) return skip(`Chương trình có ${matches.length} bài cùng tên "${title}", không xác định được bài nào.`);
 

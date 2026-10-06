@@ -14,6 +14,7 @@ import type {
   CognitiveLevel,
   GridCell,
   GridRow,
+  LessonOption,
   MatrixDetail,
   MatrixDetailRequest,
 } from '../types';
@@ -25,6 +26,15 @@ export const LEVEL_LABELS: Record<CognitiveLevel, string> = {
   THONG_HIEU: 'Thông hiểu',
   VAN_DUNG: 'Vận dụng',
 };
+
+/**
+ * Nhãn duy nhất của một bài: "Bài 9. Luyện tập chung — Chương 1. Ôn tập và bổ sung".
+ * Tên bài trơn không đủ vì cùng một tên có thể xuất hiện ở nhiều chương.
+ */
+export const lessonLabel = (lesson: LessonOption): string =>
+  lesson.chapterTitle
+    ? `Bài ${lesson.code}. ${lesson.title} — Chương ${lesson.chapterCode}. ${lesson.chapterTitle}`
+    : lesson.title;
 
 /** Trần tỷ lệ % mỗi ô — không có ô nào chiếm quá 100% một mình. */
 export const MAX_PERCENTAGE = 100;

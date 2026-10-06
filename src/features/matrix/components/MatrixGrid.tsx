@@ -4,6 +4,7 @@ import {
   LEVELS,
   LEVEL_LABELS,
   cellErrorKey,
+  lessonLabel,
   cellScore,
   columnTotal,
   formatPerQuestion,
@@ -15,6 +16,11 @@ import {
   rowErrorKey,
   rowTotal,
 } from '../../../utils/matrixGrid';
+
+const lessonName = (lessons: LessonOption[], lessonId: number) => {
+  const lesson = lessons.find((item) => item.id === lessonId);
+  return lesson ? lessonLabel(lesson) : `Bài học #${lessonId} (không còn trong chương trình)`;
+};
 
 type Props = {
   rows: GridRow[];
@@ -68,8 +74,7 @@ export const MatrixGrid = ({ rows, lessons, matrixTotalScore, readOnly, errors =
               <tr key={row.key}>
                 {readOnly ? (
                   <th scope="row" className="sep-matrix-rowhead">
-                    {lessons.find((lesson) => lesson.id === row.lessonId)?.title ??
-                      `Bài học #${row.lessonId} (không còn trong sách)`}
+                    {lessonName(lessons, row.lessonId)}
                   </th>
                 ) : (
                   <td>
@@ -92,7 +97,7 @@ export const MatrixGrid = ({ rows, lessons, matrixTotalScore, readOnly, errors =
                           value={lesson.id}
                           disabled={lesson.id !== row.lessonId && usedLessons.has(lesson.id)}
                         >
-                          {lesson.title}
+                          {lessonLabel(lesson)}
                         </option>
                       ))}
                     </SelectField>

@@ -8,7 +8,7 @@ import { MatrixGrid } from './MatrixGrid';
 
 type Props = {
   lessons: LessonOption[];
-  /** Đã chọn đủ 4 chiều ngữ cảnh: bài học để đối chiếu và để dựng file mẫu đều theo chương trình này. */
+  /** Đã chọn đủ 3 chiều ngữ cảnh: bài học để đối chiếu và để dựng file mẫu đều theo ngữ cảnh này. */
   contextReady: boolean;
   contextLabel: string;
   semesterName: string | null;
@@ -121,8 +121,8 @@ export const ExcelImportPanel = ({
 
       {!contextReady && (
         <div className="sep-alert sep-alert--info" role="status">
-          Chọn đủ Chương trình, Môn học, Khối lớp và Năm học ở trên trước: file mẫu liệt kê sẵn bài học của chương trình
-          đó, và tên bài trong file được đối chiếu với chương trình đó.
+          Chọn đủ Môn học, Khối lớp và Năm học ở trên trước: file mẫu liệt kê sẵn bài học của ngữ cảnh đó, và tên bài
+          trong file được đối chiếu với các bài đó.
         </div>
       )}
 
@@ -179,7 +179,7 @@ export const ExcelImportPanel = ({
             <span className="pcb-hint">
               {contextReady
                 ? `${lessons.length} bài học × 3 mức = ${template.length - headerRow - 1} dòng. Ô tô màu là ô cần điền; dòng để trống sẽ bị bỏ qua.`
-                : 'Chọn chương trình để file mẫu có sẵn danh sách bài học.'}
+                : 'Chọn đủ Môn học, Khối lớp và Năm học để file mẫu có sẵn danh sách bài học.'}
             </span>
             <PcbButton variant="secondary" size="sm" disabled={!contextReady} onClick={downloadTemplate}>
               <Icon name="download" size={18} />
