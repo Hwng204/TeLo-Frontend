@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Icon } from '../components/pcb';
-import { isTeacher, isTeamLead } from '../utils/jwt';
+import { getRoles, isTeacher, isTeamLead } from '../utils/jwt';
 // Mẫu giao diện dùng chung trước, rồi mới tới khung: giữ đúng thứ tự cascade như lúc còn một file.
 import '../styles/sep-ui.css';
 import './AppShell.css';
@@ -31,6 +31,7 @@ const EXAM_GROUP = [
 ];
 const EXAM_PATHS: Record<string, string | undefined> = {
   'Danh sách kỳ thi': '/exams',
+  'Danh sách phòng thi': '/exam-rooms',
 };
 const TL_NAV: NavEntry[] = [
   { icon: 'menu_book', label: 'Chương trình học' },
@@ -85,8 +86,9 @@ export const AppShell = () => {
   const { pathname } = useLocation();
   const teamLead = isTeamLead();
   const teacherOnly = isTeacher();
+  const vicePrincipal = getRoles().includes('PHT');
   // Thu gọn mặc định: 9 mục con mở sẵn làm menu PHT dài gấp đôi menu Tổ trưởng.
-  const [examOpen, setExamOpen] = useState(pathname.startsWith('/exams'));
+  const [examOpen, setExamOpen] = useState(pathname.startsWith('/exams') || pathname.startsWith('/exam-rooms'));
   const [collapsed, setCollapsed] = useState(readCollapsed);
 
   const toggleRail = () => {
@@ -141,7 +143,9 @@ export const AppShell = () => {
                 {examOpen && (
                   <div className="sep-submenu">
                     {EXAM_GROUP.map((label) => {
-                      const to = EXAM_PATHS[label];
+                      const to = label === 'Danh sách phòng thi' && !vicePrincipal
+                        ? undefined
+                        : EXAM_PATHS[label];
                       if (!to) {
                         return <span key={label} className="sep-subnav" aria-disabled="true">{label}</span>;
                       }
