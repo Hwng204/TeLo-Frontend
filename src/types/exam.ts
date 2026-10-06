@@ -53,3 +53,26 @@ export interface ExamDetail extends ExamListItem {
   candidateCount: number;
   proctorCount: number;
 }
+
+export interface ExamRoomOption {
+  id: number;
+  code: string;
+  name: string;
+  roomType: string;
+  status: string;
+}
+
+export interface ExamRoom {
+  id: number;
+  examId: number;
+  code: string;
+  room: ExamRoomOption;
+  candidateLimit: number;
+  sessionCount: number;
+}
+
+export interface SaveExamRoomRequest {
+  code: string;
+  roomId: number;
+  candidateLimit: number;
+}

@@ -61,6 +61,9 @@ import type {
   ExamDetail,
   ExamListQuery,
   ExamPage,
+  ExamRoom,
+  ExamRoomOption,
+  SaveExamRoomRequest,
 } from '../types';
 
 const get = async <T>(url: string, params?: object): Promise<T> => (await apiClient.get<T>(url, { params })).data;
@@ -235,5 +238,16 @@ export const api = {
   exam: {
     list: (query: ExamListQuery = {}) => get<ApiResponse<ExamPage>>('/exams', query),
     create: (body: CreateExamRequest) => post<ApiResponse<ExamDetail>>('/exams', body),
+  },
+
+  examRoom: {
+    list: (examId: number) => unwrap(get<ApiResponse<ExamRoom[]>>(`/exams/${examId}/rooms`)),
+    options: (examId: number) => unwrap(get<ApiResponse<ExamRoomOption[]>>(`/exams/${examId}/rooms/options`)),
+    create: (examId: number, body: SaveExamRoomRequest) =>
+      unwrap(post<ApiResponse<ExamRoom>>(`/exams/${examId}/rooms`, body)),
+    update: (examId: number, id: number, body: SaveExamRoomRequest) =>
+      unwrap(put<ApiResponse<ExamRoom>>(`/exams/${examId}/rooms/${id}`, body)),
+    remove: (examId: number, id: number) =>
+      unwrap(del<ApiResponse<boolean>>(`/exams/${examId}/rooms/${id}`)),
   },
 };
