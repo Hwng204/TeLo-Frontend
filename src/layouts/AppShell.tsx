@@ -11,7 +11,7 @@ type NavEntry = { icon: string; label: string; to?: string; activeFor?: string[]
 
 const PHT_NAV: NavEntry[] = [
   { icon: 'dashboard', label: 'Tổng quan' },
-  { icon: 'menu_book', label: 'Chương trình học' },
+  { icon: 'menu_book', label: 'Chương & bài học', to: '/curriculum', activeFor: ['/curriculum'] },
   { icon: 'table_chart', label: 'Ma trận đề', to: '/matrices', activeFor: ['/matrices'] },
   { icon: 'assignment', label: 'Nhiệm vụ', to: '/matrix-tasks', activeFor: ['/matrix-tasks'] },
   { icon: 'fact_check', label: 'Duyệt bộ đề' },
@@ -22,6 +22,7 @@ const PHT_NAV: NavEntry[] = [
 const TEACHER_NAV: NavEntry[] = [
   { icon: 'groups', label: 'Lớp chủ nhiệm', to: '/classes', activeFor: ['/classes'] },
   { icon: 'school', label: 'Học sinh', to: '/students', activeFor: ['/students'] },
+  { icon: 'menu_book', label: 'Chương & bài học', to: '/curriculum', activeFor: ['/curriculum'] },
 ];
 
 const PHT_NAV_AFTER_EXAM_GROUP: NavEntry[] = [{ icon: 'mail', label: 'Quản lý mẫu mail' }];
@@ -34,7 +35,7 @@ const EXAM_PATHS: Record<string, string | undefined> = {
   'Danh sách phòng thi': '/exam-rooms',
 };
 const TL_NAV: NavEntry[] = [
-  { icon: 'menu_book', label: 'Chương trình học' },
+  { icon: 'menu_book', label: 'Chương & bài học', to: '/curriculum', activeFor: ['/curriculum'] },
   // Tổ trưởng xem ma trận của mình qua nhiệm vụ, nên màn ma trận vẫn thuộc mục này.
   { icon: 'assignment', label: 'Nhiệm vụ', to: '/matrix-tasks', activeFor: ['/matrix-tasks', '/matrices'] },
   { icon: 'assignment_ind', label: 'Phân công biên soạn' },

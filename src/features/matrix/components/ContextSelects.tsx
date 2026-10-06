@@ -11,7 +11,6 @@ import {
 } from '../../../utils/academicContext';
 
 const LABELS: Record<ContextDimension, string> = {
-  textbookId: 'Chương trình',
   subjectId: 'Môn học',
   gradeLevelId: 'Khối lớp',
   academicYearId: 'Năm học',
@@ -26,7 +25,7 @@ type Props = {
   disabled?: boolean;
   disabledHint?: string;
   /**
-   * Học kỳ không nằm trong 4 chiều tạo nên `academicContextId` (không ảnh hưởng danh sách bài
+   * Học kỳ không nằm trong 3 chiều tạo nên `academicContextId` (không ảnh hưởng danh sách bài
    * học), nên khoá `disabled` không áp cho nó — trừ khi truyền riêng. Mặc định theo `disabled`
    * để các nơi gọi cũ (danh sách, bộ lọc) không phải đổi gì.
    */

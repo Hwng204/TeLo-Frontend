@@ -61,6 +61,13 @@ import type {
   ExamDetail,
   ExamListQuery,
   ExamPage,
+  Chapter,
+  Curriculum,
+  CurriculumImportPreview,
+  CurriculumImportResult,
+  Lesson,
+  SaveChapterRequest,
+  SaveLessonRequest,
   ExamRoom,
   ExamRoomOption,
   SaveExamRoomRequest,
@@ -69,12 +76,12 @@ import type {
 const get = async <T>(url: string, params?: object): Promise<T> => (await apiClient.get<T>(url, { params })).data;
 
 /** Lấy tên file backend đặt trong Content-Disposition (đã expose qua CORS). */
-const filenameFrom = (header: unknown): string => {
-  if (typeof header !== 'string') return 'ma-tran.xlsx';
+const filenameFrom = (header: unknown, fallback = 'ma-tran.xlsx'): string => {
+  if (typeof header !== 'string') return fallback;
   const utf8 = /filename\*=UTF-8''([^;]+)/i.exec(header);
   if (utf8) return decodeURIComponent(utf8[1]);
   const plain = /filename="?([^";]+)"?/i.exec(header);
-  return plain ? plain[1] : 'ma-tran.xlsx';
+  return plain ? plain[1] : fallback;
 };
 const post = async <T>(url: string, body?: object): Promise<T> => (await apiClient.post<T>(url, body)).data;
 const put = async <T>(url: string, body?: object): Promise<T> => (await apiClient.put<T>(url, body)).data;
@@ -83,6 +90,13 @@ const del = async <T>(url: string): Promise<T> => (await apiClient.delete<T>(url
 
 /** Bóc lớp vỏ ApiResponse của các API danh bạ; lỗi đã được apiClient ném ra trước khi tới đây. */
 const unwrap = async <T>(request: Promise<ApiResponse<T>>): Promise<T> => (await request).data as T;
+/** Gửi một tệp dạng multipart (trường `file`) rồi bóc lớp vỏ ApiResponse. */
+const upload = async <T>(url: string, file: File): Promise<T> => {
+  const form = new FormData();
+  form.append('file', file);
+  const response = await apiClient.post<ApiResponse<T>>(url, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  return response.data.data as T;
+};
 const directoryBase = (schoolId?: number) => (schoolId ? `/admin/schools/${schoolId}` : '');
 
 export const api = {
@@ -150,7 +164,7 @@ export const api = {
 
     /**
      * `lessons` chỉ có dữ liệu khi truyền `academicContextId`, vì danh sách bài học
-     * được giới hạn theo sách giáo khoa của ngữ cảnh đó. Gọi không tham số sẽ trả
+     * được giới hạn theo phân hiệu, khối lớp và môn của ngữ cảnh đó. Gọi không tham số sẽ trả
      * lessons rỗng — đó là chủ ý của backend, không phải lỗi.
      */
     referenceData: (academicContextId?: number) =>
@@ -216,6 +230,29 @@ export const api = {
     transferStudent: (schoolId: number, id: number, body: TransferStudentClassRequest) =>
       unwrap(post<ApiResponse<StudentDetail>>(`/admin/schools/${schoolId}/students/${id}/transfer-class`, body)),
     deleteStudent: (schoolId: number, id: number) => del<unknown>(`/admin/schools/${schoolId}/students/${id}`),
+  },
+
+  /** Chương & bài học của phân hiệu người đang đăng nhập. Chỉ PHT được thêm/sửa/xoá/nhập. */
+  curriculum: {
+    get: () => unwrap(get<ApiResponse<Curriculum>>('/curriculum')),
+    createChapter: (body: SaveChapterRequest) =>
+      unwrap(post<ApiResponse<Chapter>>('/curriculum/chapters', body)),
+    updateChapter: (id: number, body: SaveChapterRequest) =>
+      unwrap(put<ApiResponse<Chapter>>(`/curriculum/chapters/${id}`, body)),
+    deleteChapter: (id: number) => del<unknown>(`/curriculum/chapters/${id}`),
+    createLesson: (chapterId: number, body: SaveLessonRequest) =>
+      unwrap(post<ApiResponse<Lesson>>(`/curriculum/chapters/${chapterId}/lessons`, body)),
+    updateLesson: (id: number, body: SaveLessonRequest) =>
+      unwrap(put<ApiResponse<Lesson>>(`/curriculum/lessons/${id}`, body)),
+    deleteLesson: (id: number) => del<unknown>(`/curriculum/lessons/${id}`),
+    downloadTemplate: async (): Promise<{ blob: Blob; filename: string }> => {
+      const response = await apiClient.get<Blob>('/curriculum/import/template.xlsx', { responseType: 'blob' });
+      return { blob: response.data, filename: filenameFrom(response.headers['content-disposition'], 'mau-nhap-chuong-bai.xlsx') };
+    },
+    /** Chỉ kiểm tra, không lưu gì. */
+    previewImport: (file: File) => upload<CurriculumImportPreview>('/curriculum/import/preview', file),
+    /** Backend kiểm tra lại cùng tệp; còn dòng lỗi thì trả 422 và không lưu gì. */
+    importFile: (file: File) => upload<CurriculumImportResult>('/curriculum/import', file),
   },
 
   academicYear: {

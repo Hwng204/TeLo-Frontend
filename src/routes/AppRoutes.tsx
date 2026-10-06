@@ -17,6 +17,7 @@ import { MatrixEditorPage } from '../features/matrix/pages/MatrixEditorPage';
 import { TaskListPage } from '../features/matrix/pages/TaskListPage';
 import { TaskAssignPage } from '../features/matrix/pages/TaskAssignPage';
 import { TaskDetailPage } from '../features/matrix/pages/TaskDetailPage';
+import { CurriculumPage } from '../features/curriculum/pages/CurriculumPage';
 import { AcademicYearListPage } from '../features/academicYears/pages/AcademicYearListPage';
 import { AcademicYearCreatePage } from '../features/academicYears/pages/AcademicYearCreatePage';
 import { AcademicYearConfigPage } from '../features/academicYears/pages/AcademicYearConfigPage';
@@ -89,6 +90,11 @@ export const AppRoutes: React.FC = () => {
             <Route path="/matrix-tasks" element={<TaskListPage />} />
             <Route path="/matrix-tasks/:id" element={<TaskDetailPage />} />
             <Route path="/matrix-tasks/:taskId/matrix/new" element={<MatrixEditorPage />} />
+          </Route>
+
+          {/* PHT quản lý, Tổ trưởng và Giáo viên chỉ xem; backend trả canManage và tự chặn quyền. */}
+          <Route element={<RequireRole allow={[...BOTH, ...TEACHER]} />}>
+            <Route path="/curriculum" element={<CurriculumPage />} />
           </Route>
         </Route>
 

@@ -97,7 +97,7 @@ export interface MatrixListQuery {
   keyword?: string;
   academicContextId?: number;
   semesterId?: number;
-  // Lọc từng chiều độc lập, không cần chọn đủ bốn chiều để ra academicContextId.
+  // Lọc từng chiều độc lập, không cần chọn đủ ba chiều để ra academicContextId.
   academicYearId?: number;
   subjectId?: number;
   gradeLevelId?: number;
@@ -159,7 +159,7 @@ export interface MatrixTaskQuery {
   /** Khớp tên nhiệm vụ hoặc yêu cầu công việc, hoặc id (gõ số). */
   keyword?: string;
   academicContextId?: number;
-  // Lọc từng chiều độc lập, không cần chọn đủ bốn chiều để ra academicContextId.
+  // Lọc từng chiều độc lập, không cần chọn đủ ba chiều để ra academicContextId.
   academicYearId?: number;
   semesterId?: number;
   subjectId?: number;
@@ -184,12 +184,10 @@ export interface AcademicContextOption {
   label: string;
   academicYearId: number;
   schoolBranchId: number;
-  textbookId: number;
   subjectId: number;
   gradeLevelId: number;
   // Tên hiển thị từng chiều. Không bắt buộc vì backend cũ chưa trả về;
   // xem contextNames() trong ContextSelects để biết nhánh dự phòng.
-  textbookTitle?: string;
   subjectName?: string;
   gradeLevelName?: string;
   academicYearName?: string;
@@ -209,6 +207,10 @@ export interface LessonOption {
   chapterId: number;
   title: string;
   sortOrder: number;
+  /** Tên bài lặp lại giữa các chương (nhiều bài "Luyện tập chung"): hiển thị và đối chiếu kèm mã bài và chương. */
+  code?: string;
+  chapterCode?: string;
+  chapterTitle?: string;
 }
 
 export interface TeamLeadOption {
