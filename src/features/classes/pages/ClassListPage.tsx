@@ -29,8 +29,6 @@ export const ClassListPage = () => {
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState<ClassStatus | ''>('');
   const [academicYearId, setAcademicYearId] = useState<number>();
-  const [gradeLevelId, setGradeLevelId] = useState<number>();
-  const [schoolBranchId, setSchoolBranchId] = useState<number>();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const popup = useNotice();
@@ -51,8 +49,6 @@ export const ClassListPage = () => {
     search: debouncedKeyword.trim() || undefined,
     status: status || undefined,
     academicYearId,
-    gradeLevelId,
-    schoolBranchId,
   };
   const list = useAsync(
     async () => (scope.ready ? api.directory.classes(query, scope.schoolId) : null),
@@ -60,7 +56,7 @@ export const ClassListPage = () => {
   );
   const items = list.data?.items ?? [];
   const totalCount = list.data?.totalCount ?? 0;
-  const filtered = Boolean(keyword || status || academicYearId || gradeLevelId || schoolBranchId);
+  const filtered = Boolean(keyword || status || academicYearId);
 
   // Mọi thay đổi bộ lọc đều quay về trang 1, nếu không sẽ thấy trang trống.
   const onFilter = <T,>(setter: (value: T) => void) => (value: T) => {
@@ -71,8 +67,6 @@ export const ClassListPage = () => {
     setKeyword('');
     setStatus('');
     setAcademicYearId(undefined);
-    setGradeLevelId(undefined);
-    setSchoolBranchId(undefined);
     setPage(1);
   };
   const numberOrUndefined = (raw: string) => (raw ? Number(raw) : undefined);
@@ -93,7 +87,6 @@ export const ClassListPage = () => {
   };
 
   const error = list.error ?? reference.error ?? scope.schoolsError;
-  const pickedBranch = branches.find((branch) => branch.id === schoolBranchId);
   const columns = 8;
   const title = scope.admin ? 'Quản lý lớp học' : teacher ? 'Lớp chủ nhiệm' : 'Lớp học';
 
@@ -102,7 +95,6 @@ export const ClassListPage = () => {
       <PageHeader title={title} inline={scope.admin} />
 
       <div className={scope.admin ? 'sep-page sep-page--flush' : 'sep-page'}>
-        <StatusTabs label="Lọc theo trạng thái lớp" tabs={STATUS_TABS} value={status} onChange={onFilter(setStatus)} />
 
         <div className="sep-toolbar">
           <div className="sep-toolbar__filters">
@@ -148,30 +140,15 @@ export const ClassListPage = () => {
               ))}
             </SelectField>
             <SelectField
-              label="Khối"
+              label="Trạng thái"
               hideLabel
-              placeholder="Khối"
-              value={gradeLevelId ?? ''}
-              onChange={(event) => onFilter(setGradeLevelId)(numberOrUndefined(event.target.value))}
+              placeholder="Tất cả trạng thái"
+              value={status}
+              onChange={(event) => onFilter(setStatus)(event.target.value as ClassStatus | '')}
             >
-              <option value="">Tất cả khối</option>
-              {grades.map((grade) => (
-                <option key={grade.id} value={grade.id}>
-                  {grade.name}
-                </option>
-              ))}
-            </SelectField>
-            <SelectField
-              label="Cơ sở"
-              hideLabel
-              placeholder="Cơ sở"
-              value={schoolBranchId ?? ''}
-              onChange={(event) => onFilter(setSchoolBranchId)(numberOrUndefined(event.target.value))}
-            >
-              <option value="">Tất cả cơ sở ({branches.length})</option>
-              {branches.map((branch) => (
-                <option key={branch.id} value={branch.id}>
-                  {branchLabel(branch, 'class')}
+              {STATUS_TABS.map((tab) => (
+                <option key={tab.value} value={tab.value}>
+                  {tab.label}
                 </option>
               ))}
             </SelectField>
@@ -267,12 +244,6 @@ export const ClassListPage = () => {
             }
           />
         </div>
-
-        {pickedBranch && pickedBranch.status !== 'ACTIVE' && (
-          <div className="sep-alert sep-alert--warn" role="status">
-            {pickedBranch.name} đã ngừng hoạt động. Danh sách trên là các lớp cũ của phân hiệu này.
-          </div>
-        )}
 
         {totalCount > 0 && (
           <Pager

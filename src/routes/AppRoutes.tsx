@@ -25,6 +25,7 @@ import { RoleListPage } from '../features/identity/pages/RoleListPage';
 import { ModuleListPage } from '../features/identity/pages/ModuleListPage';
 import { UserListPage } from '../features/identity/pages/UserListPage';
 import { ExamListPage } from '../features/exams/pages/ExamListPage';
+import { ExamRoomListPage } from '../features/exams/pages/ExamRoomListPage';
 import { storage } from '../utils/storage';
 import { getRoles, isDirectoryAdmin } from '../utils/jwt';
 
@@ -40,6 +41,7 @@ const RequireRole: React.FC<{ allow: string[]; fallback?: string }> = ({ allow, 
 };
 
 const PHT = ['PHT', 'HIEU_TRUONG', 'PRINCIPAL'];
+const VICE_PRINCIPAL = ['PHT'];
 const TEAM_LEAD = ['TEAM_LEAD', 'TO_TRUONG'];
 const BOTH = [...PHT, ...TEAM_LEAD];
 const TEACHER = ['GIAO_VIEN', 'TEACHER'];
@@ -76,6 +78,9 @@ export const AppRoutes: React.FC = () => {
             <Route path="/matrices/new" element={<MatrixEditorPage />} />
             <Route path="/matrix-tasks/new" element={<TaskAssignPage />} />
             <Route path="/exams" element={<ExamListPage />} />
+          </Route>
+          <Route element={<RequireRole allow={VICE_PRINCIPAL} fallback="/exams" />}>
+            <Route path="/exam-rooms" element={<ExamRoomListPage />} />
           </Route>
 
           {/* Mở cho cả hai vai: Tổ trưởng phải xem lại được ma trận mình vừa nộp. */}

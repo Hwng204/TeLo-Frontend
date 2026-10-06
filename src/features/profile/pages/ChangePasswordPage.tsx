@@ -39,15 +39,11 @@ export const ChangePasswordPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '24px' }}>
-      <PageHeader 
-        title="Đổi mật khẩu" 
-        inline={true}
-      />
-
-      <div style={{ 
-        marginTop: '24px', 
-        backgroundColor: 'white', 
+    <>
+      <PageHeader title="Đổi mật khẩu" />
+      <div style={{ padding: '24px' }}>
+        <div style={{ 
+          backgroundColor: 'white', 
         padding: '32px', 
         borderRadius: '12px', 
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -142,5 +138,6 @@ export const ChangePasswordPage: React.FC = () => {
         </form>
       </div>
     </div>
+    </>
   );
 };

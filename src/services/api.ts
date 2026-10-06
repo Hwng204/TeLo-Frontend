@@ -68,6 +68,9 @@ import type {
   Lesson,
   SaveChapterRequest,
   SaveLessonRequest,
+  ExamRoom,
+  ExamRoomOption,
+  SaveExamRoomRequest,
 } from '../types';
 
 const get = async <T>(url: string, params?: object): Promise<T> => (await apiClient.get<T>(url, { params })).data;
@@ -134,7 +137,8 @@ export const api = {
     forgotPassword: (body: { email: string }) => post<{ message: string }>('/auth/forgot-password', body),
     verifyOtp: (body: { email: string; otp: string }) => post<{ message: string }>('/auth/verify-otp', body),
     resetPassword: (body: { email: string; otp: string; newPassword: string }) => post<{ message: string }>('/auth/reset-password', body),
-    profile: () => get<{ username: string; fullName: string; email: string; status: string }>('/auth/profile'),
+    profile: () => get<{ username: string; fullName: string; email: string; status: string; avatarUrl?: string }>('/auth/profile'),
+    updateProfile: (body: { avatarUrl?: string }) => put<{ message: string }>('/auth/profile', body),
     changePassword: (body: any) => post<{ message: string }>('/auth/change-password', body),
   },
 
@@ -272,5 +276,16 @@ export const api = {
   exam: {
     list: (query: ExamListQuery = {}) => get<ApiResponse<ExamPage>>('/exams', query),
     create: (body: CreateExamRequest) => post<ApiResponse<ExamDetail>>('/exams', body),
+  },
+
+  examRoom: {
+    list: (examId: number) => unwrap(get<ApiResponse<ExamRoom[]>>(`/exams/${examId}/rooms`)),
+    options: (examId: number) => unwrap(get<ApiResponse<ExamRoomOption[]>>(`/exams/${examId}/rooms/options`)),
+    create: (examId: number, body: SaveExamRoomRequest) =>
+      unwrap(post<ApiResponse<ExamRoom>>(`/exams/${examId}/rooms`, body)),
+    update: (examId: number, id: number, body: SaveExamRoomRequest) =>
+      unwrap(put<ApiResponse<ExamRoom>>(`/exams/${examId}/rooms/${id}`, body)),
+    remove: (examId: number, id: number) =>
+      unwrap(del<ApiResponse<boolean>>(`/exams/${examId}/rooms/${id}`)),
   },
 };
