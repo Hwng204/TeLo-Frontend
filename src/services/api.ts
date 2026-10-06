@@ -123,7 +123,8 @@ export const api = {
     forgotPassword: (body: { email: string }) => post<{ message: string }>('/auth/forgot-password', body),
     verifyOtp: (body: { email: string; otp: string }) => post<{ message: string }>('/auth/verify-otp', body),
     resetPassword: (body: { email: string; otp: string; newPassword: string }) => post<{ message: string }>('/auth/reset-password', body),
-    profile: () => get<{ username: string; fullName: string; email: string; status: string }>('/auth/profile'),
+    profile: () => get<{ username: string; fullName: string; email: string; status: string; avatarUrl?: string }>('/auth/profile'),
+    updateProfile: (body: { avatarUrl?: string }) => put<{ message: string }>('/auth/profile', body),
     changePassword: (body: any) => post<{ message: string }>('/auth/change-password', body),
   },
 
