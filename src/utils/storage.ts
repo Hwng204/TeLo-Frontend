@@ -34,7 +34,7 @@ export const storage = {
     // Đăng xuất/hết hạn không được để lại bản nháp chưa lưu của người trước trên máy dùng chung.
     try {
       Object.keys(sessionStorage)
-        .filter((key) => key.startsWith('matrix-draft:'))
+        .filter((key) => key.startsWith('matrix-draft:') || key.startsWith('email-context:'))
         .forEach((key) => sessionStorage.removeItem(key));
     } catch {
       // sessionStorage bị chặn: không có gì để dọn.

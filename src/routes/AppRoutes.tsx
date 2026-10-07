@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { createBrowserRouter, createRoutesFromElements, RouterProvider, Route, Navigate, Outlet } from 'react-router-dom';
 import { AdminLayout } from '../layouts/AdminLayout';
 import { AppShell } from '../layouts/AppShell';
 import { StudentLayout } from '../layouts/StudentLayout';
@@ -22,6 +22,7 @@ import { AcademicYearCreatePage } from '../features/academicYears/pages/Academic
 import { AcademicYearConfigPage } from '../features/academicYears/pages/AcademicYearConfigPage';
 import { RoleListPage } from '../features/identity/pages/RoleListPage';
 import { ModuleListPage } from '../features/identity/pages/ModuleListPage';
+import { EmailManagementPage } from '../features/emails/pages/EmailManagementPage';
 import { UserListPage } from '../features/identity/pages/UserListPage';
 import { ExamListPage } from '../features/exams/pages/ExamListPage';
 import { storage } from '../utils/storage';
@@ -60,10 +61,8 @@ import { StudentDashboardPage } from '../features/student/pages/StudentDashboard
 
 const STUDENT = ['STUDENT', 'HOC_SINH'];
 
-export const AppRoutes: React.FC = () => {
-  return (
-    <BrowserRouter>
-      <Routes>
+const router = createBrowserRouter(createRoutesFromElements(
+      <>
         <Route>
           <Route path="/login" element={<LoginPage />} />
         </Route>
@@ -99,6 +98,7 @@ export const AppRoutes: React.FC = () => {
 
 
         <Route element={<DirectoryShell />}>
+          <Route path="/emails" element={<EmailManagementPage />} />
           <Route element={<RequireRole allow={[...PHT, ...TEACHER, ...ADMIN]} />}>
             <Route path="/classes" element={<ClassListPage />} />
             <Route path="/classes/:id" element={<ClassDetailPage />} />
@@ -136,7 +136,7 @@ export const AppRoutes: React.FC = () => {
         </Route>
 
         <Route path="*" element={<Navigate to="/schools" replace />} />
-      </Routes>
-    </BrowserRouter>
-  );
-};
+      </>
+));
+
+export const AppRoutes: React.FC = () => <RouterProvider router={router} />;
