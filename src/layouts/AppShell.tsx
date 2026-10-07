@@ -25,7 +25,7 @@ const TEACHER_NAV: NavEntry[] = [
   { icon: 'menu_book', label: 'Chương & bài học', to: '/curriculum', activeFor: ['/curriculum'] },
 ];
 
-const PHT_NAV_AFTER_EXAM_GROUP: NavEntry[] = [{ icon: 'mail', label: 'Quản lý mẫu mail' }];
+const PHT_NAV_AFTER_EXAM_GROUP: NavEntry[] = [{ icon: 'mail', label: 'Email & thông báo', to: '/emails', activeFor: ['/emails'] }];
 const EXAM_GROUP = [
   'Danh sách kỳ thi', 'Danh sách môn thi', 'Danh sách thí sinh', 'Danh sách bộ đề thi', 'Danh sách phòng thi',
   'Danh sách ca thi', 'Xếp phòng thi', 'Danh sách giám thị', 'Phân công giám thị',
