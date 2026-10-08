@@ -103,7 +103,7 @@ export const StudentListPage = () => {
       <PageHeader title={title} inline={scope.admin} />
 
       <div className={scope.admin ? 'sep-page sep-page--flush' : 'sep-page'}>
-        <StatusTabs label="Lọc theo trạng thái học tập" tabs={STATUS_TABS} value={status} onChange={onFilter(setStatus)} />
+
 
         <div className="sep-toolbar">
           <div className="sep-toolbar__filters">
@@ -135,16 +135,16 @@ export const StudentListPage = () => {
               onChange={(event) => onFilter(setKeyword)(event.target.value)}
             />
             <SelectField
-              label="Khối"
+              label="Trạng thái"
               hideLabel
-              placeholder="Khối"
-              value={gradeLevelId ?? ''}
-              onChange={(event) => onFilter(setGradeLevelId)(numberOrUndefined(event.target.value))}
+              placeholder="Tất cả trạng thái"
+              value={status}
+              onChange={(event) => onFilter(setStatus)(event.target.value as StudentStatus | '')}
             >
-              <option value="">Tất cả khối</option>
-              {grades.map((grade) => (
-                <option key={grade.id} value={grade.id}>
-                  {grade.name}
+              <option value="">Tất cả trạng thái</option>
+              {STATUS_TABS.map((tab) => (
+                <option key={tab.value} value={tab.value}>
+                  {tab.label}
                 </option>
               ))}
             </SelectField>
@@ -162,20 +162,7 @@ export const StudentListPage = () => {
                 </option>
               ))}
             </SelectField>
-            <SelectField
-              label="Cơ sở"
-              hideLabel
-              placeholder="Cơ sở"
-              value={schoolBranchId ?? ''}
-              onChange={(event) => onFilter(setSchoolBranchId)(numberOrUndefined(event.target.value))}
-            >
-              <option value="">Tất cả cơ sở ({branches.length})</option>
-              {branches.map((branch) => (
-                <option key={branch.id} value={branch.id}>
-                  {branchLabel(branch, 'student')}
-                </option>
-              ))}
-            </SelectField>
+
             {filtered && (
               <PcbButton variant="ghost" size="sm" onClick={reset}>
                 Xoá lọc
@@ -207,7 +194,6 @@ export const StudentListPage = () => {
                 <th>Lớp hiện tại</th>
                 <th>Cơ sở</th>
                 <th>Trạng thái học tập</th>
-                <th>Ngày vào trường</th>
                 <th className="sep-col-actions">Hành động</th>
               </tr>
             </thead>
@@ -229,7 +215,6 @@ export const StudentListPage = () => {
                   <td>
                     <StatusPill {...statusOf(STUDENT_STATUS, row.status)} />
                   </td>
-                  <td className="sep-nowrap">{formatDay(row.admissionDate)}</td>
                   <td className="sep-col-actions">
                     <div className="sep-row-actions">
                       <RowAction to={scope.withSchool(`/students/${row.id}`)} icon="visibility" label={`Xem học sinh ${row.fullName}`} />
