@@ -4,7 +4,7 @@ import { useBusy } from '../../../hooks';
 import { api } from '../../../services/api';
 import type { Chapter, CurriculumField, CurriculumOption } from '../../../types';
 import { toProblem } from '../../../utils/problem';
-import { FormDialog } from './FormDialog';
+import { FormDialog } from '../../../components/common/FormDialog';
 
 type Props = {
   open: boolean;

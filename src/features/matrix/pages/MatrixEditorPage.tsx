@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 import { Field, Icon, PcbButton } from '../../../components/pcb';
 import { useAsync, useBusy } from '../../../hooks';
 import { api } from '../../../services/api';
-import type { GridRow, MatrixImportResult, SaveMatrixRequest } from '../../../types';
+import type { GridRow, MatrixImportPreview, SaveMatrixRequest } from '../../../types';
 import { contextLabel, resolveContextId, selectionFromContext } from '../../../utils/academicContext';
 import type { ContextSelection } from '../../../utils/academicContext';
 import { clearDraft, draftKeyFor, loadDraft, saveDraft } from '../../../utils/draftStorage';
@@ -208,31 +208,21 @@ const MatrixEditor = () => {
   };
 
   /** Đổ nội dung file Excel vào bảng soạn; vẫn là bản nháp, phải qua "Xem toàn bộ ma trận" mới lưu. */
-  const applyImport = (result: MatrixImportResult) => {
+  const applyImport = (result: MatrixImportPreview) => {
     if (rows.length > 0 && !window.confirm('Thay các dòng đang có trong bảng bằng nội dung từ file Excel?')) return;
-    // Ô nhập số không hiện được chữ ("abc"): để trống, lưới sẽ báo "Nhập số câu…" đúng ô đó.
-    const numeric = (value: string) => (Number.isFinite(Number(value)) ? value : '');
-    setDraftRows(
-      result.rows.map((row) => ({
-        ...row,
-        cells: Object.fromEntries(
-          Object.entries(row.cells).map(([level, cell]) => [
-            level,
-            { questionCount: numeric(cell.questionCount), percentage: numeric(cell.percentage) },
-          ]),
-        ) as GridRow['cells'],
-      })),
-    );
+    setDraftRows(toGrid(result.details, lessons.map((lesson) => lesson.id)));
     if (result.name && !name.trim()) setDraftName(result.name);
     if (result.totalScore) setDraftTotalScore(result.totalScore);
     setImportOpen(false);
     setImportNotice(
-      `Đã đưa ${result.rows.length} bài học từ file vào bảng. Kiểm tra lại các ô được đánh dấu, rồi bấm "Xem toàn bộ ma trận" để lưu.`,
+      `Đã đưa ${result.lessonCount} bài học từ tệp Excel vào bảng ma trận.`,
     );
   };
 
   const title = reviewing ? 'Xem lại ma trận' : matrixId ? 'Sửa ma trận' : 'Tạo ma trận';
-  const back = () => (reviewing ? setSearchParams({}) : navigate(-1));
+  const back = () => (reviewing ? setSearchParams({}) : navigate(
+    matrixId ? `/matrices/${matrixId}` : taskId ? `/matrix-tasks/${taskId}` : '/matrices',
+  ));
 
   if (detail.loading || reference.loading || (taskId && task.loading) || (academicContextId && lessonData.loading)) {
     return (
@@ -367,6 +357,7 @@ const MatrixEditor = () => {
               variant="secondary"
               size="sm"
               aria-expanded={importOpen}
+              disabled={academicContextId === null || lessonData.loading}
               onClick={() => {
                 setImportOpen(!importOpen);
                 setImportNotice(null);
@@ -384,14 +375,9 @@ const MatrixEditor = () => {
           </div>
         )}
 
-        {importOpen && !reviewing && (
+        {importOpen && !reviewing && academicContextId !== null && (
           <ExcelImportPanel
-            lessons={lessons}
-            contextReady={academicContextId !== null}
-            contextLabel={contextLabel(contexts, academicContextId)}
-            semesterName={semesterName ?? null}
-            name={name}
-            totalScore={totalScore}
+            context={{ academicContextId, semesterId: selection.semesterId ?? null, name, totalScore }}
             hasRows={rows.length > 0}
             onApply={applyImport}
             onClose={() => setImportOpen(false)}
@@ -462,7 +448,7 @@ const MatrixEditor = () => {
               variant="ghost"
               onClick={() => {
                 clearDraft(draftKey);
-                navigate(-1);
+                back();
               }}
             >
               Huỷ
