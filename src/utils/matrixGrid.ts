@@ -15,7 +15,6 @@ import type {
   GridCell,
   GridRow,
   LessonOption,
-  MatrixDetail,
   MatrixDetailRequest,
 } from '../types';
 
@@ -35,6 +34,12 @@ export const lessonLabel = (lesson: LessonOption): string =>
   lesson.chapterTitle
     ? `Bài ${lesson.code}. ${lesson.title} — Chương ${lesson.chapterCode}. ${lesson.chapterTitle}`
     : lesson.title;
+
+export const rowChapterId = (row: GridRow, lessons: LessonOption[]): number =>
+  lessons.find((lesson) => lesson.id === row.lessonId)?.chapterId ?? row.chapterId ?? 0;
+
+export const changeRowChapter = (row: GridRow, chapterId: number, lessons: LessonOption[]): GridRow =>
+  rowChapterId(row, lessons) === chapterId ? row : { ...row, chapterId, lessonId: 0 };
 
 /** Trần tỷ lệ % mỗi ô — không có ô nào chiếm quá 100% một mình. */
 export const MAX_PERCENTAGE = 100;
@@ -122,7 +127,7 @@ export const formatPerQuestion = (total: number, count: number): string => {
  * Bài học không còn trong sách vẫn giữ lại và đẩy xuống cuối —
  * nuốt mất dòng của người dùng là cách làm mất dữ liệu trong im lặng.
  */
-export const toGrid = (details: MatrixDetail[], lessonOrder: number[]): GridRow[] => {
+export const toGrid = (details: MatrixDetailRequest[], lessonOrder: number[]): GridRow[] => {
   const rows = new Map<number, GridRow>();
 
   for (const detail of details) {

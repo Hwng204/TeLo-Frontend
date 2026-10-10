@@ -17,9 +17,9 @@ export const LoginPage: React.FC = () => {
   const [activeYearName, setActiveYearName] = useState<string>('Năm học 2026-2027');
 
   useEffect(() => {
-    api.academicYear.list({ status: 'ACTIVE' }).then(res => {
-      if ((res.data?.items?.length ?? 0) > 0) {
-        setActiveYearName(`Năm học ${res.data!.items![0].name}`);
+    api.academicYear.current().then(res => {
+      if (res.data) {
+        setActiveYearName(`Năm học ${res.data.name}`);
       } else {
         setActiveYearName('Chưa thiết lập năm học');
       }

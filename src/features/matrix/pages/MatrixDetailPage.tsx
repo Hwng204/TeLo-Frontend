@@ -14,6 +14,7 @@ import { InfoGrid, type InfoItem } from '../../../components/common/InfoGrid';
 import { MatrixGrid } from '../components/MatrixGrid';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { RejectDialog } from '../components/RejectDialog';
+import { FormDialog } from '../../../components/common/FormDialog';
 import '../matrix.css';
 
 /** M03 / M03-A / M03-B chỉ khác nhau ở tiêu đề và cụm nút, mà cụm nút đọc từ allowedActions. */
@@ -34,6 +35,7 @@ export const MatrixDetailPage = () => {
   const [notice, setNotice] = useState<{ message: string; kind: 'error' | 'info' } | null>(null);
   const [busy, runExclusive] = useBusy();
   const [rejecting, setRejecting] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const detail = useAsync(() => api.matrix.get(matrixId), [matrixId]);
   const matrix = detail.data;
@@ -87,9 +89,11 @@ export const MatrixDetailPage = () => {
       async () => {
         const { blob, filename } = await api.matrix.exportXlsx(matrixId);
         saveBlob(blob, filename);
+        setExporting(false);
       },
       undefined,
       'Không xuất được file. Vui lòng thử lại.',
+      false,
     );
 
   const back = () => navigate(listPath);
@@ -180,7 +184,7 @@ export const MatrixDetailPage = () => {
         {/* Việc phụ (xuất, sửa) dồn trái; bên phải chỉ còn các quyết định, để Từ chối và Xác nhận đứng cạnh nhau. */}
         <div className="sep-actions__lead">
           {can('Export') && (
-            <PcbButton variant="secondary" disabled={busy} onClick={exportFile}>
+            <PcbButton variant="secondary" disabled={busy} onClick={() => { setNotice(null); setExporting(true); }}>
               <Icon name="download" size={20} />
               Xuất Excel
             </PcbButton>
@@ -253,6 +257,20 @@ export const MatrixDetailPage = () => {
         )}
       </div>
 
+      <FormDialog open={exporting && can('Export')} title="Xuất ma trận ra Excel" onClose={() => setExporting(false)}>
+        <div className="sep-excel">
+          {notice?.kind === 'error' && <div className="sep-alert" role="alert">{notice.message}</div>}
+          <p className="pcb-hint">Tải thông tin và bảng ma trận theo bài học, mức nhận thức, số câu, tỷ lệ và điểm.</p>
+          <div className="sep-excel__export-file">
+            <strong>{matrix.name}.xlsx</strong>
+            <span className="pcb-hint">Excel (.xlsx) · {matrix.totalQuestions} câu · {formatScore(matrix.totalScore)} điểm</span>
+          </div>
+          <div className="sep-actions">
+            <PcbButton variant="ghost" onClick={() => setExporting(false)}>Huỷ</PcbButton>
+            <PcbButton disabled={busy} onClick={exportFile}>{busy ? 'Đang xuất…' : 'Xuất Excel'}</PcbButton>
+          </div>
+        </div>
+      </FormDialog>
       <RejectDialog
         open={rejecting}
         busy={busy}

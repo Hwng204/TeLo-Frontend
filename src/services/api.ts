@@ -23,6 +23,8 @@ import type {
   LoginRequest,
   LoginResponse,
   Matrix,
+  MatrixImportContext,
+  MatrixImportPreview,
   MatrixListItem,
   MatrixListQuery,
   MatrixReferenceData,
@@ -162,6 +164,23 @@ export const api = {
       return { blob: response.data, filename: filenameFrom(response.headers['content-disposition']) };
     },
 
+    downloadTemplate: async (context: MatrixImportContext): Promise<{ blob: Blob; filename: string }> => {
+      const response = await apiClient.get<Blob>('/matrices/import/template.xlsx', { params: context, responseType: 'blob' });
+      return { blob: response.data, filename: filenameFrom(response.headers['content-disposition'], 'mau-ma-tran.xlsx') };
+    },
+    previewImport: async (file: File, context: MatrixImportContext): Promise<MatrixImportPreview> => {
+      const form = new FormData();
+      form.append('file', file);
+      return (await apiClient.post<MatrixImportPreview>('/matrices/import/preview', form,
+        { params: context, headers: { 'Content-Type': 'multipart/form-data' } })).data;
+    },
+    importFile: async (file: File, context: MatrixImportContext): Promise<MatrixImportPreview> => {
+      const form = new FormData();
+      form.append('file', file);
+      return (await apiClient.post<MatrixImportPreview>('/matrices/import', form,
+        { params: context, headers: { 'Content-Type': 'multipart/form-data' } })).data;
+    },
+
     /**
      * `lessons` chỉ có dữ liệu khi truyền `academicContextId`, vì danh sách bài học
      * được giới hạn theo phân hiệu, khối lớp và môn của ngữ cảnh đó. Gọi không tham số sẽ trả
@@ -256,10 +275,7 @@ export const api = {
   },
 
   academicYear: {
-    current: async (): Promise<ApiResponse<AcademicYearListItem | null>> => {
-      const res = await get<ApiResponse<AcademicYearPage>>('/academic-years', { status: 'ACTIVE' });
-      return { ...res, data: res.data?.items?.[0] ?? null };
-    },
+    current: () => get<ApiResponse<AcademicYearListItem | null>>('/academic-years/current'),
     list: (params?: { status?: string; search?: string; page?: number; pageSize?: number }) =>
       get<ApiResponse<AcademicYearPage>>('/academic-years', params),
     get: (id: string) => get<ApiResponse<AcademicYearDetail>>(`/academic-years/${id}`),

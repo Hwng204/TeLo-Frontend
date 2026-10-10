@@ -4,7 +4,7 @@ import {
   LEVELS,
   LEVEL_LABELS,
   cellErrorKey,
-  lessonLabel,
+  changeRowChapter,
   cellScore,
   columnTotal,
   formatPerQuestion,
@@ -14,13 +14,17 @@ import {
   isCellEmpty,
   newRow,
   rowErrorKey,
+  rowChapterId,
   rowTotal,
 } from '../../../utils/matrixGrid';
 
 const lessonName = (lessons: LessonOption[], lessonId: number) => {
   const lesson = lessons.find((item) => item.id === lessonId);
-  return lesson ? lessonLabel(lesson) : `Bài học #${lessonId} (không còn trong chương trình)`;
+  return lesson ? `${lesson.code ? `Bài ${lesson.code}. ` : ''}${lesson.title}` : `Bài học #${lessonId} (không còn trong chương trình)`;
 };
+
+const chapterName = (lesson: LessonOption) =>
+  `Chương ${lesson.chapterCode ? `${lesson.chapterCode}. ` : ''}${lesson.chapterTitle || `#${lesson.chapterId}`}`;
 
 type Props = {
   rows: GridRow[];
@@ -50,6 +54,7 @@ export const MatrixGrid = ({ rows, lessons, matrixTotalScore, readOnly, errors =
 
   // Một bài học chỉ được xuất hiện ở một dòng, nếu không backend trả DuplicateDetail.
   const usedLessons = new Set(rows.map((row) => row.lessonId).filter(Boolean));
+  const chapters = [...new Map(lessons.map((lesson) => [lesson.chapterId, lesson])).values()];
 
   return (
     <div className="sep-panel">
@@ -57,7 +62,8 @@ export const MatrixGrid = ({ rows, lessons, matrixTotalScore, readOnly, errors =
       <table className="pcb-table sep-matrix-table">
         <thead>
           <tr>
-            <th scope="col">Nội dung / Bài học</th>
+            <th scope="col">Chương</th>
+            <th scope="col">Bài học</th>
             {LEVELS.map((level) => (
               <th key={level} scope="col">{LEVEL_LABELS[level]}</th>
             ))}
@@ -70,8 +76,32 @@ export const MatrixGrid = ({ rows, lessons, matrixTotalScore, readOnly, errors =
           {rows.map((row) => {
             const rowSum = rowTotal(row);
             const lessonError = errors[rowErrorKey(row.key)];
+            const chapterId = rowChapterId(row, lessons);
+            const chapter = chapters.find((item) => item.chapterId === chapterId);
+            const lesson = lessons.find((item) => item.id === row.lessonId);
             return (
               <tr key={row.key}>
+                <td className={readOnly ? 'sep-matrix-rowhead' : undefined}>
+                  {readOnly ? (
+                    lesson ? chapterName(lesson) : '—'
+                  ) : (
+                    <SelectField
+                      value={chapterId || ''}
+                      aria-label="Chương"
+                      title={chapter ? chapterName(chapter) : undefined}
+                      disabled={chapters.length === 0}
+                      error={!chapterId && lessonError ? 'Chọn chương cho dòng này.' : undefined}
+                      onChange={(event) => update(rows.map((item) =>
+                        item.key === row.key ? changeRowChapter(item, Number(event.target.value), lessons) : item,
+                      ))}
+                    >
+                      <option value="">{chapters.length ? 'Chọn chương' : 'Chưa có chương có bài học'}</option>
+                      {chapters.map((chapter) => (
+                        <option key={chapter.chapterId} value={chapter.chapterId}>{chapterName(chapter)}</option>
+                      ))}
+                    </SelectField>
+                  )}
+                </td>
                 {readOnly ? (
                   <th scope="row" className="sep-matrix-rowhead">
                     {lessonName(lessons, row.lessonId)}
@@ -81,23 +111,26 @@ export const MatrixGrid = ({ rows, lessons, matrixTotalScore, readOnly, errors =
                     <SelectField
                       value={row.lessonId || ''}
                       aria-label="Bài học"
-                      error={lessonError}
+                      title={lesson ? lessonName(lessons, lesson.id) : undefined}
+                      disabled={!chapterId}
+                      error={chapterId ? lessonError : undefined}
                       onChange={(event) =>
                         update(
                           rows.map((item) =>
-                            item.key === row.key ? { ...item, lessonId: Number(event.target.value) } : item,
+                            item.key === row.key ? { ...item, chapterId: rowChapterId(item, lessons), lessonId: Number(event.target.value) } : item,
                           ),
                         )
                       }
                     >
-                      <option value="">Chọn bài học</option>
-                      {lessons.map((lesson) => (
+                      <option value="">{chapterId ? 'Chọn bài học' : 'Chọn chương trước'}</option>
+                      {row.lessonId !== 0 && !lesson && <option value={row.lessonId}>{lessonName(lessons, row.lessonId)}</option>}
+                      {lessons.filter((lesson) => lesson.chapterId === chapterId).map((lesson) => (
                         <option
                           key={lesson.id}
                           value={lesson.id}
                           disabled={lesson.id !== row.lessonId && usedLessons.has(lesson.id)}
                         >
-                          {lessonLabel(lesson)}
+                          {lessonName(lessons, lesson.id)}
                         </option>
                       ))}
                     </SelectField>
@@ -183,7 +216,7 @@ export const MatrixGrid = ({ rows, lessons, matrixTotalScore, readOnly, errors =
 
           {rows.length > 0 && (
             <tr className="sep-table-total">
-              <td>Tổng</td>
+              <td colSpan={2}>Tổng</td>
               {LEVELS.map((level) => {
                 const column = columnTotal(rows, level);
                 return (
@@ -201,7 +234,7 @@ export const MatrixGrid = ({ rows, lessons, matrixTotalScore, readOnly, errors =
 
       {rows.length === 0 && (
         <p className="sep-empty">
-          {readOnly ? 'Ma trận chưa có dòng chi tiết nào.' : 'Chưa có dòng nào. Bấm "Thêm nội dung" để chọn bài học đầu tiên.'}
+          {readOnly ? 'Ma trận chưa có dòng chi tiết nào.' : 'Chưa có dòng nào. Bấm "Thêm nội dung", chọn chương rồi chọn bài học.'}
         </p>
       )}
       </div>
