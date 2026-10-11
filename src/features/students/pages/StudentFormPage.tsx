@@ -13,12 +13,11 @@ type Draft = {
   fullName: string;
   dateOfBirth: string;
   gender: string;
-  admissionDate: string;
   status: StudentStatus;
   schoolClassId: string;
 };
 
-const EMPTY: Draft = { code: '', fullName: '', dateOfBirth: '', gender: '', admissionDate: '', status: 'ACTIVE', schoolClassId: '' };
+const EMPTY: Draft = { code: '', fullName: '', dateOfBirth: '', gender: '', status: 'ACTIVE', schoolClassId: '' };
 // "Đã xoá" chỉ đạt được bằng nút Xoá; hồ sơ đã xoá thì giữ lựa chọn đó, chọn trạng thái khác là khôi phục.
 const EDITABLE_STATUSES: StudentStatus[] = ['ACTIVE', 'TEMPORARY_LEAVE', 'TRANSFERRED'];
 
@@ -53,7 +52,6 @@ export const StudentFormPage = () => {
           fullName: current.fullName,
           dateOfBirth: current.dateOfBirth ?? '',
           gender: current.gender ?? '',
-          admissionDate: current.admissionDate,
           status: current.status,
           schoolClassId: '',
         }
@@ -71,9 +69,6 @@ export const StudentFormPage = () => {
     else if (value.code.trim().length > 64) found.code = 'Mã học sinh tối đa 64 ký tự.';
     if (!value.fullName.trim()) found.fullName = 'Nhập họ và tên.';
     else if (value.fullName.trim().length > 255) found.fullName = 'Họ và tên tối đa 255 ký tự.';
-    if (!value.admissionDate) found.admissionDate = 'Chọn ngày vào trường.';
-    if (value.dateOfBirth && value.admissionDate && value.dateOfBirth > value.admissionDate)
-      found.dateOfBirth = 'Ngày sinh phải trước ngày vào trường.';
     if (!studentId && !value.schoolClassId) found.schoolClassId = 'Chọn lớp cho học sinh.';
     setErrors(found);
     if (Object.keys(found).length > 0) {
@@ -86,7 +81,6 @@ export const StudentFormPage = () => {
       fullName: value.fullName.trim(),
       dateOfBirth: value.dateOfBirth || null,
       gender: value.gender || null,
-      admissionDate: value.admissionDate,
       status: value.status,
       schoolClassId: value.schoolClassId ? Number(value.schoolClassId) : null,
     };
@@ -131,13 +125,6 @@ export const StudentFormPage = () => {
         <section className="sep-section">
           <h2 className="sep-section-title">Học tập</h2>
           <div className="sep-fields">
-            <Field
-              label="Ngày vào trường"
-              type="date"
-              value={value.admissionDate}
-              invalid={Boolean(errors.admissionDate)}
-              onChange={(e) => set('admissionDate', e.target.value)}
-            />
             <SelectField label="Trạng thái học tập" value={value.status} invalid={Boolean(errors.status)} onChange={(e) => set('status', e.target.value)}>
               {(current?.status === 'INACTIVE' ? [...EDITABLE_STATUSES, 'INACTIVE' as const] : EDITABLE_STATUSES).map((code) => (
                 <option key={code} value={code}>

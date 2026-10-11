@@ -107,7 +107,6 @@ export interface StudentListItem {
   schoolBranchId: number | null;
   schoolBranchName: string | null;
   status: StudentStatus;
-  admissionDate: string;
 }
 
 export interface StudentAcademicHistoryItem {
@@ -141,7 +140,6 @@ export interface StudentDetail {
   fullName: string;
   dateOfBirth: string | null;
   gender: string | null;
-  admissionDate: string;
   status: StudentStatus;
   currentClass: StudentCurrentClass | null;
   academicHistory: StudentAcademicHistoryItem[];
@@ -168,7 +166,6 @@ export interface SaveStudentRequest {
   fullName: string;
   dateOfBirth: string | null;
   gender: string | null;
-  admissionDate: string;
   status: StudentStatus | null;
   /** Bắt buộc khi tạo (tạo lượt ghi danh đầu tiên); khi sửa, đổi lớp trong cùng năm hãy dùng chuyển lớp. */
   schoolClassId: number | null;

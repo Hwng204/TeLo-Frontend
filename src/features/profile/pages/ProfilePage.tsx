@@ -6,19 +6,60 @@ import { uploadToCloudinary } from '../../../utils/cloudinary';
 import { displayToast } from '../../../utils/toast';
 import { PageHeader } from '../../../components/common/PageHeader';
 
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  boxSizing: 'border-box',
+  padding: '10px 12px',
+  borderRadius: '6px',
+  border: '1px solid #e2e8f0',
+  backgroundColor: '#f1f5f9', // Tối màu, không sửa được
+  color: '#475569',
+  fontSize: '14px',
+  outline: 'none',
+  cursor: 'default'
+};
+
+const HeaderButtons = ({ onSave }: { onSave: () => void }) => (
+  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+    <button type="button" onClick={() => window.history.back()} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569', fontWeight: 500, cursor: 'pointer' }}>
+      <Icon name="arrow_back" size={18} />
+      Quay lại
+    </button>
+    <button type="button" onClick={onSave} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', backgroundColor: '#3b82f6', border: '1px solid #3b82f6', borderRadius: '6px', color: 'white', fontWeight: 500, cursor: 'pointer' }}>
+      <Icon name="save" size={18} />
+      Lưu thay đổi
+    </button>
+  </div>
+);
+
+const AvatarUpload = ({ uploading, onAvatarChange, avatarUrl }: any) => (
+  <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '24px', marginBottom: '24px' }}>
+    <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', marginBottom: '16px', textTransform: 'uppercase' }}>Ảnh giao diện</div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+      <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#f1f5f9', border: '1px dashed #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        {avatarUrl ? <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <img src="/logo-pcb.png" alt="Logo" style={{ width: '60%' }} />}
+      </div>
+      <div>
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', fontWeight: 500, color: '#475569', cursor: 'pointer' }}>
+            <Icon name="upload" size={16} />
+            {uploading ? 'Đang tải...' : 'Tải ảnh lên'}
+            <input type="file" accept="image/png, image/jpeg, image/svg+xml" style={{ display: 'none' }} onChange={onAvatarChange} disabled={uploading} />
+          </label>
+          <button type="button" onClick={() => onAvatarChange({ target: { files: null } })} style={{ color: '#ef4444', backgroundColor: 'transparent', border: 'none', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>Xóa</button>
+        </div>
+        <div style={{ fontSize: '12px', color: '#64748b', maxWidth: '400px', lineHeight: 1.5 }}>
+          Định dạng PNG, JPG, SVG. Khuyến nghị ảnh vuông tối đa 2MB. Logo hiển thị dạng hình tròn trên hệ thống.
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const StudentProfile = ({ profile, onSave, uploading, onAvatarChange, avatarUrl }: any) => {
   return (
-    <div style={{ padding: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <button type="button" onClick={() => window.history.back()} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569', fontWeight: 500, cursor: 'pointer' }}>
-          <Icon name="refresh" size={18} />
-          Quay lại
-        </button>
-        <button type="button" onClick={onSave} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', backgroundColor: '#3b82f6', border: '1px solid #3b82f6', borderRadius: '6px', color: 'white', fontWeight: 500, cursor: 'pointer' }}>
-          <Icon name="check" size={18} />
-          Lưu thay đổi
-        </button>
-      </div>
+    <div style={{ padding: '16px' }}>
+      <HeaderButtons onSave={onSave} />
 
       <div style={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
         <div style={{ padding: '16px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f8fafc' }}>
@@ -30,53 +71,33 @@ const StudentProfile = ({ profile, onSave, uploading, onAvatarChange, avatarUrl 
         </div>
 
         <div style={{ padding: '24px' }}>
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '24px', marginBottom: '24px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', marginBottom: '16px', textTransform: 'uppercase' }}>Ảnh giao diện</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-              <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#f1f5f9', border: '1px dashed #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                {avatarUrl ? <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <img src="/logo-pcb.png" alt="Logo" style={{ width: '60%' }} />}
-              </div>
-              <div>
-                <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
-                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', fontWeight: 500, color: '#475569', cursor: 'pointer' }}>
-                    <Icon name="upload" size={16} />
-                    {uploading ? 'Đang tải...' : 'Tải ảnh lên'}
-                    <input type="file" accept="image/png, image/jpeg, image/svg+xml" style={{ display: 'none' }} onChange={onAvatarChange} disabled={uploading} />
-                  </label>
-                  <button type="button" style={{ color: '#ef4444', backgroundColor: 'transparent', border: 'none', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>Xóa</button>
-                </div>
-                <div style={{ fontSize: '12px', color: '#64748b', maxWidth: '400px', lineHeight: 1.5 }}>
-                  Định dạng PNG, JPG, SVG. Khuyến nghị ảnh vuông tối đa 2MB. Logo hiển thị dạng hình tròn trên hệ thống.
-                </div>
-              </div>
-            </div>
-          </div>
+          <AvatarUpload uploading={uploading} onAvatarChange={onAvatarChange} avatarUrl={avatarUrl} />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '32px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '16px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Khối <span style={{ color: '#ef4444' }}>*</span></label>
-              <input type="text" readOnly value="Khối 3" style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', color: '#334155', fontSize: '14px', outline: 'none' }} />
+              <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Khối</label>
+              <input type="text" readOnly value="Khối 3" style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Lớp học <span style={{ color: '#ef4444' }}>*</span></label>
-              <input type="text" readOnly value="3A1" style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', color: '#334155', fontSize: '14px', outline: 'none' }} />
+              <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Lớp học</label>
+              <input type="text" readOnly value="3A1" style={inputStyle} />
             </div>
 
             <div>
               <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Mã học sinh</label>
-              <input type="text" readOnly value={profile?.username || '103008104-00-2497'} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', color: '#334155', fontSize: '14px', outline: 'none' }} />
+              <input type="text" readOnly value={profile?.username || '103008104-00-2497'} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Họ và tên <span style={{ color: '#ef4444' }}>*</span></label>
-              <input type="text" readOnly value={profile?.fullName || 'Thái Bảo Quỳnh Chi'} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', color: '#334155', fontSize: '14px', outline: 'none' }} />
+              <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Họ và tên</label>
+              <input type="text" readOnly value={profile?.fullName || 'Thái Bảo Quỳnh Chi'} style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Giới tính <span style={{ color: '#ef4444' }}>*</span></label>
-              <input type="text" readOnly value="Nữ" style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', color: '#334155', fontSize: '14px', outline: 'none' }} />
+              <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Giới tính</label>
+              <input type="text" readOnly value="Nữ" style={inputStyle} />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Ngày sinh <span style={{ color: '#ef4444' }}>*</span></label>
-              <input type="text" readOnly defaultValue="01/01/2014" style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', color: '#334155', fontSize: '14px', outline: 'none' }} />
+              <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Ngày sinh</label>
+              <input type="text" readOnly value="01/01/2014" style={inputStyle} />
             </div>
           </div>
         </div>
@@ -87,21 +108,12 @@ const StudentProfile = ({ profile, onSave, uploading, onAvatarChange, avatarUrl 
 
 const TeacherProfile = ({ profile, onSave, uploading, onAvatarChange, avatarUrl }: any) => {
   return (
-    <div style={{ padding: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <button type="button" onClick={() => window.history.back()} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569', fontWeight: 500, cursor: 'pointer' }}>
-          <Icon name="refresh" size={18} />
-          Quay lại
-        </button>
-        <button type="button" onClick={onSave} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', backgroundColor: '#3b82f6', border: '1px solid #3b82f6', borderRadius: '6px', color: 'white', fontWeight: 500, cursor: 'pointer' }}>
-          <Icon name="check" size={18} />
-          Lưu thay đổi
-        </button>
-      </div>
+    <div style={{ padding: '16px' }}>
+      <HeaderButtons onSave={onSave} />
 
-      <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
         {/* Left column */}
-        <div style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ width: '320px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0', padding: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
               <span style={{ color: '#64748b', fontSize: '13px' }}>Tổ chuyên môn:</span>
@@ -143,52 +155,32 @@ const TeacherProfile = ({ profile, onSave, uploading, onAvatarChange, avatarUrl 
           </div>
 
           <div style={{ padding: '24px' }}>
-            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '24px', marginBottom: '24px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b', marginBottom: '16px', textTransform: 'uppercase' }}>Ảnh giao diện</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#f1f5f9', border: '1px dashed #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  {avatarUrl ? <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <img src="/logo-pcb.png" alt="Logo" style={{ width: '60%' }} />}
-                </div>
-                <div>
-                  <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
-                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', fontWeight: 500, color: '#475569', cursor: 'pointer' }}>
-                      <Icon name="upload" size={16} />
-                      {uploading ? 'Đang tải...' : 'Tải ảnh lên'}
-                      <input type="file" accept="image/png, image/jpeg, image/svg+xml" style={{ display: 'none' }} onChange={onAvatarChange} disabled={uploading} />
-                    </label>
-                    <button type="button" onClick={() => onAvatarChange({ target: { files: null } })} style={{ color: '#ef4444', backgroundColor: 'transparent', border: 'none', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>Xóa</button>
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#64748b', maxWidth: '400px', lineHeight: 1.5 }}>
-                    Định dạng PNG, JPG, SVG. Khuyến nghị ảnh vuông tối đa 2MB. Logo hiển thị dạng hình tròn trên hệ thống.
-                  </div>
-                </div>
-              </div>
-            </div>
+            <AvatarUpload uploading={uploading} onAvatarChange={onAvatarChange} avatarUrl={avatarUrl} />
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Họ và tên giáo viên</label>
-                <input type="text" readOnly value={profile?.fullName || ''} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', color: '#334155', fontSize: '14px', outline: 'none' }} />
+                <input type="text" readOnly value={profile?.fullName || ''} style={inputStyle} />
               </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Ngày sinh</label>
-                <input type="date" defaultValue="1988-05-14" style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: 'white', color: '#334155', fontSize: '14px', outline: 'none' }} />
+                <input type="text" readOnly value="14/05/1988" style={inputStyle} />
               </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Giới tính</label>
-                <input type="text" readOnly value="Nam" style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', color: '#334155', fontSize: '14px', outline: 'none' }} />
+                <input type="text" readOnly value="Nam" style={inputStyle} />
               </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Số điện thoại liên hệ</label>
-                <input type="text" defaultValue="0901234567" style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: 'white', color: '#334155', fontSize: '14px', outline: 'none' }} />
+                <input type="text" readOnly value="0901234567" style={inputStyle} />
               </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Email công vụ</label>
-                <input type="email" readOnly value={profile?.email || 'trong.nh@pcb.edu.vn'} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', color: '#334155', fontSize: '14px', outline: 'none' }} />
+                <input type="text" readOnly value={profile?.email || 'trong.nh@pcb.edu.vn'} style={inputStyle} />
               </div>
             </div>
 
@@ -268,23 +260,25 @@ export const ProfilePage: React.FC = () => {
   return (
     <>
       <PageHeader title="Hồ sơ cá nhân" />
-      {isStudent ? (
-        <StudentProfile
-          profile={profile}
-          onSave={handleSave}
-          uploading={uploading}
-          onAvatarChange={handleAvatarChange}
-          avatarUrl={avatarUrl}
-        />
-      ) : (
-        <TeacherProfile
-          profile={profile}
-          onSave={handleSave}
-          uploading={uploading}
-          onAvatarChange={handleAvatarChange}
-          avatarUrl={avatarUrl}
-        />
-      )}
+      <div className="sep-page sep-page--flush">
+        {isStudent ? (
+          <StudentProfile
+            profile={profile}
+            onSave={handleSave}
+            uploading={uploading}
+            onAvatarChange={handleAvatarChange}
+            avatarUrl={avatarUrl}
+          />
+        ) : (
+          <TeacherProfile
+            profile={profile}
+            onSave={handleSave}
+            uploading={uploading}
+            onAvatarChange={handleAvatarChange}
+            avatarUrl={avatarUrl}
+          />
+        )}
+      </div>
     </>
   );
 };

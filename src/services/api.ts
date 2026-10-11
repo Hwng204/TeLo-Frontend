@@ -5,6 +5,25 @@
  */
 import { apiClient } from './apiClient';
 import type {
+  EmailListQuery,
+  EmailSchoolItem,
+  EmailEventItem,
+  EmailTemplateItem,
+  EmailTemplateDetail,
+  EmailRevisionItem,
+  SaveEmailTemplateRequest,
+  SaveEmailConfigRequest,
+  EmailConfigItem,
+  EmailConfigurationListItem,
+  EmailRecipientOption,
+  EmailHistoryItem,
+  EmailHistoryDetail,
+  EmailDeliveryItem,
+  EmailQueueResult,
+  SaveEmailEventRequest,
+  SendEmailRequest,
+  EmailMessagePreview,
+  EmailRuntimeStatus,
   IdentityQuery,
   IdentityStatus,
   IdentityScope,
@@ -23,6 +42,8 @@ import type {
   LoginRequest,
   LoginResponse,
   Matrix,
+  MatrixImportContext,
+  MatrixImportPreview,
   MatrixListItem,
   MatrixListQuery,
   MatrixReferenceData,
@@ -103,8 +124,38 @@ const upload = async <T>(url: string, file: File): Promise<T> => {
   return response.data.data as T;
 };
 const directoryBase = (schoolId?: number) => (schoolId ? `/admin/schools/${schoolId}` : '');
+const emailBase = (schoolId: number) => `/schools/${schoolId}/emails`;
 
 export const api = {
+  email: {
+    schools: (query: EmailListQuery = {}) => unwrap(get<ApiResponse<DirectoryPage<EmailSchoolItem>>>('/email/schools', query)),
+    events: (schoolId: number, query: EmailListQuery = {}) => unwrap(get<ApiResponse<DirectoryPage<EmailEventItem>>>(`${emailBase(schoolId)}/events`, query)),
+    event: (schoolId: number, code: string) => unwrap(get<ApiResponse<EmailEventItem>>(`${emailBase(schoolId)}/events/${encodeURIComponent(code)}`)),
+    createEvent: (schoolId: number, body: SaveEmailEventRequest) => unwrap(post<ApiResponse<EmailEventItem>>(`${emailBase(schoolId)}/events`, body)),
+    updateEvent: (schoolId: number, code: string, body: SaveEmailEventRequest) => unwrap(put<ApiResponse<EmailEventItem>>(`${emailBase(schoolId)}/events/${encodeURIComponent(code)}`, body)),
+    eventStatus: (schoolId: number, code: string, status: string, version: number) => unwrap(patch<ApiResponse<EmailEventItem>>(`${emailBase(schoolId)}/events/${encodeURIComponent(code)}/status`, { status, version })),
+    deleteEvent: (schoolId: number, code: string, version: number) => unwrap(del<ApiResponse<boolean>>(`${emailBase(schoolId)}/events/${encodeURIComponent(code)}?version=${version}`)),
+    deliveryStatus: (schoolId: number) => unwrap(get<ApiResponse<EmailRuntimeStatus>>(`${emailBase(schoolId)}/delivery-status`)),
+    previewMessage: (schoolId: number, body: SendEmailRequest) => unwrap(post<ApiResponse<EmailMessagePreview>>(`${emailBase(schoolId)}/send/preview`, body)),
+    send: (schoolId: number, body: SendEmailRequest) => unwrap(post<ApiResponse<EmailQueueResult>>(`${emailBase(schoolId)}/send`, body)),
+    cancel: (schoolId: number, id: number, version: number) => unwrap(post<ApiResponse<boolean>>(`${emailBase(schoolId)}/history/${id}/cancel`, { version })),
+    templates: (schoolId: number, query: EmailListQuery = {}) => unwrap(get<ApiResponse<DirectoryPage<EmailTemplateItem>>>(`${emailBase(schoolId)}/templates`, query)),
+    template: (schoolId: number, id: number) => unwrap(get<ApiResponse<EmailTemplateDetail>>(`${emailBase(schoolId)}/templates/${id}`)),
+    createTemplate: (schoolId: number, body: SaveEmailTemplateRequest) => unwrap(post<ApiResponse<EmailTemplateDetail>>(`${emailBase(schoolId)}/templates`, body)),
+    updateTemplate: (schoolId: number, id: number, body: SaveEmailTemplateRequest) => unwrap(put<ApiResponse<EmailTemplateDetail>>(`${emailBase(schoolId)}/templates/${id}`, body)),
+    templateStatus: (schoolId: number, id: number, status: string, version: number) => unwrap(patch<ApiResponse<EmailTemplateItem>>(`${emailBase(schoolId)}/templates/${id}/status`, { status, version })),
+    deleteTemplate: (schoolId: number, id: number, version: number) => unwrap(del<ApiResponse<boolean>>(`${emailBase(schoolId)}/templates/${id}?version=${version}`)),
+    revisions: (schoolId: number, id: number, query: EmailListQuery = {}) => unwrap(get<ApiResponse<DirectoryPage<EmailRevisionItem>>>(`${emailBase(schoolId)}/templates/${id}/revisions`, query)),
+    configurations: (schoolId: number, query: EmailListQuery = {}) => unwrap(get<ApiResponse<DirectoryPage<EmailConfigurationListItem>>>(`${emailBase(schoolId)}/configurations`, { params: query })),
+    configuration: (schoolId: number, eventCode: string) => unwrap(get<ApiResponse<EmailConfigItem>>(`${emailBase(schoolId)}/configuration/${encodeURIComponent(eventCode)}`)),
+    saveConfiguration: (schoolId: number, eventCode: string, body: SaveEmailConfigRequest) => unwrap(put<ApiResponse<EmailConfigItem>>(`${emailBase(schoolId)}/configuration/${encodeURIComponent(eventCode)}`, body)),
+    recipients: (schoolId: number, kind: 'role' | 'user', query: EmailListQuery = {}) => unwrap(get<ApiResponse<DirectoryPage<EmailRecipientOption>>>(`${emailBase(schoolId)}/recipients`, { ...query, kind })),
+    previewRecipients: (schoolId: number, body: SaveEmailConfigRequest, query: EmailListQuery = {}) => unwrap(apiClient.post<ApiResponse<DirectoryPage<EmailRecipientOption>>>(`${emailBase(schoolId)}/recipients/preview`, body, { params: query }).then(response => response.data)),
+    history: (schoolId: number, query: EmailListQuery = {}) => unwrap(get<ApiResponse<DirectoryPage<EmailHistoryItem>>>(`${emailBase(schoolId)}/history`, query)),
+    historyDetail: (schoolId: number, id: number) => unwrap(get<ApiResponse<EmailHistoryDetail>>(`${emailBase(schoolId)}/history/${id}`)),
+    deliveries: (schoolId: number, id: number, query: EmailListQuery = {}) => unwrap(get<ApiResponse<DirectoryPage<EmailDeliveryItem>>>(`${emailBase(schoolId)}/history/${id}/recipients`, query)),
+    test: (schoolId: number, body: { revisionId: number; recipientUserId: number; requestId: string }) => unwrap(post<ApiResponse<EmailQueueResult>>(`${emailBase(schoolId)}/test`, body)),
+  },
   roles: {
     list: (query: IdentityQuery = {}) => unwrap(get<ApiResponse<DirectoryPage<RoleItem>>>('/roles', query)),
     get: (id: number) => unwrap(get<ApiResponse<RoleItem>>(`/roles/${id}`)),
@@ -165,6 +216,23 @@ export const api = {
     exportXlsx: async (id: number): Promise<{ blob: Blob; filename: string }> => {
       const response = await apiClient.get<Blob>(`/matrices/${id}/export.xlsx`, { responseType: 'blob' });
       return { blob: response.data, filename: filenameFrom(response.headers['content-disposition']) };
+    },
+
+    downloadTemplate: async (context: MatrixImportContext): Promise<{ blob: Blob; filename: string }> => {
+      const response = await apiClient.get<Blob>('/matrices/import/template.xlsx', { params: context, responseType: 'blob' });
+      return { blob: response.data, filename: filenameFrom(response.headers['content-disposition'], 'mau-ma-tran.xlsx') };
+    },
+    previewImport: async (file: File, context: MatrixImportContext): Promise<MatrixImportPreview> => {
+      const form = new FormData();
+      form.append('file', file);
+      return (await apiClient.post<MatrixImportPreview>('/matrices/import/preview', form,
+        { params: context, headers: { 'Content-Type': 'multipart/form-data' } })).data;
+    },
+    importFile: async (file: File, context: MatrixImportContext): Promise<MatrixImportPreview> => {
+      const form = new FormData();
+      form.append('file', file);
+      return (await apiClient.post<MatrixImportPreview>('/matrices/import', form,
+        { params: context, headers: { 'Content-Type': 'multipart/form-data' } })).data;
     },
 
     /**
@@ -261,10 +329,7 @@ export const api = {
   },
 
   academicYear: {
-    current: async (): Promise<ApiResponse<AcademicYearListItem | null>> => {
-      const res = await get<ApiResponse<AcademicYearPage>>('/academic-years', { status: 'ACTIVE' });
-      return { ...res, data: res.data?.items?.[0] ?? null };
-    },
+    current: () => get<ApiResponse<AcademicYearListItem | null>>('/academic-years/current'),
     list: (params?: { status?: string; search?: string; page?: number; pageSize?: number }) =>
       get<ApiResponse<AcademicYearPage>>('/academic-years', params),
     get: (id: string) => get<ApiResponse<AcademicYearDetail>>(`/academic-years/${id}`),

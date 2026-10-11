@@ -19,7 +19,7 @@ const PHT_NAV: NavEntry[] = [
   { icon: 'inventory_2', label: 'Kho đề' },
   { icon: 'calendar_month', label: 'Quản lý kỳ thi', to: '/exams', activeFor: ['/exams'] },
   { icon: 'event', label: 'Tổ chức thi' },
-  { icon: 'mail', label: 'Quản lý mẫu mail' },
+  { icon: 'mail', label: 'Email & thông báo', to: '/emails', activeFor: ['/emails'] },
 ];
 // Giáo viên chỉ có lớp mình chủ nhiệm và học sinh của lớp đó.
 const TEACHER_NAV: NavEntry[] = [

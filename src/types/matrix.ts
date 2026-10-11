@@ -246,10 +246,29 @@ export interface GridCell {
 export interface GridRow {
   key: string;
   lessonId: number;
+  /** Chỉ giữ lựa chọn chương của bản nháp khi chưa chọn bài; request lưu vẫn dùng lessonId. */
+  chapterId?: number;
   cells: Record<CognitiveLevel, GridCell>;
 }
 
-// --- Nhập ma trận từ file Excel (đọc/ghi .xlsx ngay trên trình duyệt) ---
+export interface MatrixImportContext {
+  academicContextId: number;
+  semesterId: number | null;
+  totalScore: number;
+  name?: string;
+}
+
+export interface MatrixImportPreview {
+  canImport: boolean;
+  name: string | null;
+  totalScore: number;
+  lessonCount: number;
+  filledLines: number;
+  details: MatrixDetailRequest[];
+  errors: { rowNumber: number | null; message: string }[];
+}
+
+// --- Helpers đọc/ghi .xlsx và kiểm tra định dạng cũ ---
 
 /** Một ô khi ghi file .xlsx; `bold` cho dòng tiêu đề. */
 export type XlsxCell = string | number | null | { value: string | number; bold?: boolean };

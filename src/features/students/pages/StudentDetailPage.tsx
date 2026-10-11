@@ -108,7 +108,6 @@ export const StudentDetailPage = () => {
         '—'
       ),
     },
-    { label: 'Ngày vào trường', value: formatDay(student.admissionDate) },
     { label: 'Trạng thái học tập', value: state.label },
     { label: 'Cơ sở', value: current?.schoolBranchName ?? '—' },
     { label: 'Giáo viên chủ nhiệm', value: current?.homeroomTeacherName ?? '—', span: 'wide' },
