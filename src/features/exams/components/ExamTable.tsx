@@ -1,111 +1,74 @@
-import { Icon } from '../../../components/pcb';
+import { Pager } from '../../../components/common/Pager';
+import { RowAction, RowActionButton } from '../../../components/common/RowAction';
+import { TableState } from '../../../components/common/TableState';
 import type { ExamListItem, ExamStatus } from '../../../types';
 
 type ExamTableProps = {
   items: ExamListItem[];
   loading: boolean;
+  failed: boolean;
   page: number;
   pageSize: number;
   totalCount: number;
-  totalPages: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+  onDelete: (exam: ExamListItem) => void;
 };
 
 const STATUS_META: Record<ExamStatus, { label: string; className: string }> = {
-  DRAFT: { label: 'Bản nháp', className: 'draft' },
-  SCHEDULED: { label: 'Sắp diễn ra', className: 'scheduled' },
-  ONGOING: { label: 'Đang diễn ra', className: 'ongoing' },
-  COMPLETED: { label: 'Đã kết thúc', className: 'completed' },
-  CANCELLED: { label: 'Đã hủy', className: 'cancelled' },
+  DRAFT: { label: 'Đang cấu hình', className: 'amber' },
+  SCHEDULED: { label: 'Đã chốt', className: 'green' },
+  ONGOING: { label: 'Đã chốt', className: 'green' },
+  COMPLETED: { label: 'Đã kết thúc', className: 'gray' },
+  CANCELLED: { label: 'Đã hủy', className: 'gray' },
 };
-
-const formatDate = (value: string) => {
-  const [year, month, day] = value.split('-');
-  return year && month && day ? `${day}/${month}/${year}` : value;
-};
-
-const ExamRow = ({ exam }: { exam: ExamListItem }) => {
-  const meta = STATUS_META[exam.status] ?? STATUS_META.DRAFT;
-
-  return (
-    <tr>
-      <td>
-        <strong className="exam-name">{exam.name}</strong>
-        <small>{exam.schoolBranch.code}</small>
-      </td>
-      <td>{exam.semester.name}</td>
-      <td>{exam.schoolBranch.name}</td>
-      <td>
-        <span className="exam-date">{formatDate(exam.startDate)}</span>
-        {exam.endDate !== exam.startDate && <small>đến {formatDate(exam.endDate)}</small>}
-      </td>
-      <td>
-        <span className={`exam-status exam-status--${meta.className}`}><i />{meta.label}</span>
-      </td>
-      <td>
-        <button className="exam-more" type="button" aria-label={`Thao tác với ${exam.name}`}>
-          <Icon name="more_vert" size={20} />
-        </button>
-      </td>
-    </tr>
-  );
-};
-
-const LoadingRows = () => (
-  <>
-    {[1, 2, 3].map((row) => (
-      <tr key={row} className="exam-loading"><td colSpan={6}><span /></td></tr>
-    ))}
-  </>
-);
 
 export const ExamTable = ({
   items,
   loading,
+  failed,
   page,
   pageSize,
   totalCount,
-  totalPages,
   onPageChange,
+  onPageSizeChange,
+  onDelete,
 }: ExamTableProps) => (
-  <section className="exam-table-card">
-    <div className="exam-table-scroll">
-      <table>
+  <>
+    <div className="pcb-table-wrap exam-table-wrap">
+      <table className="pcb-table exam-table">
         <thead>
           <tr>
-            <th>Tên kỳ thi</th><th>Học kỳ</th><th>Cơ sở</th>
-            <th>Thời gian</th><th>Trạng thái</th><th>Thao tác</th>
+            <th className="sep-col-index">STT</th><th>Kỳ thi</th><th>Học kỳ</th><th>Năm học</th>
+            <th>Khối</th><th>Môn</th><th>Trạng thái</th><th className="sep-col-actions">Thao tác</th>
           </tr>
         </thead>
         <tbody>
-          {loading ? <LoadingRows /> : items.length === 0 ? (
-            <tr>
-              <td className="exam-empty" colSpan={6}>
-                <Icon name="event_busy" size={38} />
-                <strong>Chưa có kỳ thi phù hợp</strong>
-                <span>Thử thay đổi bộ lọc hoặc tạo kỳ thi mới.</span>
-              </td>
-            </tr>
-          ) : items.map((exam) => <ExamRow key={exam.id} exam={exam} />)}
+          {items.map((exam, index) => {
+            const meta = STATUS_META[exam.status] ?? STATUS_META.DRAFT;
+            return (
+              <tr key={exam.id}>
+                <td className="sep-col-index">{(page - 1) * pageSize + index + 1}</td>
+                <td className="sep-col-name">{exam.name}</td>
+                <td>{exam.semester.name}</td>
+                <td>{exam.academicYear.name}</td>
+                <td>{exam.gradeLevel?.name ?? '—'}</td>
+                <td>{exam.subject?.name ?? '—'}</td>
+                <td><span className={`sep-status sep-status--${meta.className}`}>{meta.label}</span></td>
+                <td className="sep-col-actions">
+                  <div className="sep-row-actions">
+                    <RowAction to={`/exams/detail/${exam.id}`} icon="visibility" label={`Xem chi tiết ${exam.name}`} />
+                    <RowAction to={`/exams/update/${exam.id}`} icon="edit" label={`Cập nhật ${exam.name}`} />
+                    <RowActionButton icon="delete" label={`Xóa ${exam.name}`} onClick={() => onDelete(exam)} />
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
+      <TableState loading={loading} failed={failed} empty={items.length === 0} columns={8} title="Không có kỳ thi nào khớp bộ lọc." hint="Thử thay đổi điều kiện lọc hoặc tạo kỳ thi mới." />
     </div>
-
-    <div className="exam-pagination">
-      <span>
-        Hiển thị <strong>{items.length ? (page - 1) * pageSize + 1 : 0} - {(page - 1) * pageSize + items.length}</strong> của {totalCount} kỳ thi
-      </span>
-      <div>
-        <button type="button" disabled={page <= 1} onClick={() => onPageChange(page - 1)} aria-label="Trang trước">
-          <Icon name="chevron_left" size={18} />
-        </button>
-        {Array.from({ length: Math.min(totalPages, 5) }, (_, index) => index + 1).map((value) => (
-          <button key={value} type="button" className={page === value ? 'is-active' : ''} onClick={() => onPageChange(value)}>{value}</button>
-        ))}
-        <button type="button" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)} aria-label="Trang sau">
-          <Icon name="chevron_right" size={18} />
-        </button>
-      </div>
-    </div>
-  </section>
+    {totalCount > 0 && <Pager page={page} pageSize={pageSize} totalCount={totalCount} itemLabel="kỳ thi" onChange={onPageChange} onPageSizeChange={onPageSizeChange} />}
+  </>
 );

@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Icon } from '../../../components/pcb';
+import { useSearchParams } from 'react-router-dom';
+import { Icon, PcbButton } from '../../../components/pcb';
+import { PageHeader } from '../../../components/common/PageHeader';
+import { RowActionButton } from '../../../components/common/RowAction';
+import { TableState } from '../../../components/common/TableState';
 import { useAsync } from '../../../hooks';
 import { api } from '../../../services/api';
 import type { ExamListItem, ExamRoom, SaveExamRoomRequest } from '../../../types';
-import { roleLabel } from '../../../utils/jwt';
 import { toProblem } from '../../../utils/problem';
-import { storage } from '../../../utils/storage';
 import { displayToast } from '../../../utils/toast';
-import { ExamHeader } from '../components';
 import './exams.css';
 
 type ExamRoomModalProps = {
@@ -138,8 +139,9 @@ const ExamRoomModal = ({ initialExamId, exams, room, onClose, onSaved }: ExamRoo
 };
 
 export const ExamRoomListPage = () => {
-  const user = storage.getUser<{ fullName?: string }>();
-  const [examId, setExamId] = useState<number | ''>('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const examIdFromUrl = Number(searchParams.get('examId'));
+  const [examId, setExamId] = useState<number | ''>(Number.isFinite(examIdFromUrl) && examIdFromUrl > 0 ? examIdFromUrl : '');
   const [grade, setGrade] = useState('');
   const [editing, setEditing] = useState<ExamRoom | null | undefined>(undefined);
   const [deletingId, setDeletingId] = useState<number>();
@@ -151,6 +153,13 @@ export const ExamRoomListPage = () => {
   const visibleRooms = (rooms.data ?? []).filter((room) => !grade || room.code.toLowerCase().startsWith(`k${grade}p`));
   const totalCapacity = visibleRooms.reduce((total, room) => total + room.candidateLimit, 0);
   const error = exams.error ?? rooms.error;
+
+  const changeExam = (value: string) => {
+    const nextId = Number(value);
+    setExamId(nextId || '');
+    if (nextId) setSearchParams({ examId: String(nextId) }, { replace: true });
+    else setSearchParams({}, { replace: true });
+  };
 
   const remove = async (room: ExamRoom) => {
     if (!window.confirm(`Xóa phòng thi ${room.code}? Thao tác này không thể hoàn tác.`)) return;
@@ -167,37 +176,54 @@ export const ExamRoomListPage = () => {
   };
 
   return (
-    <div className="exam-screen">
-      <ExamHeader userName={user?.fullName} userRole={roleLabel()} />
-      <main className="exam-page">
-        <section className="exam-room-overview">
-          <div><h1>Danh sách phòng thi</h1><p>Quản lý và thiết lập danh sách phòng thi, số lượng chỗ ngồi cho từng kỳ thi và khối lớp.</p></div>
-          <div className="exam-room-summary"><span><i />Tổng phòng khả dụng: <strong>{String(visibleRooms.length).padStart(2, '0')} phòng</strong></span><span>Tổng sức chứa: <strong>{totalCapacity} chỗ</strong></span></div>
-        </section>
-        <section className="exam-filter-card exam-room-search">
-          <div className="exam-room-search__title"><Icon name="filter_alt" size={18} />Bộ lọc tìm kiếm phòng thi</div>
-          <div className="exam-room-search__fields">
-            <label className="exam-form-field"><span>Kỳ thi <b>*</b></span><select value={selectedExamId || ''} onChange={(event) => setExamId(Number(event.target.value))}>{examItems.length === 0 && <option value="">Chưa có kỳ thi</option>}{examItems.map((exam) => <option key={exam.id} value={exam.id}>{exam.name}</option>)}</select></label>
-            <label className="exam-form-field"><span>Khối thi</span><select value={grade} onChange={(event) => setGrade(event.target.value)}><option value="">Tất cả các khối</option>{[1, 2, 3, 4, 5].map((value) => <option key={value} value={value}>Khối {value}</option>)}</select></label>
+    <>
+      <PageHeader title="Danh sách phòng thi" />
+      <main className="sep-page">
+        <div className="sep-toolbar">
+          <div className="sep-toolbar__filters">
+            <label className="pcb-field exam-room-exam-filter">
+              <span className="pcb-label pcb-label--hidden">Kỳ thi</span>
+              <span className="pcb-control exam-native-control">
+                <select aria-label="Kỳ thi" value={selectedExamId || ''} onChange={(event) => changeExam(event.target.value)}>
+                  <option value="">{examItems.length === 0 ? 'Chưa có kỳ thi' : 'Chọn kỳ thi'}</option>
+                  {examItems.map((exam) => <option key={exam.id} value={exam.id}>{exam.name}</option>)}
+                </select>
+                <Icon name="expand_more" size={18} />
+              </span>
+            </label>
+            <label className="pcb-field exam-grade-filter">
+              <span className="pcb-label pcb-label--hidden">Khối thi</span>
+              <span className="pcb-control exam-native-control">
+                <select aria-label="Khối thi" value={grade} onChange={(event) => setGrade(event.target.value)}>
+                  <option value="">Khối</option>
+                  {[1, 2, 3, 4, 5].map((value) => <option key={value} value={value}>Khối {value}</option>)}
+                </select>
+                <Icon name="expand_more" size={18} />
+              </span>
+            </label>
           </div>
-        </section>
-        <div className="exam-room-list-head">
-          <span>Đang hiển thị danh sách phòng thi{selectedExam ? ` của ${selectedExam.name}` : ''}{grade ? ` — Khối ${grade}` : ''}</span>
-          <button className="exam-primary" type="button" onClick={() => setEditing(null)}><Icon name="add" size={20} />Thêm mới</button>
+          <div className="sep-toolbar__actions">
+            <PcbButton onClick={() => setEditing(null)}>Thêm phòng thi <Icon name="add" size={20} /></PcbButton>
+          </div>
         </div>
-        {error != null && <div className="exam-error" role="alert">{toProblem(error).message}</div>}
-        <section className="exam-table-card">
-          <div className="exam-table-scroll"><table>
-            <thead><tr><th>STT</th><th>Mã phòng thi</th><th>Tên phòng thi / vị trí</th><th>Số chỗ ngồi</th><th>Ca thi</th><th>Thao tác</th></tr></thead>
-            <tbody>{rooms.loading ? <tr className="exam-loading"><td colSpan={6}><span /></td></tr> : visibleRooms.length === 0 ? <tr><td className="exam-empty" colSpan={6}><Icon name="meeting_room" size={38} /><strong>Chưa có phòng thi</strong><span>Bấm “Thêm mới” để tạo phòng thi đầu tiên.</span></td></tr> : visibleRooms.map((room, index) => <tr key={room.id}>
-              <td>{index + 1}</td><td><strong className="exam-name">{room.code}</strong></td><td>{room.room.name}<small>{room.room.code} · {room.room.roomType}</small></td><td><span className="exam-room-capacity-badge">{room.candidateLimit}</span></td><td>{room.sessionCount}</td>
-              <td><div className="exam-room-actions"><button type="button" onClick={() => setEditing(room)} aria-label={`Sửa ${room.code}`}><Icon name="edit" size={18} /></button><button type="button" disabled={deletingId === room.id} onClick={() => remove(room)} aria-label={`Xóa ${room.code}`}><Icon name="delete" size={18} /></button></div></td>
+
+        <div className="exam-room-meta">
+          <span>Danh sách{selectedExam ? ` của ${selectedExam.name}` : ''}{grade ? ` — Khối ${grade}` : ''}</span>
+          <span><strong>{visibleRooms.length}</strong> phòng · <strong>{totalCapacity}</strong> chỗ ngồi</span>
+        </div>
+        {error != null && <div className="sep-alert" role="alert">{toProblem(error).message}</div>}
+        <div className="pcb-table-wrap">
+          <table className="pcb-table">
+            <thead><tr><th className="sep-col-index">STT</th><th>Mã phòng thi</th><th>Tên phòng thi / vị trí</th><th>Số chỗ ngồi</th><th>Ca thi</th><th className="sep-col-actions">Hành động</th></tr></thead>
+            <tbody>{visibleRooms.map((room, index) => <tr key={room.id}>
+              <td className="sep-col-index">{index + 1}</td><td><strong className="sep-row-link">{room.code}</strong></td><td>{room.room.name}<div className="sep-subline">{room.room.code} · {room.room.roomType}</div></td><td><span className="sep-status sep-status--blue">{room.candidateLimit} chỗ</span></td><td>{room.sessionCount}</td>
+              <td className="sep-col-actions"><div className="sep-row-actions"><RowActionButton icon="edit" label={`Sửa ${room.code}`} onClick={() => setEditing(room)} /><RowActionButton icon="delete" label={`Xóa ${room.code}`} disabled={deletingId === room.id} onClick={() => void remove(room)} /></div></td>
             </tr>)}</tbody>
-          </table></div>
-          <div className="exam-room-table-foot"><span>Hiển thị toàn bộ {visibleRooms.length} phòng thi</span><span>Tổng số chỗ ngồi: <strong>{totalCapacity} chỗ</strong></span></div>
-        </section>
+          </table>
+          <TableState loading={rooms.loading || exams.loading} failed={Boolean(error)} empty={visibleRooms.length === 0} columns={6} title="Chưa có phòng thi nào khớp bộ lọc." hint={selectedExamId ? 'Bấm “Thêm phòng thi” để tạo phòng thi đầu tiên.' : 'Hãy tạo hoặc chọn một kỳ thi trước.'} />
+        </div>
       </main>
-      {editing !== undefined && <ExamRoomModal initialExamId={selectedExamId} exams={examItems} room={editing ?? undefined} onClose={() => setEditing(undefined)} onSaved={(savedExamId) => { setEditing(undefined); if (savedExamId !== selectedExamId) setExamId(savedExamId); else rooms.reload(); }} />}
-    </div>
+      {editing !== undefined && <ExamRoomModal initialExamId={selectedExamId} exams={examItems} room={editing ?? undefined} onClose={() => setEditing(undefined)} onSaved={(savedExamId) => { setEditing(undefined); if (savedExamId !== selectedExamId) changeExam(String(savedExamId)); else rooms.reload(); }} />}
+    </>
   );
 };

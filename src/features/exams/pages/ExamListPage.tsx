@@ -1,20 +1,17 @@
 import { useMemo, useState } from 'react';
-import { Icon } from '../../../components/pcb';
+import { useNavigate } from 'react-router-dom';
+import { Icon, PcbButton } from '../../../components/pcb';
+import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
+import { PageHeader } from '../../../components/common/PageHeader';
 import { useAsync, useDebounce } from '../../../hooks';
 import { api } from '../../../services/api';
-import { parseJwt, roleLabel } from '../../../utils/jwt';
+import type { ExamListItem } from '../../../types';
+import { parseJwt } from '../../../utils/jwt';
 import { storage } from '../../../utils/storage';
 import { toProblem } from '../../../utils/problem';
-import {
-  CreateExamModal,
-  ExamFilters,
-  ExamHeader,
-  ExamTable,
-  type ExamStatusTab,
-} from '../components';
+import { displayToast } from '../../../utils/toast';
+import { ExamFilters, ExamTable, type ExamStatusTab } from '../components';
 import './exams.css';
-
-const PAGE_SIZE = 10;
 
 const getBranchId = () => {
   const token = storage.getToken();
@@ -24,112 +21,92 @@ const getBranchId = () => {
 };
 
 export const ExamListPage = () => {
-  const user = storage.getUser<{ fullName?: string }>();
+  const navigate = useNavigate();
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState<ExamStatusTab>('');
-  const [semesterId, setSemesterId] = useState<number | ''>('');
-  const [branchId, setBranchId] = useState<number | ''>(getBranchId() ?? '');
+  const [academicYearId, setAcademicYearId] = useState<number | ''>('');
   const [page, setPage] = useState(1);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
   const [reloadKey, setReloadKey] = useState(0);
+  const [deleting, setDeleting] = useState<ExamListItem | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const debouncedKeyword = useDebounce(keyword, 300);
 
-  const references = useAsync(() => api.matrix.referenceData(), []);
-  const academicYears = useAsync(
-    () => api.academicYear.list({ page: 1, pageSize: 100 }),
-    [],
-  );
+  const academicYears = useAsync(() => api.academicYear.list({ page: 1, pageSize: 100 }), []);
+  const years = useMemo(() => academicYears.data?.data?.items ?? [], [academicYears.data]);
   const list = useAsync(
     () => api.exam.list({
       keyword: debouncedKeyword.trim() || undefined,
-      semesterId: semesterId || undefined,
-      schoolBranchId: branchId || undefined,
+      academicYearId: academicYearId || undefined,
+      schoolBranchId: getBranchId(),
       status: status || undefined,
       pageNumber: page,
-      pageSize: PAGE_SIZE,
+      pageSize,
     }),
-    [debouncedKeyword, semesterId, branchId, status, page, reloadKey],
+    [debouncedKeyword, academicYearId, status, page, pageSize, reloadKey],
   );
 
-  const semesters = useMemo(() => references.data?.semesters ?? [], [references.data]);
-  const contexts = useMemo(() => references.data?.academicContexts ?? [], [references.data]);
-  const years = useMemo(() => academicYears.data?.data?.items ?? [], [academicYears.data]);
-  const currentYear = years.find((year) => year.status === 'ACTIVE') ?? years[0];
-  const branches = useMemo(() => {
-    const values = new Map<number, string>();
-    contexts.forEach((context) => {
-      const branchName = context.label.split('/').at(-1)?.trim();
-      if (!values.has(context.schoolBranchId)) {
-        values.set(context.schoolBranchId, branchName || `Cơ sở ${context.schoolBranchId}`);
-      }
-    });
-    return [...values].map(([id, name]) => ({ id, name }));
-  }, [contexts]);
-
   const response = list.data?.data;
-  const error = list.error ?? references.error ?? academicYears.error;
-
+  const error = list.error ?? academicYears.error;
   const changeFilter = (callback: () => void) => {
     callback();
     setPage(1);
   };
 
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    try {
+      setDeleteLoading(true);
+      await api.exam.remove(deleting.id);
+      displayToast('success', 'Thành công', 'Đã xóa kỳ thi.');
+      setDeleting(null);
+      setReloadKey((value) => value + 1);
+    } catch (deleteError) {
+      displayToast('error', 'Không thể xóa', toProblem(deleteError).message);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
-    <div className="exam-screen">
-      <ExamHeader
-        academicYearName={currentYear?.name}
-        userName={user?.fullName}
-        userRole={roleLabel()}
-      />
-
-      <main className="exam-page">
-        <div className="exam-title-row">
-          <div>
-            <h1>Danh sách kỳ thi</h1>
-            <p>Quản lý và giám sát các kỳ thi trong hệ thống trường.</p>
-          </div>
-          <button className="exam-primary" type="button" onClick={() => setCreateOpen(true)}>
-            <Icon name="add" size={20} />Tạo kỳ thi
-          </button>
-        </div>
-
+    <>
+      <PageHeader title="Danh sách kỳ thi" />
+      <main className="sep-page exam-list-page">
         <ExamFilters
           keyword={keyword}
-          semesterId={semesterId}
-          branchId={branchId}
+          academicYearId={academicYearId}
           status={status}
-          semesters={semesters}
-          branches={branches}
+          years={years}
           onKeywordChange={(value) => changeFilter(() => setKeyword(value))}
-          onSemesterChange={(value) => changeFilter(() => setSemesterId(value))}
-          onBranchChange={(value) => changeFilter(() => setBranchId(value))}
+          onAcademicYearChange={(value) => changeFilter(() => setAcademicYearId(value))}
           onStatusChange={(value) => changeFilter(() => setStatus(value))}
+          actions={<PcbButton onClick={() => navigate('/exams/create')}>Tạo kỳ thi <Icon name="add" size={20} /></PcbButton>}
         />
 
-        {error != null && <div className="exam-error" role="alert">{toProblem(error).message}</div>}
+        {error != null && <div className="sep-alert" role="alert">{toProblem(error).message}</div>}
 
         <ExamTable
           items={response?.items ?? []}
           loading={list.loading}
+          failed={Boolean(error)}
           page={page}
-          pageSize={PAGE_SIZE}
+          pageSize={pageSize}
           totalCount={response?.totalCount ?? 0}
-          totalPages={Math.max(response?.totalPages ?? 0, 1)}
           onPageChange={setPage}
+          onPageSizeChange={(value) => { setPageSize(value); setPage(1); }}
+          onDelete={setDeleting}
         />
       </main>
 
-      {createOpen && (
-        <CreateExamModal
-          years={years}
-          branchId={getBranchId() ?? branches[0]?.id}
-          onClose={() => setCreateOpen(false)}
-          onCreated={() => {
-            setCreateOpen(false);
-            setReloadKey((value) => value + 1);
-          }}
-        />
-      )}
-    </div>
+      <ConfirmDialog
+        isOpen={deleting != null}
+        title="Xóa kỳ thi"
+        message={<>Bạn có chắc muốn xóa kỳ thi <strong>{deleting?.name}</strong>? Hành động này không thể hoàn tác.</>}
+        confirmText="Xóa kỳ thi"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleting(null)}
+        isLoading={deleteLoading}
+      />
+    </>
   );
 };
