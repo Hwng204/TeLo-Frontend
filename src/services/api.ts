@@ -79,7 +79,10 @@ import type {
   StudentScoreItem,
   TransferStudentClassRequest,
   CreateExamRequest,
+  UpdateExamRequest,
   ExamDetail,
+  ExamFormOptions,
+  ExamCandidateCount,
   ExamListQuery,
   ExamPage,
   Chapter,
@@ -92,6 +95,8 @@ import type {
   ExamRoom,
   ExamRoomOption,
   SaveExamRoomRequest,
+  CreateExamRoomsRequest,
+  ExamRoomPlan,
 } from '../types';
 
 const get = async <T>(url: string, params?: object): Promise<T> => (await apiClient.get<T>(url, { params })).data;
@@ -339,15 +344,29 @@ export const api = {
   },
 
   exam: {
+    options: () => get<ApiResponse<ExamFormOptions>>('/exams/options'),
+    candidateCount: (academicYearId: number, schoolBranchId: number, gradeLevelId: number) =>
+      unwrap(get<ApiResponse<ExamCandidateCount>>('/exams/candidate-count', {
+        academicYearId,
+        schoolBranchId,
+        gradeLevelId,
+      })),
     list: (query: ExamListQuery = {}) => get<ApiResponse<ExamPage>>('/exams', query),
     create: (body: CreateExamRequest) => post<ApiResponse<ExamDetail>>('/exams', body),
+    get: (id: number) => get<ApiResponse<ExamDetail>>(`/exams/${id}`),
+    update: (id: number, body: UpdateExamRequest) => put<ApiResponse<ExamDetail>>(`/exams/${id}`, body),
+    remove: (id: number) => del<ApiResponse<boolean>>(`/exams/${id}`),
   },
 
   examRoom: {
     list: (examId: number) => unwrap(get<ApiResponse<ExamRoom[]>>(`/exams/${examId}/rooms`)),
     options: (examId: number) => unwrap(get<ApiResponse<ExamRoomOption[]>>(`/exams/${examId}/rooms/options`)),
+    plan: (examId: number, candidateLimit: number) =>
+      unwrap(get<ApiResponse<ExamRoomPlan>>(`/exams/${examId}/rooms/plan`, { candidateLimit })),
     create: (examId: number, body: SaveExamRoomRequest) =>
       unwrap(post<ApiResponse<ExamRoom>>(`/exams/${examId}/rooms`, body)),
+    createBatch: (examId: number, body: CreateExamRoomsRequest) =>
+      unwrap(post<ApiResponse<ExamRoom[]>>(`/exams/${examId}/rooms/batch`, body)),
     update: (examId: number, id: number, body: SaveExamRoomRequest) =>
       unwrap(put<ApiResponse<ExamRoom>>(`/exams/${examId}/rooms/${id}`, body)),
     remove: (examId: number, id: number) =>

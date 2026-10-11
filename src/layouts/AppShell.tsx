@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Icon } from '../components/pcb';
-import { getRoles, isTeacher, isTeamLead } from '../utils/jwt';
+import { isTeacher, isTeamLead } from '../utils/jwt';
 // Mẫu giao diện dùng chung trước, rồi mới tới khung: giữ đúng thứ tự cascade như lúc còn một file.
 import '../styles/sep-ui.css';
 import './AppShell.css';
@@ -17,6 +17,9 @@ const PHT_NAV: NavEntry[] = [
   { icon: 'fact_check', label: 'Duyệt bộ đề' },
   { icon: 'database', label: 'Ngân hàng câu hỏi' },
   { icon: 'inventory_2', label: 'Kho đề' },
+  { icon: 'calendar_month', label: 'Quản lý kỳ thi', to: '/exams', activeFor: ['/exams'] },
+  { icon: 'event', label: 'Tổ chức thi' },
+  { icon: 'mail', label: 'Email & thông báo', to: '/emails', activeFor: ['/emails'] },
 ];
 // Giáo viên chỉ có lớp mình chủ nhiệm và học sinh của lớp đó.
 const TEACHER_NAV: NavEntry[] = [
@@ -25,15 +28,6 @@ const TEACHER_NAV: NavEntry[] = [
   { icon: 'menu_book', label: 'Chương & bài học', to: '/curriculum', activeFor: ['/curriculum'] },
 ];
 
-const PHT_NAV_AFTER_EXAM_GROUP: NavEntry[] = [{ icon: 'mail', label: 'Email & thông báo', to: '/emails', activeFor: ['/emails'] }];
-const EXAM_GROUP = [
-  'Danh sách kỳ thi', 'Danh sách môn thi', 'Danh sách thí sinh', 'Danh sách bộ đề thi', 'Danh sách phòng thi',
-  'Danh sách ca thi', 'Xếp phòng thi', 'Danh sách giám thị', 'Phân công giám thị',
-];
-const EXAM_PATHS: Record<string, string | undefined> = {
-  'Danh sách kỳ thi': '/exams',
-  'Danh sách phòng thi': '/exam-rooms',
-};
 const TL_NAV: NavEntry[] = [
   { icon: 'menu_book', label: 'Chương & bài học', to: '/curriculum', activeFor: ['/curriculum'] },
   // Tổ trưởng xem ma trận của mình qua nhiệm vụ, nên màn ma trận vẫn thuộc mục này.
@@ -84,12 +78,8 @@ const NavItem = ({ icon, label, to, activeFor = [] }: NavEntry) => {
 
 /** Khung chung của app: sidebar theo vai trò + vùng nội dung. Mỗi màn tự vẽ thanh trên bằng PageHeader. */
 export const AppShell = () => {
-  const { pathname } = useLocation();
   const teamLead = isTeamLead();
   const teacherOnly = isTeacher();
-  const vicePrincipal = getRoles().includes('PHT');
-  // Thu gọn mặc định: 9 mục con mở sẵn làm menu PHT dài gấp đôi menu Tổ trưởng.
-  const [examOpen, setExamOpen] = useState(pathname.startsWith('/exams') || pathname.startsWith('/exam-rooms'));
   const [collapsed, setCollapsed] = useState(readCollapsed);
 
   const toggleRail = () => {
@@ -121,52 +111,7 @@ export const AppShell = () => {
           ) : teamLead ? (
             TL_NAV.map((item) => <NavItem key={item.label} {...item} />)
           ) : (
-            <>
-              {PHT_NAV.map((item) => <NavItem key={item.label} {...item} />)}
-              <div>
-                <button
-                  type="button"
-                  className="sep-nav sep-nav--group"
-                  aria-expanded={examOpen}
-                  title="Tổ chức thi"
-                  // Thu gọn thì danh sách con bị ẩn: mở rộng thanh điều hướng để bấm vào có kết quả.
-                  onClick={() => {
-                    if (collapsed) toggleRail();
-                    setExamOpen(collapsed || !examOpen);
-                  }}
-                >
-                  <Icon name="event" size={22} />
-                  <span className="sep-rail__label">Tổ chức thi</span>
-                  <span className="sep-rail__label sep-nav__chevron">
-                    <Icon name={examOpen ? 'expand_less' : 'expand_more'} size={20} />
-                  </span>
-                </button>
-                {examOpen && (
-                  <div className="sep-submenu">
-                    {EXAM_GROUP.map((label) => {
-                      const to = label === 'Danh sách phòng thi' && !vicePrincipal
-                        ? undefined
-                        : EXAM_PATHS[label];
-                      if (!to) {
-                        return <span key={label} className="sep-subnav" aria-disabled="true">{label}</span>;
-                      }
-                      const active = pathname === to || pathname.startsWith(`${to}/`);
-                      return (
-                        <Link
-                          key={label}
-                          to={to}
-                          className={`sep-subnav sep-subnav--link${active ? ' sep-subnav--active' : ''}`}
-                          aria-current={active ? 'page' : undefined}
-                        >
-                          {label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-              {PHT_NAV_AFTER_EXAM_GROUP.map((item) => <NavItem key={item.label} {...item} />)}
-            </>
+            PHT_NAV.map((item) => <NavItem key={item.label} {...item} />)
           )}
         </nav>
 

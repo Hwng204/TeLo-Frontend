@@ -1,90 +1,71 @@
-import { Icon } from '../../../components/pcb';
-import type { SemesterOption } from '../../../types';
+import type { ReactNode } from 'react';
+import { Field, SelectField } from '../../../components/pcb';
+import type { AcademicYearListItem, ExamStatus } from '../../../types';
 
-export type ExamStatusTab = '' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED';
-
-export type ExamBranchOption = {
-  id: number;
-  name: string;
-};
+export type ExamStatusTab = '' | 'DRAFT' | 'SCHEDULED' | 'COMPLETED';
 
 type ExamFiltersProps = {
   keyword: string;
-  semesterId: number | '';
-  branchId: number | '';
+  academicYearId: number | '';
   status: ExamStatusTab;
-  semesters: SemesterOption[];
-  branches: ExamBranchOption[];
+  years: AcademicYearListItem[];
   onKeywordChange: (value: string) => void;
-  onSemesterChange: (value: number | '') => void;
-  onBranchChange: (value: number | '') => void;
+  onAcademicYearChange: (value: number | '') => void;
   onStatusChange: (value: ExamStatusTab) => void;
+  actions?: ReactNode;
 };
 
 const STATUS_TABS: { value: ExamStatusTab; label: string }[] = [
-  { value: 'SCHEDULED', label: 'Sắp diễn ra' },
   { value: '', label: 'Tất cả' },
-  { value: 'ONGOING', label: 'Đang diễn ra' },
+  { value: 'DRAFT', label: 'Đang cấu hình' },
+  { value: 'SCHEDULED', label: 'Đã chốt' },
   { value: 'COMPLETED', label: 'Đã kết thúc' },
 ];
 
 export const ExamFilters = ({
   keyword,
-  semesterId,
-  branchId,
+  academicYearId,
   status,
-  semesters,
-  branches,
+  years,
   onKeywordChange,
-  onSemesterChange,
-  onBranchChange,
+  onAcademicYearChange,
   onStatusChange,
+  actions,
 }: ExamFiltersProps) => (
-  <section className="exam-filter-card" aria-label="Bộ lọc kỳ thi">
-    <div className="exam-filter-row">
-      <label className="exam-search">
-        <Icon name="search" size={20} />
-        <input
+  <div className="sep-toolbar exam-list-toolbar">
+      <div className="sep-toolbar__filters">
+        <Field
+          label="Tìm tên kỳ thi"
+          hideLabel
+          leading="search"
+          fieldClassName="sep-toolbar__search exam-search-field"
           value={keyword}
           onChange={(event) => onKeywordChange(event.target.value)}
-          placeholder="Tìm kiếm kỳ thi..."
+          placeholder="Tìm tên kỳ thi"
         />
-      </label>
-
-      <select
-        aria-label="Học kỳ"
-        value={semesterId}
-        onChange={(event) => onSemesterChange(event.target.value ? Number(event.target.value) : '')}
-      >
-        <option value="">Năm học (Tất cả)</option>
-        {semesters.map((semester) => (
-          <option key={semester.id} value={semester.id}>{semester.name}</option>
-        ))}
-      </select>
-
-      <select
-        aria-label="Cơ sở"
-        value={branchId}
-        onChange={(event) => onBranchChange(event.target.value ? Number(event.target.value) : '')}
-      >
-        <option value="">Cơ sở (Tất cả)</option>
-        {branches.map((branch) => (
-          <option key={branch.id} value={branch.id}>{branch.name}</option>
-        ))}
-      </select>
-    </div>
-
-    <div className="exam-tabs">
-      {STATUS_TABS.map((tab) => (
-        <button
-          key={tab.label}
-          type="button"
-          className={status === tab.value ? 'is-active' : ''}
-          onClick={() => onStatusChange(tab.value)}
+        <SelectField
+          label="Năm học"
+          hideLabel
+          placeholder="Tất cả năm học"
+          value={academicYearId}
+          onChange={(event) => onAcademicYearChange(event.target.value ? Number(event.target.value) : '')}
         >
-          {tab.label}
-        </button>
-      ))}
-    </div>
-  </section>
+          <option value="">Tất cả năm học</option>
+          {years.map((year) => <option key={year.id} value={year.id}>{year.name}</option>)}
+        </SelectField>
+        <SelectField
+          label="Trạng thái"
+          hideLabel
+          placeholder="Tất cả trạng thái"
+          value={status}
+          onChange={(event) => onStatusChange(event.target.value as ExamStatusTab)}
+        >
+          <option value="">Tất cả trạng thái</option>
+          {STATUS_TABS.filter((item) => item.value).map((item) => (
+            <option key={item.value} value={item.value as ExamStatus}>{item.label}</option>
+          ))}
+        </SelectField>
+      </div>
+      {actions && <div className="sep-toolbar__actions">{actions}</div>}
+  </div>
 );

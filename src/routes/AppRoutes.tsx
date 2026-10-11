@@ -26,6 +26,7 @@ import { ModuleListPage } from '../features/identity/pages/ModuleListPage';
 import { EmailManagementPage } from '../features/emails/pages/EmailManagementPage';
 import { UserListPage } from '../features/identity/pages/UserListPage';
 import { ExamListPage } from '../features/exams/pages/ExamListPage';
+import { ExamFormPage } from '../features/exams/pages/ExamFormPage';
 import { ExamRoomListPage } from '../features/exams/pages/ExamRoomListPage';
 import { storage } from '../utils/storage';
 import { getRoles, isDirectoryAdmin } from '../utils/jwt';
@@ -77,6 +78,9 @@ const router = createBrowserRouter(createRoutesFromElements(
             <Route path="/matrices/new" element={<MatrixEditorPage />} />
             <Route path="/matrix-tasks/new" element={<TaskAssignPage />} />
             <Route path="/exams" element={<ExamListPage />} />
+            <Route path="/exams/create" element={<ExamFormPage mode="create" />} />
+            <Route path="/exams/detail/:id" element={<ExamFormPage mode="view" />} />
+            <Route path="/exams/update/:id" element={<ExamFormPage mode="edit" />} />
           </Route>
           <Route element={<RequireRole allow={VICE_PRINCIPAL} fallback="/exams" />}>
             <Route path="/exam-rooms" element={<ExamRoomListPage />} />
