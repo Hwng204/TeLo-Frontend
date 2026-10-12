@@ -5,7 +5,7 @@ import './pcb.css';
 import { Icon } from './Icon';
 
 type ShellProps = {
-  label?: string;
+  label?: ReactNode;
   /** Giữ nhãn cho trình đọc màn hình nhưng không hiện ra (ô lọc trên thanh công cụ). */
   hideLabel?: boolean;
   error?: string;
@@ -35,7 +35,7 @@ const Shell = ({ label, hideLabel, error, invalid, hint, leading, select, classN
 };
 
 type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
-  label?: string;
+  label?: ReactNode;
   hideLabel?: boolean;
   error?: string;
   invalid?: boolean;
@@ -52,7 +52,7 @@ export const Field = ({ label, hideLabel, error, invalid, hint, leading, fieldCl
 );
 
 type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
-  label?: string;
+  label?: ReactNode;
   hideLabel?: boolean;
   error?: string;
   invalid?: boolean;
@@ -167,7 +167,7 @@ export const SelectField = ({
             aria-expanded={open}
             aria-haspopup="listbox"
             aria-invalid={Boolean(error || invalid) || undefined}
-            aria-label={select['aria-label'] ?? label}
+            aria-label={select['aria-label'] ?? (typeof label === 'string' ? label : undefined)}
             onFocus={onFocus as unknown as React.FocusEventHandler<HTMLButtonElement>}
             onBlur={onBlur as unknown as React.FocusEventHandler<HTMLButtonElement>}
             onClick={() => (open ? setOpen(false) : openMenu())}
@@ -199,7 +199,7 @@ export const SelectField = ({
               id={menuId}
               className="pcb-select-menu"
               role="listbox"
-              aria-label={label ?? select['aria-label']}
+              aria-label={select['aria-label'] ?? (typeof label === 'string' ? label : undefined)}
               style={position}
             >
               {options.map((option) => (

@@ -126,6 +126,22 @@
 .exam-room-table-foot { display: flex; align-items: center; gap: 20px; min-height: 52px; padding: 0 18px; color: #718198; font-size: 12px; }
 .exam-room-table-foot span + span { padding-left: 20px; border-left: 1px solid #dce5ef; }
 
+/* Hai màn danh sách dùng cùng nhịp trang, màu và control với Ma trận đề. */
+.exam-toolbar { align-items: center; }
+.exam-list-context { flex: 1; margin: 0; color: var(--pcb-color-text-secondary); font: 400 14px/20px 'Inter', sans-serif; }
+.exam-room-exam-filter { width: min(360px, 100%) !important; }
+.exam-grade-filter { width: 130px !important; }
+.exam-native-control { padding-right: 10px; }
+.exam-native-control select { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; appearance: none; background: transparent; color: var(--pcb-color-text-primary); font: 400 14px/20px 'Inter', sans-serif; cursor: pointer; }
+.exam-native-control .pcb-icon { flex-shrink: 0; pointer-events: none; }
+.exam-room-meta { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: -4px; color: var(--pcb-color-text-secondary); font: 400 14px/20px 'Inter', sans-serif; }
+.exam-room-meta strong { color: var(--pcb-color-text-primary); font-weight: 600; }
+
+/* Modal cũ vẫn giữ hành vi, nhưng nút tuân theo màu/nét của design system chung. */
+.exam-primary { border-color: var(--pcb-color-bg-accent); background: var(--pcb-color-bg-accent); box-shadow: none; }
+.exam-primary:hover { background: var(--pcb-color-bg-accent-hover); }
+.exam-secondary { border-color: var(--pcb-color-border-focus); color: var(--pcb-color-text-brand); }
+
 @media (max-width: 1000px) {
   .exam-topbar { padding: 0 18px; }
   .exam-year-chip, .exam-user > span:last-child { display: none; }
@@ -151,5 +167,142 @@
   .exam-room-list-head { align-items: flex-start; }
   .exam-modal-backdrop { align-items: end; padding: 0; }
   .exam-modal { max-height: 94vh; overflow-y: auto; border-radius: 16px 16px 0 0; }
+  .exam-room-meta { align-items: flex-start; flex-direction: column; gap: 4px; }
 }
 @media (prefers-reduced-motion: reduce) { .exam-loading span { animation: none; } }
+
+/* KT01 — danh sách kỳ thi. Dùng đúng token xanh và kiểu bảng phẳng của giao diện hiện tại. */
+.exam-list-page { padding-top: 70px; }
+.exam-list-toolbar .sep-toolbar__filters { display: grid; grid-template-columns: minmax(240px, 1.35fr) minmax(190px, .9fr) minmax(190px, .9fr); gap: 16px; }
+.exam-list-toolbar .sep-toolbar__filters > .pcb-field,
+.exam-list-toolbar .sep-toolbar__filters > .exam-search-field { width: auto; }
+.exam-list-toolbar .pcb-control,
+.exam-list-toolbar .pcb-btn { height: 46px; }
+.exam-list-toolbar .sep-toolbar__actions .pcb-btn { min-width: 162px; }
+.exam-table-wrap { overflow: hidden; border: 1px solid var(--pcb-color-border-default); border-radius: 10px; }
+.exam-table thead { background: var(--pcb-color-bg-subtle); }
+.exam-table td { vertical-align: middle; }
+.exam-table .sep-row-actions { gap: 6px; }
+.exam-table .pcb-iconbtn--sm { border: 1px solid var(--pcb-color-border-default); color: var(--pcb-color-text-brand); }
+
+/* KT02 — bước 1 của tiến trình cấu hình kỳ thi. */
+.exam-workflow-page { display: flex; min-height: calc(100vh - 64px); flex-direction: column; padding: 34px 32px 28px; box-sizing: border-box; }
+.exam-wizard { display: grid; grid-template-columns: repeat(5, 1fr); margin: 0; padding: 0 20px 32px; border-bottom: 1px solid var(--pcb-color-border-default); list-style: none; }
+.exam-wizard li { position: relative; color: var(--pcb-color-text-secondary); text-align: center; }
+.exam-wizard li::before { content: ''; position: absolute; z-index: 0; top: 18px; right: 50%; width: 100%; height: 2px; background: var(--pcb-color-border-default); }
+.exam-wizard li:first-child::before { display: none; }
+.exam-wizard li > button { position: relative; z-index: 1; display: flex; width: 100%; flex-direction: column; align-items: center; gap: 10px; padding: 0 6px; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.exam-wizard li > button:hover strong { color: var(--pcb-color-text-brand); }
+.exam-wizard li > button:focus-visible { outline: 2px solid var(--pcb-color-border-focus); outline-offset: 4px; border-radius: 8px; }
+.exam-wizard li > button > span { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 50%; background: #eef3fb; color: var(--pcb-color-text-secondary); font: 600 14px/20px 'Inter', sans-serif; }
+.exam-wizard li > button > strong { font: 500 14px/20px 'Inter', sans-serif; }
+.exam-wizard li.is-active > button > span,
+.exam-wizard li.is-complete > button > span { background: var(--pcb-color-bg-accent); color: var(--pcb-color-text-on-accent); }
+.exam-wizard li.is-complete > button > span { background: #2f7d4b; }
+.exam-wizard li.is-complete > button > strong { color: #2f7d4b; }
+.exam-wizard li.is-active > button > strong { color: var(--pcb-color-text-brand); font-weight: 600; }
+.exam-wizard li.is-complete::before { background: #2f7d4b; }
+.exam-wizard li.is-active::before { background: #2f7d4b; }
+.exam-workflow-form { display: flex; flex: 1; flex-direction: column; gap: 28px; padding-top: 22px; }
+.exam-workflow-form > h1,
+.exam-step-placeholder h1 { margin: 0; color: var(--pcb-color-text-primary); font: 600 24px/32px 'Inter', sans-serif; }
+.exam-form-section { display: flex; flex-direction: column; gap: 12px; }
+.exam-form-section h2 { margin: 0; color: var(--pcb-color-text-primary); font: 600 16px/24px 'Inter', sans-serif; }
+.exam-create-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 24px; }
+.exam-span-full { grid-column: 1 / -1; }
+.exam-create-grid .pcb-control { height: 46px; }
+.exam-required { color: var(--pcb-color-text-danger); font-weight: 700; }
+.exam-create-grid input[type="datetime-local"] { cursor: pointer; }
+.exam-form-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--pcb-color-border-default); }
+.exam-form-actions > div { display: flex; gap: 16px; }
+.exam-form-actions .pcb-btn { min-width: 160px; }
+.exam-form-actions > div .pcb-btn:last-child { min-width: 236px; }
+.exam-step-placeholder { display: flex; flex: 1; flex-direction: column; gap: 12px; padding-top: 28px; }
+.exam-step-placeholder p { margin: 0; color: var(--pcb-color-text-secondary); }
+
+/* KT07, KT25 — bước 2: danh sách và thiết lập phòng thi ngay trong tiến trình kỳ thi. */
+.exam-room-step { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 24px; padding-top: 22px; }
+.exam-room-step h1 { margin: 0; color: var(--pcb-color-text-primary); font: 600 24px/32px 'Inter', sans-serif; }
+.exam-room-step h2 { margin: 0; color: var(--pcb-color-text-primary); font: 600 16px/24px 'Inter', sans-serif; }
+.exam-room-step__heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 26px; }
+.exam-room-step__heading .pcb-btn { min-width: 200px; }
+.exam-room-step__table,
+.exam-room-picker { overflow: hidden; border: 1px solid var(--pcb-color-border-default); border-radius: 10px; }
+.exam-room-step__table table,
+.exam-room-picker table { width: 100%; border-collapse: collapse; }
+.exam-room-step__table th,
+.exam-room-picker th { height: 44px; box-sizing: border-box; padding: 0 12px; background: var(--pcb-color-bg-subtle); color: var(--pcb-color-text-brand); font: 600 14px/20px 'Inter', sans-serif; text-align: left; }
+.exam-room-step__table td,
+.exam-room-picker td { height: 80px; padding: 0 12px; border-top: 1px solid #edf1f6; color: var(--pcb-color-text-primary); font: 400 14px/20px 'Inter', sans-serif; }
+.exam-room-step__table th:first-child,
+.exam-room-step__table td:first-child { width: 56px; }
+.exam-room-step__table th:last-child,
+.exam-room-step__table td:last-child { width: 124px; text-align: center; }
+.exam-room-step__table .sep-row-actions { justify-content: center; }
+.exam-room-step__table .pcb-iconbtn { border: 1px solid var(--pcb-color-border-default); color: var(--pcb-color-text-brand); }
+.exam-room-ready { display: inline-flex; padding: 4px 10px; border-radius: 7px; background: #e8f6ee; color: #2f7d4b; font-size: 13px; }
+.exam-room-ready--unavailable { background: #f2f4f7; color: var(--pcb-color-text-secondary); }
+.exam-room-step__summary { margin: -8px 0 0; color: var(--pcb-color-text-secondary); font: 400 13px/20px 'Inter', sans-serif; }
+.exam-room-list-step > .exam-form-actions { margin-top: auto; }
+
+.exam-room-create__section { display: flex; flex-direction: column; gap: 18px; }
+.exam-room-create__fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+.exam-room-create__fields label { display: flex; min-width: 0; flex-direction: column; gap: 8px; color: var(--pcb-color-text-primary); font: 500 14px/20px 'Inter', sans-serif; }
+.exam-room-create__fields label > span b { color: var(--pcb-color-text-danger); }
+.exam-room-create__fields input { width: 100%; height: 46px; box-sizing: border-box; padding: 0 13px; border: 1px solid var(--pcb-color-border-default); border-radius: 10px; outline: 0; background: #fff; color: var(--pcb-color-text-primary); font: 400 14px/20px 'Inter', sans-serif; }
+.exam-room-create__fields input:focus { border-color: var(--pcb-color-border-focus); box-shadow: 0 0 0 3px rgba(74, 144, 226, .12); }
+.exam-room-create__fields input:disabled { background: var(--pcb-color-bg-subtle); color: var(--pcb-color-text-secondary); }
+.exam-room-create__fields label.has-error input,
+.exam-room-picker.has-error { border-color: var(--pcb-color-text-danger); }
+.exam-room-create__fields small,
+.exam-room-create__error { margin: 0; color: var(--pcb-color-text-danger); font: 400 12px/18px 'Inter', sans-serif; }
+.exam-room-create__note { padding: 16px; border-radius: 10px; background: #f2f5fb; color: var(--pcb-color-text-secondary); font: 400 14px/20px 'Inter', sans-serif; }
+.exam-room-picker th:first-child,
+.exam-room-picker td:first-child { width: 76px; }
+.exam-room-picker tbody tr { cursor: pointer; }
+.exam-room-picker tbody tr:hover,
+.exam-room-picker tbody tr.is-selected { background: #fbfdff; }
+.exam-room-picker td:nth-child(2) span { display: block; color: var(--pcb-color-text-secondary); font-size: 12px; }
+.exam-room-picker input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--pcb-color-bg-accent); cursor: pointer; }
+.exam-room-picker .sep-empty { border: 0; }
+.exam-room-plan { display: flex; flex-direction: column; gap: 16px; }
+.exam-room-plan__loading,
+.exam-room-plan__empty { margin: 0; padding: 16px; border-radius: 10px; background: var(--pcb-color-bg-subtle); color: var(--pcb-color-text-secondary); font: 400 14px/20px 'Inter', sans-serif; }
+.exam-room-plan__summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: hidden; border: 1px solid var(--pcb-color-border-default); border-radius: 10px; background: #fff; }
+.exam-room-plan__summary span { padding: 14px 18px; color: var(--pcb-color-text-secondary); font: 400 14px/20px 'Inter', sans-serif; text-align: center; }
+.exam-room-plan__summary span + span { border-left: 1px solid var(--pcb-color-border-default); }
+.exam-room-plan__summary strong { color: var(--pcb-color-text-brand); font-size: 18px; }
+.exam-room-plan__sessions { display: grid; gap: 14px; }
+.exam-room-plan__sessions article { overflow: hidden; border: 1px solid var(--pcb-color-border-default); border-radius: 10px; background: #fff; }
+.exam-room-plan__sessions article > h3 { margin: 0; padding: 11px 16px; background: var(--pcb-color-bg-subtle); color: var(--pcb-color-text-brand); font: 600 14px/20px 'Inter', sans-serif; }
+.exam-room-plan__sessions article > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.exam-room-plan__sessions details + details { border-left: 1px solid var(--pcb-color-border-default); }
+.exam-room-plan__sessions summary { display: grid; grid-template-columns: 1fr auto; gap: 2px 14px; padding: 14px 16px; cursor: pointer; }
+.exam-room-plan__sessions summary span { color: var(--pcb-color-text-primary); font: 600 14px/20px 'Inter', sans-serif; }
+.exam-room-plan__sessions summary strong { color: #2f7d4b; font: 600 13px/20px 'Inter', sans-serif; }
+.exam-room-plan__sessions summary small { grid-column: 1 / -1; color: var(--pcb-color-text-secondary); font: 400 12px/18px 'Inter', sans-serif; }
+.exam-room-plan__sessions ol { max-height: 240px; overflow-y: auto; margin: 0; padding: 0 16px 12px 42px; }
+.exam-room-plan__sessions li { padding: 5px 0; color: var(--pcb-color-text-primary); font: 400 13px/18px 'Inter', sans-serif; }
+.exam-room-plan__sessions li span { display: inline-block; min-width: 180px; }
+.exam-room-plan__sessions li small { color: var(--pcb-color-text-secondary); }
+
+@media (max-width: 900px) {
+  .exam-list-page { padding-top: 24px; }
+  .exam-list-toolbar .sep-toolbar__filters { grid-template-columns: 1fr; }
+  .exam-workflow-page { padding: 24px 16px; }
+  .exam-wizard { grid-template-columns: repeat(5, minmax(112px, 1fr)); overflow-x: auto; padding-inline: 0; }
+  .exam-create-grid { grid-template-columns: 1fr; }
+  .exam-room-create__fields { grid-template-columns: 1fr; gap: 16px; }
+  .exam-room-step__heading { align-items: stretch; flex-direction: column; margin-bottom: 0; }
+  .exam-room-step__table,
+  .exam-room-picker { overflow-x: auto; }
+  .exam-room-step__table table,
+  .exam-room-picker table { min-width: 760px; }
+  .exam-room-plan__summary,
+  .exam-room-plan__sessions article > div { grid-template-columns: 1fr; }
+  .exam-room-plan__summary span + span,
+  .exam-room-plan__sessions details + details { border-top: 1px solid var(--pcb-color-border-default); border-left: 0; }
+  .exam-span-full { grid-column: auto; }
+  .exam-form-actions { align-items: stretch; flex-direction: column; }
+  .exam-form-actions > div { flex-direction: column; }
+}
