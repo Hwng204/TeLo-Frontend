@@ -8,3 +8,4 @@ export * from './identity';
 export * from './email';
 export * from './exam';
 export * from './curriculum';
+export * from './task';

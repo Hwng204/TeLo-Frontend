@@ -30,7 +30,7 @@ export const RejectDialog = ({ open, busy, onCancel, onConfirm }: Props) => {
       <div className="sep-dialog__body">
         <h2 className="sep-dialog__title">Từ chối ma trận</h2>
         <p className="sep-muted">
-          Ma trận sẽ trở về trạng thái Nháp để Tổ trưởng chỉnh sửa. Nhận xét sẽ bị xoá khi ma trận được nộp lại.
+          Ma trận sẽ trở về trạng thái Nháp để Tổ trưởng chỉnh sửa. Nhận xét sẽ bị xóa khi ma trận được nộp lại.
         </p>
         <label className="pcb-label" htmlFor="reject-comment">
           Nhận xét (tuỳ chọn)

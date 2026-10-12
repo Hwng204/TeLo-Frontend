@@ -144,3 +144,19 @@
 .confirm-btn--info:hover:not(:disabled) {
     background-color: #2563eb;
 }
+
+/* Biến thể xác nhận xóa (className="sep-delete-confirm"): tiêu đề trái + nút đóng tròn, hai dòng mô tả, nút phải. */
+.confirm-dialog.sep-delete-confirm { width: 440px; max-width: calc(100vw - 32px); padding: 24px; box-sizing: border-box; border-radius: 16px; background: var(--pcb-color-bg-surface); font-family: 'Inter', system-ui, sans-serif; text-align: left; }
+.sep-delete-confirm .confirm-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0; border: 0; }
+.sep-delete-confirm .confirm-header h3 { margin: 0; font: 700 20px/28px 'Inter', sans-serif; color: var(--pcb-color-text-primary); }
+.sep-delete-confirm .confirm-close { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: var(--pcb-color-bg-subtle); color: var(--pcb-color-text-secondary); }
+.sep-delete-confirm .confirm-close svg { width: 16px; height: 16px; }
+.sep-delete-confirm .confirm-body { margin-top: 8px; padding: 0; font: 400 14px/22px 'Inter', sans-serif; color: var(--pcb-color-text-secondary); overflow-wrap: anywhere; }
+.sep-delete-confirm .confirm-body p { margin: 0; }
+.sep-delete-confirm .confirm-body strong { font-weight: 600; color: var(--pcb-color-text-primary); }
+.sep-delete-confirm .confirm-footer { justify-content: flex-end; gap: 12px; margin-top: 24px; padding: 0; border: 0; background: transparent; }
+.sep-delete-confirm .confirm-btn { height: 40px; padding: 0 20px; border-radius: 10px; font: 600 14px/20px 'Inter', sans-serif; }
+.sep-delete-confirm .confirm-btn--cancel { border: 1px solid var(--pcb-color-border-default); background: var(--pcb-color-bg-surface); color: var(--pcb-color-text-primary); }
+.sep-delete-confirm .confirm-btn--cancel:hover:not(:disabled) { background: var(--pcb-color-bg-subtle); }
+.sep-delete-confirm .confirm-btn--danger { border: 1px solid var(--pcb-color-text-danger); background: var(--pcb-color-text-danger); color: var(--pcb-color-text-on-accent); }
+.sep-delete-confirm .confirm-btn--danger:hover:not(:disabled) { background: color-mix(in srgb, var(--pcb-color-text-danger) 88%, #000); }

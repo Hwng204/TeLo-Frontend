@@ -9,6 +9,7 @@ import { FormDialog } from '../../../components/common/FormDialog';
 type Props = {
   open: boolean;
   chapter: Chapter | null;
+  fieldName?: string;
   /** Có thì là sửa bài này, không thì thêm bài mới vào `chapter`. */
   lesson: Lesson | null;
   onClose: () => void;
@@ -24,7 +25,7 @@ export const LessonFormDialog = (props: Props) => (
   </FormDialog>
 );
 
-const LessonForm = ({ chapter, lesson, onClose, onSaved }: Props) => {
+const LessonForm = ({ chapter, fieldName, lesson, onClose, onSaved }: Props) => {
   const [values, setValues] = useState<Values>({ code: lesson?.code ?? '', title: lesson?.title ?? '' });
   const [errors, setErrors] = useState<Partial<Record<keyof Values, string>>>({});
   const [formError, setFormError] = useState('');
@@ -71,7 +72,7 @@ const LessonForm = ({ chapter, lesson, onClose, onSaved }: Props) => {
     >
       {chapter && (
         <p className="sep-muted cur-dialog-context">
-          Chương {chapter.code}. {chapter.title} · {chapter.gradeLevelName} · {chapter.fieldName}
+          Chương {chapter.code}. {chapter.title} · {chapter.gradeLevelName} · {fieldName ?? chapter.fieldName}
         </p>
       )}
       <div className="cur-form-fields">

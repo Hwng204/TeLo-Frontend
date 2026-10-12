@@ -15,6 +15,7 @@ import { MatrixGrid } from '../components/MatrixGrid';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { RejectDialog } from '../components/RejectDialog';
 import { FormDialog } from '../../../components/common/FormDialog';
+import { ConfirmDialog, DeleteMessage } from '../../../components/common/ConfirmDialog';
 import '../matrix.css';
 
 /** M03 / M03-A / M03-B chỉ khác nhau ở tiêu đề và cụm nút, mà cụm nút đọc từ allowedActions. */
@@ -36,6 +37,7 @@ export const MatrixDetailPage = () => {
   const [busy, runExclusive] = useBusy();
   const [rejecting, setRejecting] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const detail = useAsync(() => api.matrix.get(matrixId), [matrixId]);
   const matrix = detail.data;
@@ -117,11 +119,6 @@ export const MatrixDetailPage = () => {
         <div className="sep-page">
           <div className="sep-alert" role="alert">
             {detail.error ? toProblem(detail.error).message : 'Không tìm thấy ma trận.'}
-          </div>
-          <div className="sep-actions">
-            <PcbButton variant="secondary" onClick={back}>
-              Về danh sách
-            </PcbButton>
           </div>
         </div>
       </>
@@ -214,20 +211,9 @@ export const MatrixDetailPage = () => {
           <PcbButton
             variant="danger"
             disabled={busy}
-            onClick={() => {
-              if (!window.confirm('Xoá ma trận này? Thao tác không thể hoàn tác.')) return;
-              void run(
-                async () => {
-                  await api.matrix.remove(matrixId);
-                  navigate(listPath, { replace: true });
-                },
-                undefined,
-                undefined,
-                false,
-              );
-            }}
+            onClick={() => setDeleting(true)}
           >
-            Xoá
+            Xóa
           </PcbButton>
         )}
         {can('Archive') && (
@@ -271,6 +257,28 @@ export const MatrixDetailPage = () => {
           </div>
         </div>
       </FormDialog>
+      <ConfirmDialog
+        isOpen={deleting}
+        className="sep-delete-confirm"
+        title="Xóa ma trận?"
+        message={<DeleteMessage subject="Ma trận" name={matrix.name} />}
+        confirmText="Xóa ma trận"
+        cancelText="Đóng"
+        loadingText="Đang xóa…"
+        isLoading={busy}
+        onCancel={() => setDeleting(false)}
+        onConfirm={() =>
+          void run(
+            async () => {
+              await api.matrix.remove(matrixId);
+              navigate(listPath, { replace: true });
+            },
+            undefined,
+            undefined,
+            false,
+          ).finally(() => setDeleting(false))
+        }
+      />
       <RejectDialog
         open={rejecting}
         busy={busy}

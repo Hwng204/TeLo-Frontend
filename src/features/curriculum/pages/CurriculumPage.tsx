@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { curriculumFieldLabel } from '../components/fieldLabel';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { RowActionButton } from '../../../components/common/RowAction';
 import { TableState } from '../../../components/common/TableState';
@@ -36,6 +37,8 @@ export const CurriculumPage = () => {
   const curriculum = data.data;
   const canManage = curriculum?.canManage ?? false;
   const chapters = useMemo(() => curriculum?.chapters ?? [], [curriculum]);
+  const fields = useMemo(() => curriculum?.fields ?? [], [curriculum]);
+  const fieldLabels = useMemo(() => new Map(fields.map((field) => [field.id, curriculumFieldLabel(field, fields)])), [fields]);
   const visible = useMemo(() => filterChapters(chapters, filter), [chapters, filter]);
   const filtered = isFiltered(filter);
   const loadProblem = data.error != null ? toProblem(data.error) : null;
@@ -143,9 +146,9 @@ export const CurriculumPage = () => {
                 }
               >
                 <option value="">Tất cả lĩnh vực</option>
-                {(curriculum?.fields ?? []).map((field) => (
+                {fields.map((field) => (
                   <option key={field.id} value={field.id}>
-                    {field.name}
+                    {fieldLabels.get(field.id)}
                   </option>
                 ))}
               </SelectField>
@@ -231,7 +234,7 @@ export const CurriculumPage = () => {
                         </button>
                       </td>
                       <td className="sep-nowrap">{chapter.gradeLevelName}</td>
-                      <td>{chapter.fieldName}</td>
+                      <td>{fieldLabels.get(chapter.fieldId) ?? chapter.fieldName}</td>
                       <td className="cur-col-count">{chapter.lessons.length}</td>
                       {canManage && (
                         <td className="sep-col-actions">
@@ -330,13 +333,14 @@ export const CurriculumPage = () => {
         open={editing?.kind === 'chapter'}
         chapter={editing?.kind === 'chapter' ? editing.chapter : null}
         grades={curriculum?.grades ?? []}
-        fields={curriculum?.fields ?? []}
+        fields={fields}
         onClose={() => setEditing(null)}
         onSaved={saved}
       />
       <LessonFormDialog
         open={editing?.kind === 'lesson'}
         chapter={editing?.kind === 'lesson' ? editing.chapter : null}
+        fieldName={editing?.kind === 'lesson' ? fieldLabels.get(editing.chapter.fieldId) : undefined}
         lesson={editing?.kind === 'lesson' ? editing.lesson : null}
         onClose={() => setEditing(null)}
         onSaved={(message) => {

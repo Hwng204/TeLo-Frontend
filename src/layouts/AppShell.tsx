@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Icon } from '../components/pcb';
-import { isTeacher, isTeamLead } from '../utils/jwt';
+import { getRoles, isTeacher, isTeamLead } from '../utils/jwt';
 // Mẫu giao diện dùng chung trước, rồi mới tới khung: giữ đúng thứ tự cascade như lúc còn một file.
 import '../styles/sep-ui.css';
 import './AppShell.css';
@@ -26,6 +26,7 @@ const TEACHER_NAV: NavEntry[] = [
   { icon: 'groups', label: 'Lớp chủ nhiệm', to: '/classes', activeFor: ['/classes'] },
   { icon: 'school', label: 'Học sinh', to: '/students', activeFor: ['/students'] },
   { icon: 'menu_book', label: 'Chương & bài học', to: '/curriculum', activeFor: ['/curriculum'] },
+  { icon: 'assignment', label: 'Nhiệm vụ', to: '/matrix-tasks', activeFor: ['/matrix-tasks'] },
 ];
 
 const TL_NAV: NavEntry[] = [
@@ -80,6 +81,7 @@ const NavItem = ({ icon, label, to, activeFor = [] }: NavEntry) => {
 export const AppShell = () => {
   const teamLead = isTeamLead();
   const teacherOnly = isTeacher();
+  const vicePrincipal = getRoles().includes('PHT');
   const [collapsed, setCollapsed] = useState(readCollapsed);
 
   const toggleRail = () => {
@@ -111,7 +113,7 @@ export const AppShell = () => {
           ) : teamLead ? (
             TL_NAV.map((item) => <NavItem key={item.label} {...item} />)
           ) : (
-            PHT_NAV.map((item) => <NavItem key={item.label} {...item} />)
+            PHT_NAV.filter(item => item.to !== '/curriculum' || vicePrincipal).map((item) => <NavItem key={item.label} {...item} />)
           )}
         </nav>
 

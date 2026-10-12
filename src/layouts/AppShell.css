@@ -78,3 +78,8 @@
   .sep-user__text { display: none; }
   .sep-admin-content { padding: 16px; }
 }
+
+@media (max-width: 480px) {
+  /* Tiêu đề dài ("Chi tiết nhiệm vụ biên soạn câu hỏi") cắt một dòng thì mất nghĩa: cho tối đa 2 dòng. */
+  .sep-topbar__title > span:first-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; }
+}
