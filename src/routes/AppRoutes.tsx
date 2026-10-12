@@ -14,9 +14,13 @@ import { StudentFormPage } from '../features/students/pages/StudentFormPage';
 import { MatrixListPage } from '../features/matrix/pages/MatrixListPage';
 import { MatrixDetailPage } from '../features/matrix/pages/MatrixDetailPage';
 import { MatrixEditorPage } from '../features/matrix/pages/MatrixEditorPage';
-import { TaskListPage } from '../features/matrix/pages/TaskListPage';
-import { TaskAssignPage } from '../features/matrix/pages/TaskAssignPage';
-import { TaskDetailPage } from '../features/matrix/pages/TaskDetailPage';
+import { TaskListPage } from '../features/tasks/pages/TaskListPage';
+import { TaskTypePage } from '../features/tasks/pages/TaskTypePage';
+import { MatrixTaskFormPage } from '../features/tasks/pages/MatrixTaskFormPage';
+import { ExamTaskFormPage } from '../features/tasks/pages/ExamTaskFormPage';
+import { QuestionTaskFormPage } from '../features/tasks/pages/QuestionTaskFormPage';
+import { TaskDetailPage } from '../features/tasks/pages/TaskDetailPage';
+import { TaskEditPage } from '../features/tasks/pages/TaskEditPage';
 import { CurriculumPage } from '../features/curriculum/pages/CurriculumPage';
 import { AcademicYearListPage } from '../features/academicYears/pages/AcademicYearListPage';
 import { AcademicYearCreatePage } from '../features/academicYears/pages/AcademicYearCreatePage';
@@ -75,8 +79,13 @@ const router = createBrowserRouter(createRoutesFromElements(
           <Route element={<RequireRole allow={PHT} />}>
             <Route path="/matrices" element={<MatrixListPage />} />
             <Route path="/matrices/new" element={<MatrixEditorPage />} />
-            <Route path="/matrix-tasks/new" element={<TaskAssignPage />} />
             <Route path="/exams" element={<ExamListPage />} />
+          </Route>
+          <Route element={<RequireRole allow={VICE_PRINCIPAL} fallback="/matrix-tasks" />}>
+            {/* PHT giao ma trận và đề thi; Tổ trưởng giao câu hỏi (route riêng bên dưới). */}
+            <Route path="/matrix-tasks/new" element={<TaskTypePage />} />
+            <Route path="/matrix-tasks/new/matrix" element={<MatrixTaskFormPage />} />
+            <Route path="/matrix-tasks/new/exam" element={<ExamTaskFormPage />} />
           </Route>
           <Route element={<RequireRole allow={VICE_PRINCIPAL} fallback="/exams" />}>
             <Route path="/exam-rooms" element={<ExamRoomListPage />} />
@@ -86,13 +95,21 @@ const router = createBrowserRouter(createRoutesFromElements(
           <Route element={<RequireRole allow={BOTH} />}>
             <Route path="/matrices/:id" element={<MatrixDetailPage />} />
             <Route path="/matrices/:id/edit" element={<MatrixEditorPage />} />
+            <Route path="/matrix-tasks/:taskId/matrix/new" element={<MatrixEditorPage />} />
+          </Route>
+          <Route element={<RequireRole allow={TEAM_LEAD} fallback="/matrix-tasks" />}>
+            <Route path="/matrix-tasks/new/question" element={<QuestionTaskFormPage />} />
+          </Route>
+
+          {/* Nhiệm vụ: PHT, Tổ trưởng, Giáo viên; mỗi người chỉ thấy việc mình giao, làm hoặc kiểm duyệt. */}
+          <Route element={<RequireRole allow={[...BOTH, ...TEACHER]} />}>
             <Route path="/matrix-tasks" element={<TaskListPage />} />
             <Route path="/matrix-tasks/:id" element={<TaskDetailPage />} />
-            <Route path="/matrix-tasks/:taskId/matrix/new" element={<MatrixEditorPage />} />
+            <Route path="/matrix-tasks/:id/edit" element={<TaskEditPage />} />
           </Route>
 
           {/* PHT quản lý, Tổ trưởng và Giáo viên chỉ xem; backend trả canManage và tự chặn quyền. */}
-          <Route element={<RequireRole allow={[...BOTH, ...TEACHER]} />}>
+          <Route element={<RequireRole allow={[...VICE_PRINCIPAL, ...TEAM_LEAD, ...TEACHER]} />}>
             <Route path="/curriculum" element={<CurriculumPage />} />
           </Route>
         </Route>

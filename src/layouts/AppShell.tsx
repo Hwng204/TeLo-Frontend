@@ -23,6 +23,7 @@ const TEACHER_NAV: NavEntry[] = [
   { icon: 'groups', label: 'Lớp chủ nhiệm', to: '/classes', activeFor: ['/classes'] },
   { icon: 'school', label: 'Học sinh', to: '/students', activeFor: ['/students'] },
   { icon: 'menu_book', label: 'Chương & bài học', to: '/curriculum', activeFor: ['/curriculum'] },
+  { icon: 'assignment', label: 'Nhiệm vụ', to: '/matrix-tasks', activeFor: ['/matrix-tasks'] },
 ];
 
 const PHT_NAV_AFTER_EXAM_GROUP: NavEntry[] = [{ icon: 'mail', label: 'Email & thông báo', to: '/emails', activeFor: ['/emails'] }];
@@ -122,7 +123,7 @@ export const AppShell = () => {
             TL_NAV.map((item) => <NavItem key={item.label} {...item} />)
           ) : (
             <>
-              {PHT_NAV.map((item) => <NavItem key={item.label} {...item} />)}
+              {PHT_NAV.filter(item => item.to !== '/curriculum' || vicePrincipal).map((item) => <NavItem key={item.label} {...item} />)}
               <div>
                 <button
                   type="button"

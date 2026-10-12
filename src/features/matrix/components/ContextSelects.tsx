@@ -30,8 +30,15 @@ type Props = {
    * để các nơi gọi cũ (danh sách, bộ lọc) không phải đổi gì.
    */
   semesterDisabled?: boolean;
-  emptyLabel?: string;
+  /** Chữ của lựa chọn rỗng; hàm nhận tên chiều để ghi cụ thể ("Chọn môn học"). */
+  emptyLabel?: string | ((label: string) => string);
   error?: string;
+  /** Lỗi riêng từng chiều, hiện ngay dưới ô đó (thắng `error` ở ô Năm học). */
+  errors?: Partial<Record<ContextDimension, string>>;
+  /** Thêm dấu * vào nhãn Môn học, Khối lớp, Năm học. */
+  required?: boolean;
+  /** Lớp thêm cho lưới `.sep-context`. */
+  className?: string;
   /**
    * Dạng ô lọc trên thanh công cụ: không có nhãn nhìn thấy, ô trống đọc là "Tất cả <chiều>",
    * và các ô trả thẳng ra ngoài để xếp chung hàng với ô tìm kiếm.
@@ -49,10 +56,14 @@ export const ContextSelects = ({
   semesterDisabled,
   emptyLabel = 'Tất cả',
   error,
+  errors,
+  required,
+  className,
   toolbar,
 }: Props) => {
   const semesterLocked = semesterDisabled ?? disabled;
-  const empty = (label: string) => (toolbar ? `Tất cả ${label.toLowerCase()}` : emptyLabel);
+  const empty = (label: string) =>
+    toolbar ? `Tất cả ${label.toLowerCase()}` : typeof emptyLabel === 'function' ? emptyLabel(label) : emptyLabel;
   const allBranches = contextBranchOptions(contexts, {});
   const branches = contextBranchOptions(contexts, value);
   const availableSemesters = value.academicYearId
@@ -95,14 +106,14 @@ export const ContextSelects = ({
       {CONTEXT_DIMENSIONS.map((dimension) => (
         <SelectField
           key={dimension}
-          label={LABELS[dimension]}
+          label={required ? `${LABELS[dimension]} *` : LABELS[dimension]}
           hideLabel={toolbar}
           // Trên thanh lọc, ô chưa chọn chỉ ghi tên chiều (mờ) cho gọn một hàng; mở ra vẫn thấy "Tất cả …".
           placeholder={toolbar ? LABELS[dimension] : undefined}
           value={value[dimension] ?? ''}
           disabled={disabled}
           title={disabled ? disabledHint : undefined}
-          error={dimension === 'academicYearId' ? error : undefined}
+          error={errors?.[dimension] ?? (dimension === 'academicYearId' ? error : undefined)}
           onChange={(event) => changeDimension(dimension, event.target.value)}
         >
           <option value="">{empty(LABELS[dimension])}</option>
@@ -139,5 +150,5 @@ export const ContextSelects = ({
   );
 
   if (toolbar) return fields;
-  return <div className="sep-context">{fields}</div>;
+  return <div className={className ? `sep-context ${className}` : 'sep-context'}>{fields}</div>;
 };

@@ -137,4 +137,10 @@ export const selfCheck = () => {
   console.assert(formatPerQuestion(5, 0) === '', 'selfCheck 11: 0 câu không được chia');
 
   console.info('[matrixGrid] self-check xong');
+  const countBoundary = toGrid([detail(1, 'NHAN_BIET', 4294967295, 50), detail(1, 'THONG_HIEU', 1, 50)], [1]);
+  console.assert(Boolean(validateGrid(countBoundary, 'M', 1).totalQuestions), 'Total count overflow must be rejected');
+  countBoundary[0].cells.THONG_HIEU.questionCount = '0';
+  countBoundary[0].cells.THONG_HIEU.percentage = '';
+  countBoundary[0].cells.NHAN_BIET.questionCount = '4294967296';
+  console.assert(!hasValidCellValues(countBoundary[0].cells.NHAN_BIET), 'Single count overflow must be rejected');
 };

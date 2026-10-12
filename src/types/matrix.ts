@@ -89,6 +89,10 @@ export interface MatrixListItem {
   createdAt: string | null;
   approvedBy: MatrixPerson | null;
   approvedAt: string | null;
+  subjectName?: string | null;
+  gradeLevelName?: string | null;
+  academicYearName?: string | null;
+  semesterName?: string | null;
 }
 
 export interface MatrixListQuery {
@@ -112,9 +116,7 @@ export interface Page<T> {
   totalCount: number;
 }
 
-export type MatrixTaskStatus = 'ASSIGNED' | 'SUBMITTED' | 'COMPLETED';
-/** Tab lọc ở danh sách nhiệm vụ: các trạng thái thật, cộng "Quá hạn" (= Đã giao và hạn trước hôm nay). */
-export type MatrixTaskTab = MatrixTaskStatus | 'OVERDUE';
+export type MatrixTaskStatus = 'ASSIGNED' | 'IN_PROGRESS' | 'PENDING_REVIEW' | 'NEEDS_REVISION' | 'COMPLETED';
 
 /** GET /matrix-tasks/{id} — không có `createdByUserId`. */
 export interface MatrixTask {
@@ -133,41 +135,6 @@ export interface MatrixTask {
   description: string | null;
   matrixId: number | null;
 }
-
-/** Hàng trong danh sách nhiệm vụ — có `createdByUserId`, ngữ cảnh thì nullable. */
-export interface MatrixTaskListItem {
-  id: number;
-  name: string;
-  createdBy: MatrixPerson | null;
-  createdByUserId: number;
-  assignedToUserId: number;
-  dueAt: string | null;
-  status: MatrixTaskStatus;
-  statusLabel: string;
-  taskType: string;
-  description: string | null;
-  academicContextId: number | null;
-  semesterId: number | null;
-  matrixId: number | null;
-}
-
-export interface MatrixTaskQuery {
-  page?: number;
-  pageSize?: number;
-  status?: MatrixTaskStatus;
-  dueBefore?: string;
-  /** Khớp tên nhiệm vụ hoặc yêu cầu công việc, hoặc id (gõ số). */
-  keyword?: string;
-  academicContextId?: number;
-  // Lọc từng chiều độc lập, không cần chọn đủ ba chiều để ra academicContextId.
-  academicYearId?: number;
-  semesterId?: number;
-  subjectId?: number;
-  gradeLevelId?: number;
-}
-
-/** Nhóm nhiệm vụ ở hàng tab đầu màn Nhiệm vụ. Hiện backend mới có nhiệm vụ ma trận. */
-export type TaskGroup = 'MATRIX' | 'QUESTION' | 'EXAM';
 
 export interface CreateMatrixTaskRequest {
   assignedToUserId: number;

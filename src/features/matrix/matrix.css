@@ -1,10 +1,13 @@
 /* Phần riêng của tính năng Ma trận. Mẫu giao diện dùng chung nằm ở src/styles/sep-ui.css. */
 
-/* Màu từng trạng thái ma trận / nhiệm vụ (nhãn gốc .sep-status ở sep-ui.css). */
-.sep-status--ASSIGNED { background: var(--sep-bg-brand-soft); color: var(--pcb-color-text-brand); }
-.sep-status--SUBMITTED { background: #fdf8ec; color: #7a5a1e; }
-.sep-status--APPROVED, .sep-status--COMPLETED { background: #ecf7ef; color: #2b6b3f; }
-.sep-status--ARCHIVED { background: #f1f0f4; color: #555061; }
+/* Màu từng trạng thái ma trận / nhiệm vụ (nhãn gốc .sep-status ở sep-ui.css).
+   Hai lớp: identity.css, emails.css @import lại sep-ui.css sau file này, .sep-status nạp sau sẽ đè một lớp. */
+.sep-status.sep-status--DRAFT { background: var(--pcb-color-bg-subtle); color: var(--pcb-color-text-secondary); }
+.sep-status.sep-status--ASSIGNED, .sep-status.sep-status--IN_PROGRESS { background: var(--sep-bg-brand-soft); color: var(--pcb-color-text-brand); }
+.sep-status.sep-status--SUBMITTED, .sep-status.sep-status--PENDING_REVIEW { background: #fdf8ec; color: #7a5a1e; }
+.sep-status.sep-status--NEEDS_REVISION { background: var(--pcb-color-bg-danger-hover); color: var(--pcb-color-text-danger); }
+.sep-status.sep-status--APPROVED, .sep-status.sep-status--COMPLETED { background: #ecf7ef; color: #2b6b3f; }
+.sep-status.sep-status--ARCHIVED { background: #f1f0f4; color: #555061; }
 
 /* Hạn hoàn thành: quá hạn phải tự nhảy ra khỏi cột ngày, hôm nay là hạn thì nhắc nhẹ. */
 .sep-due { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; white-space: nowrap; }
