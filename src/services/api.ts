@@ -48,8 +48,6 @@ import type {
   MatrixListQuery,
   MatrixReferenceData,
   MatrixTask,
-  MatrixTaskListItem,
-  MatrixTaskQuery,
   Page,
   ProvinceOption,
   SaveMatrixRequest,
@@ -95,6 +93,13 @@ import type {
   ExamRoom,
   ExamRoomOption,
   SaveExamRoomRequest,
+  CloudinarySignatureResponse,
+  TaskDetail,
+  TaskListItem,
+  TaskListQuery,
+  TaskOptions,
+  SaveExamTaskRequest,
+  SaveQuestionTaskRequest,
   CreateExamRoomsRequest,
   ExamRoomPlan,
 } from '../types';
@@ -244,11 +249,22 @@ export const api = {
 
   matrixTask: {
     create: (body: CreateMatrixTaskRequest) => post<MatrixTask>('/matrix-tasks', body),
-    /** 409 TaskStarted khi Tổ trưởng đã lưu/nộp ma trận cho nhiệm vụ. */
-    remove: (id: number) => del<void>(`/matrix-tasks/${id}`),
-    list: (query: MatrixTaskQuery = {}) => get<Page<MatrixTaskListItem>>('/matrix-tasks', query),
-    mine: (query: MatrixTaskQuery = {}) => get<Page<MatrixTaskListItem>>('/my/matrix-tasks', query),
     get: (id: number) => get<MatrixTask>(`/matrix-tasks/${id}`),
+  },
+
+  /** Màn Nhiệm vụ chung: chỉ người giao, người thực hiện, người kiểm duyệt thấy một nhiệm vụ. */
+  task: {
+    list: (query: TaskListQuery = {}) => unwrap(get<ApiResponse<DirectoryPage<TaskListItem>>>('/tasks', query)),
+    get: (id: number) => unwrap(get<ApiResponse<TaskDetail>>(`/tasks/${id}`)),
+    options: () => unwrap(get<ApiResponse<TaskOptions>>('/tasks/options')),
+    /** 409 TASK_STARTED khi người thực hiện đã bắt đầu; `message` là câu báo đã xoá. */
+    remove: (id: number) => del<ApiResponse<string>>(`/tasks/${id}`),
+    updateMatrix: (id: number, body: CreateMatrixTaskRequest) => unwrap(put<ApiResponse<TaskDetail>>(`/tasks/matrix/${id}`, body)),
+    createExam: (body: SaveExamTaskRequest) => unwrap(post<ApiResponse<TaskDetail>>('/tasks/exam', body)),
+    updateExam: (id: number, body: SaveExamTaskRequest) => unwrap(put<ApiResponse<TaskDetail>>(`/tasks/exam/${id}`, body)),
+    createQuestion: (body: SaveQuestionTaskRequest) => unwrap(post<ApiResponse<TaskDetail>>('/tasks/question', body)),
+    updateQuestion: (id: number, body: SaveQuestionTaskRequest) =>
+      unwrap(put<ApiResponse<TaskDetail>>(`/tasks/question/${id}`, body)),
   },
 
   provinces: {
@@ -370,4 +386,8 @@ export const api = {
     remove: (examId: number, id: number) =>
       unwrap(del<ApiResponse<boolean>>(`/exams/${examId}/rooms/${id}`)),
   },
+
+  media: {
+    signature: () => get<CloudinarySignatureResponse>('/cloudinary/signature')
+  }
 };

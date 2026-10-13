@@ -14,9 +14,13 @@ import { StudentFormPage } from '../features/students/pages/StudentFormPage';
 import { MatrixListPage } from '../features/matrix/pages/MatrixListPage';
 import { MatrixDetailPage } from '../features/matrix/pages/MatrixDetailPage';
 import { MatrixEditorPage } from '../features/matrix/pages/MatrixEditorPage';
-import { TaskListPage } from '../features/matrix/pages/TaskListPage';
-import { TaskAssignPage } from '../features/matrix/pages/TaskAssignPage';
-import { TaskDetailPage } from '../features/matrix/pages/TaskDetailPage';
+import { TaskListPage } from '../features/tasks/pages/TaskListPage';
+import { TaskTypePage } from '../features/tasks/pages/TaskTypePage';
+import { MatrixTaskFormPage } from '../features/tasks/pages/MatrixTaskFormPage';
+import { ExamTaskFormPage } from '../features/tasks/pages/ExamTaskFormPage';
+import { QuestionTaskFormPage } from '../features/tasks/pages/QuestionTaskFormPage';
+import { TaskDetailPage } from '../features/tasks/pages/TaskDetailPage';
+import { TaskEditPage } from '../features/tasks/pages/TaskEditPage';
 import { CurriculumPage } from '../features/curriculum/pages/CurriculumPage';
 import { AcademicYearListPage } from '../features/academicYears/pages/AcademicYearListPage';
 import { AcademicYearCreatePage } from '../features/academicYears/pages/AcademicYearCreatePage';
@@ -30,7 +34,7 @@ import { ExamListPage } from '../features/exams/pages/ExamListPage';
 import { ExamFormPage } from '../features/exams/pages/ExamFormPage';
 import { ExamRoomListPage } from '../features/exams/pages/ExamRoomListPage';
 import { storage } from '../utils/storage';
-import { getRoles, isDirectoryAdmin } from '../utils/jwt';
+import { getRoles, isDirectoryAdmin, isStudent } from '../utils/jwt';
 
 /**
  * Chặn theo vai trò chỉ để giấu màn không dùng được. Backend mới là nơi quyết định:
@@ -52,14 +56,18 @@ const ADMIN = ['OperationalAdmin', 'ADMIN'];
 
 /**
  * Lớp học / học sinh dùng chung một bộ màn cho nhà trường (chỉ xem) và admin (thêm/sửa/xoá):
- * admin ở trong khung AdminLayout, nhà trường ở khung AppShell.
+ * admin ở trong khung AdminLayout, học sinh ở khung StudentLayout, nhà trường ở khung AppShell.
  */
 const DirectoryShell: React.FC = () => {
   if (!storage.getToken()) return <Navigate to="/login" replace />;
-  return isDirectoryAdmin() ? <AdminLayout /> : <AppShell />;
+  if (isDirectoryAdmin()) return <AdminLayout />;
+  if (isStudent()) return <StudentLayout />;
+  return <AppShell />;
 };
 import { SchoolListPage } from '../features/schools/pages/SchoolListPage';
 import { BranchListPage } from '../features/schools/pages/BranchListPage';
+import { OverviewPage } from '../features/schools/pages/OverviewPage';
+import { TeacherListPage } from '../features/schools/pages/TeacherListPage';
 import { ProfilePage } from '../features/profile/pages/ProfilePage';
 import { ChangePasswordPage } from '../features/profile/pages/ChangePasswordPage';
 import { StudentDashboardPage } from '../features/student/pages/StudentDashboardPage';
@@ -77,11 +85,16 @@ const router = createBrowserRouter(createRoutesFromElements(
           <Route element={<RequireRole allow={PHT} />}>
             <Route path="/matrices" element={<MatrixListPage />} />
             <Route path="/matrices/new" element={<MatrixEditorPage />} />
-            <Route path="/matrix-tasks/new" element={<TaskAssignPage />} />
             <Route path="/exams" element={<ExamListPage />} />
             <Route path="/exams/create" element={<ExamFormPage mode="create" />} />
             <Route path="/exams/detail/:id" element={<ExamFormPage mode="view" />} />
             <Route path="/exams/update/:id" element={<ExamFormPage mode="edit" />} />
+          </Route>
+          <Route element={<RequireRole allow={VICE_PRINCIPAL} fallback="/matrix-tasks" />}>
+            {/* PHT giao ma trận và đề thi; Tổ trưởng giao câu hỏi (route riêng bên dưới). */}
+            <Route path="/matrix-tasks/new" element={<TaskTypePage />} />
+            <Route path="/matrix-tasks/new/matrix" element={<MatrixTaskFormPage />} />
+            <Route path="/matrix-tasks/new/exam" element={<ExamTaskFormPage />} />
           </Route>
           <Route element={<RequireRole allow={VICE_PRINCIPAL} fallback="/exams" />}>
             <Route path="/exam-rooms" element={<ExamRoomListPage />} />
@@ -91,13 +104,21 @@ const router = createBrowserRouter(createRoutesFromElements(
           <Route element={<RequireRole allow={BOTH} />}>
             <Route path="/matrices/:id" element={<MatrixDetailPage />} />
             <Route path="/matrices/:id/edit" element={<MatrixEditorPage />} />
+            <Route path="/matrix-tasks/:taskId/matrix/new" element={<MatrixEditorPage />} />
+          </Route>
+          <Route element={<RequireRole allow={TEAM_LEAD} fallback="/matrix-tasks" />}>
+            <Route path="/matrix-tasks/new/question" element={<QuestionTaskFormPage />} />
+          </Route>
+
+          {/* Nhiệm vụ: PHT, Tổ trưởng, Giáo viên; mỗi người chỉ thấy việc mình giao, làm hoặc kiểm duyệt. */}
+          <Route element={<RequireRole allow={[...BOTH, ...TEACHER]} />}>
             <Route path="/matrix-tasks" element={<TaskListPage />} />
             <Route path="/matrix-tasks/:id" element={<TaskDetailPage />} />
-            <Route path="/matrix-tasks/:taskId/matrix/new" element={<MatrixEditorPage />} />
+            <Route path="/matrix-tasks/:id/edit" element={<TaskEditPage />} />
           </Route>
 
           {/* PHT quản lý, Tổ trưởng và Giáo viên chỉ xem; backend trả canManage và tự chặn quyền. */}
-          <Route element={<RequireRole allow={[...BOTH, ...TEACHER]} />}>
+          <Route element={<RequireRole allow={[...VICE_PRINCIPAL, ...TEAM_LEAD, ...TEACHER]} />}>
             <Route path="/curriculum" element={<CurriculumPage />} />
           </Route>
         </Route>
@@ -149,6 +170,10 @@ const router = createBrowserRouter(createRoutesFromElements(
           <Route path="/" element={<Navigate to="/schools" replace />} />
           <Route path="/schools" element={<SchoolListPage />} />
           <Route path="/schools/:schoolId/branches" element={<BranchListPage />} />
+          <Route path="/overview" element={<OverviewPage />} />
+          <Route path="/teachers" element={<TeacherListPage />} />
+          <Route path="/permissions" element={<Navigate to="/roles" replace />} />
+          <Route path="/navbars" element={<Navigate to="/modules" replace />} />
           <Route path="/academic-years" element={<AcademicYearListPage />} />
           <Route path="/academic-years/new" element={<AcademicYearCreatePage />} />
           <Route path="/academic-years/:id" element={<AcademicYearConfigPage />} />

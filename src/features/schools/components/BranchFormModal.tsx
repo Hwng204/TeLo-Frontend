@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Upload, Home } from 'lucide-react';
 import type { CreateSchoolBranchRequest, SchoolBranchSummary } from '../../../types';
+import { validateCreateBranch, validateAvatarFile } from '../../../utils/validators';
+import { uploadToCloudinary } from '../../../utils/cloudinary';
+import { displayToast } from '../../../utils/toast';
 
 interface BranchFormModalProps {
   mode: 'create' | 'edit';
@@ -13,23 +16,62 @@ interface BranchFormModalProps {
 export const BranchFormModal: React.FC<BranchFormModalProps> = ({ mode, branch, nextCode, onClose, onSubmit }) => {
   const [form, setForm] = useState<CreateSchoolBranchRequest>({
     name: branch?.name ?? '',
+    code: branch?.code ?? (nextCode || ''),
     address: branch?.address ?? '',
+    logo: branch?.logo ?? '',
     status: branch?.status ?? 'ACTIVE',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<keyof CreateSchoolBranchRequest, string>>>({});
   const isEdit = mode === 'edit';
 
   const set = (key: keyof CreateSchoolBranchRequest) => (val: string) => {
     setForm((prev) => ({ ...prev, [key]: val }));
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    const validation = validateAvatarFile(file);
+    if (!validation.isValid) {
+      displayToast('error', 'Lỗi', validation.firstError || 'Kích thước ảnh tối đa là 2MB');
+      return;
+    }
+
+    try {
+      setUploadingLogo(true);
+      const url = await uploadToCloudinary(file);
+      setForm((prev) => ({ ...prev, logo: url }));
+      if (errors.logo) setErrors((prev) => ({ ...prev, logo: undefined }));
+      displayToast('success', 'Thành công', 'Đã tải ảnh lên Cloudinary thành công!');
+    } catch (err: any) {
+      displayToast('error', 'Lỗi', err.message || 'Có lỗi xảy ra khi tải ảnh lên Cloudinary');
+    } finally {
+      setUploadingLogo(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setForm((prev) => ({ ...prev, logo: '' }));
   };
 
   const handleSubmit = async () => {
+    const payload = {
+      ...form,
+      code: (form.code && form.code.trim()) ? form.code.trim().toUpperCase() : (isEdit ? branch?.code : (nextCode || '')),
+    };
+    const validation = validateCreateBranch(payload);
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await onSubmit({
-        ...form,
-        code: isEdit ? branch?.code : (nextCode || ''),
-      });
+      await onSubmit(payload);
     } finally {
       setIsLoading(false);
     }
@@ -91,18 +133,53 @@ export const BranchFormModal: React.FC<BranchFormModalProps> = ({ mode, branch, 
                 value={form.name}
                 onChange={(e) => set('name')(e.target.value)}
                 placeholder="VD: Tiểu học Phạm Công Bình"
-                style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '14px', boxSizing: 'border-box', backgroundColor: '#ffffff', color: '#1e293b' }}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: `1px solid ${errors.name ? '#ef4444' : '#cbd5e1'}`,
+                  outline: 'none',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                  backgroundColor: '#ffffff',
+                  color: '#1e293b'
+                }}
               />
+              {errors.name && (
+                <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{errors.name}</div>
+              )}
             </div>
 
             <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#334155', textAlign: 'left' }}>Mã cơ sở</label>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#334155', textAlign: 'left' }}>
+                Mã cơ sở <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <input
                 type="text"
-                disabled
-                value={isEdit ? branch?.code : (nextCode || 'Hệ thống tự động sinh')}
-                style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '14px', boxSizing: 'border-box', backgroundColor: '#f8fafc', color: '#94a3b8', fontStyle: isEdit ? 'normal' : 'italic' }}
+                disabled={isEdit}
+                value={form.code ?? ''}
+                onChange={(e) => set('code')(e.target.value.toUpperCase())}
+                placeholder={nextCode || 'VD: TEST_BRANCH'}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: `1px solid ${errors.code ? '#ef4444' : '#cbd5e1'}`,
+                  outline: 'none',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                  backgroundColor: isEdit ? '#f8fafc' : '#ffffff',
+                  color: isEdit ? '#94a3b8' : '#1e293b',
+                  cursor: isEdit ? 'not-allowed' : 'text',
+                }}
               />
+              {errors.code ? (
+                <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{errors.code}</div>
+              ) : !isEdit ? (
+                <div style={{ color: '#64748b', fontSize: '12px', marginTop: '4px' }}>
+                  Hệ thống tự động sinh theo thứ tự A, B... Bạn có thể chỉnh sửa mã này nếu muốn.
+                </div>
+              ) : null}
             </div>
 
             <div>
@@ -114,6 +191,103 @@ export const BranchFormModal: React.FC<BranchFormModalProps> = ({ mode, branch, 
                 placeholder="VD: Số 45 phố Nguyễn Khuyến, P. Văn Miếu, Q. Đống Đa"
                 style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '14px', boxSizing: 'border-box', backgroundColor: '#ffffff', color: '#1e293b' }}
               />
+            </div>
+
+            <div style={{
+              border: '1px solid #e2e8f0',
+              borderRadius: '10px',
+              padding: '18px',
+              backgroundColor: '#f8fafc'
+            }}>
+              <div style={{
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#64748b',
+                marginBottom: '14px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                Logo cơ sở
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div style={{
+                  width: '76px',
+                  height: '76px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ffffff',
+                  border: '1px dashed #cbd5e1',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                }}>
+                  {form.logo ? (
+                    <img
+                      src={form.logo}
+                      alt="Logo cơ sở"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                    />
+                  ) : (
+                    <Home size={32} color="#94a3b8" />
+                  )}
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                    <label style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '7px 14px',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#334155',
+                      cursor: (uploadingLogo || isLoading) ? 'not-allowed' : 'pointer',
+                      opacity: (uploadingLogo || isLoading) ? 0.7 : 1,
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                      transition: 'all 0.15s'
+                    }}>
+                      <Upload size={15} />
+                      {uploadingLogo ? 'Đang tải lên...' : form.logo ? 'Đổi ảnh' : 'Tải ảnh lên'}
+                      <input
+                        type="file"
+                        accept="image/png, image/jpeg, image/svg+xml, image/webp"
+                        style={{ display: 'none' }}
+                        onChange={handleLogoUpload}
+                        disabled={uploadingLogo || isLoading}
+                      />
+                    </label>
+
+                    {form.logo && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveLogo}
+                        disabled={uploadingLogo || isLoading}
+                        style={{
+                          color: '#ef4444',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          padding: '6px 8px'
+                        }}
+                      >
+                        Xóa
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.5 }}>
+                    Định dạng PNG, JPG, SVG, WEBP. Khuyến nghị ảnh vuông tối đa 2MB. Ảnh được lưu trữ trực tiếp trên Cloudinary.
+                  </div>
+                </div>
+              </div>
             </div>
 
             {isEdit && (
@@ -145,7 +319,7 @@ export const BranchFormModal: React.FC<BranchFormModalProps> = ({ mode, branch, 
           <button
             type="button"
             onClick={onClose}
-            disabled={isLoading}
+            disabled={isLoading || uploadingLogo}
             style={{
               padding: '10px 20px',
               borderRadius: '8px',
@@ -154,7 +328,7 @@ export const BranchFormModal: React.FC<BranchFormModalProps> = ({ mode, branch, 
               color: '#475569',
               fontSize: '14px',
               fontWeight: 600,
-              cursor: 'pointer',
+              cursor: (isLoading || uploadingLogo) ? 'not-allowed' : 'pointer',
             }}
           >
             Hủy
@@ -162,7 +336,7 @@ export const BranchFormModal: React.FC<BranchFormModalProps> = ({ mode, branch, 
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={isLoading}
+            disabled={isLoading || uploadingLogo}
             style={{
               padding: '10px 24px',
               borderRadius: '8px',
@@ -171,11 +345,11 @@ export const BranchFormModal: React.FC<BranchFormModalProps> = ({ mode, branch, 
               color: '#ffffff',
               fontSize: '14px',
               fontWeight: 600,
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              opacity: isLoading ? 0.7 : 1,
+              cursor: (isLoading || uploadingLogo) ? 'not-allowed' : 'pointer',
+              opacity: (isLoading || uploadingLogo) ? 0.7 : 1,
             }}
           >
-            {isLoading ? 'Đang xử lý...' : isEdit ? 'Lưu thay đổi' : 'Tạo mới'}
+            {isLoading ? 'Đang xử lý...' : uploadingLogo ? 'Đang tải ảnh...' : isEdit ? 'Lưu thay đổi' : 'Tạo mới'}
           </button>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PcbButton } from '../../../components/pcb';
+import { Icon, PcbButton, PcbIconButton } from '../../../components/pcb';
 import { useAsync } from '../../../hooks/useAsync';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { api } from '../../../services/api';
@@ -9,10 +9,11 @@ import { IdentityDialog, IdentityPager, IdentitySearch, IdentityState } from './
 
 export type ScopeValue = Pick<RoleItem, 'schoolId' | 'schoolName' | 'schoolBranchId' | 'schoolBranchName'>;
 
-function ScopePicker({ kind, schoolId, onChoose, onClose }: {
+function ScopePicker({ kind, schoolId, allowAllSchools = false, onChoose, onClose }: {
   kind: 'school' | 'branch';
   schoolId?: number;
-  onChoose: (scope: IdentityScope) => void;
+  allowAllSchools?: boolean;
+  onChoose: (scope: IdentityScope | null) => void;
   onClose: () => void
 }) {
   const [search, setSearch] = useState('');
@@ -26,13 +27,17 @@ function ScopePicker({ kind, schoolId, onChoose, onClose }: {
     page,
     pageSize
   }), [kind, schoolId, debounced, page, pageSize]);
-  return <IdentityDialog title={kind === 'school' ? 'Chọn trường' : 'Chọn phân hiệu'} onClose={onClose}>
+  return <IdentityDialog title={kind === 'school' ? 'Chọn trường' : 'Chọn phân hiệu'} icon={kind === 'school' ? 'school' : 'apartment'} onClose={onClose}>
     <IdentitySearch value={search} onChange={value => {
       setSearch(value);
       setPage(1);
     }} />
-    <IdentityState {...result} count={result.data?.items.length ?? 0} />
+    <IdentityState {...result} count={(result.data?.items.length ?? 0) + (allowAllSchools ? 1 : 0)} />
     <ul className="identity-options">
+      {allowAllSchools && <li>
+        <span><strong>Tất cả các trường</strong></span>
+        <PcbIconButton icon="check" label="Chọn tất cả các trường" onClick={() => onChoose(null)} />
+      </li>}
       {result.data?.items.map(item => <li key={item.id}>
         <span>
           <strong>
@@ -42,12 +47,11 @@ function ScopePicker({ kind, schoolId, onChoose, onClose }: {
             {item.code}
           </small>
         </span>
-        <PcbButton
-          variant="secondary"
-          size="sm"
+        <PcbIconButton
+          icon="check"
+          label={`Chọn ${item.name}`}
           onClick={() => onChoose(item)}
-          aria-label={`Chọn ${item.name}`}
-        >Chọn</PcbButton>
+        />
       </li>)}
     </ul>
     <IdentityPager
@@ -60,33 +64,38 @@ function ScopePicker({ kind, schoolId, onChoose, onClose }: {
     />
   </IdentityDialog>;
 }
-export function ScopeFields({ value, onChange, disabled = false, filter = false }: {
+export function ScopeFields({ value, onChange, disabled = false, filter = false, schoolOnly = false, required = false, allowAllSchools = false }: {
   value: ScopeValue;
   onChange: (value: ScopeValue) => void;
   disabled?: boolean;
-  filter?: boolean
+  filter?: boolean;
+  schoolOnly?: boolean;
+  required?: boolean;
+  allowAllSchools?: boolean;
 }) {
   const [picker, setPicker] = useState<'school' | 'branch' | null>(null);
   return <div className="identity-scope">
     <div>
-      <span className="pcb-label">Trường</span>
+      <span className="pcb-label">Trường{required && <> <span className="identity-required" aria-hidden="true">*</span></>}</span>
       <div className="identity-actions">
         <PcbButton
           variant="secondary"
           disabled={disabled}
           onClick={() => setPicker('school')}
         >
-          {value.schoolName || (filter ? 'Tất cả trường' : 'Toàn hệ thống')}
+          <Icon name="school" size={18} />
+          {value.schoolName || (filter ? 'Tất cả trường' : allowAllSchools ? 'Tất cả các trường' : required ? 'Chọn trường áp dụng' : 'Toàn hệ thống')}
+          <Icon name="expand_more" size={18} />
         </PcbButton>
-        {value.schoolId && <PcbButton
-          variant="ghost"
+        {value.schoolId && <PcbIconButton
+          icon="close"
+          label="Bỏ chọn trường"
           disabled={disabled}
           onClick={() => onChange(emptyScope)}
-          aria-label="Bỏ chọn trường"
-        >Bỏ chọn</PcbButton>}
+        />}
       </div>
     </div>
-    <div>
+    {!schoolOnly && <div>
       <span className="pcb-label">Phân hiệu</span>
       <div className="identity-actions">
         <PcbButton
@@ -96,23 +105,29 @@ export function ScopeFields({ value, onChange, disabled = false, filter = false 
         >
           {value.schoolBranchName || 'Tất cả phân hiệu'}
         </PcbButton>
-        {value.schoolBranchId && <PcbButton
-          variant="ghost"
+        {value.schoolBranchId && <PcbIconButton
+          icon="close"
+          label="Bỏ chọn phân hiệu"
           disabled={disabled}
           onClick={() => onChange({
             ...value,
             schoolBranchId: null,
             schoolBranchName: null
           })}
-          aria-label="Bỏ chọn phân hiệu"
-        >Bỏ chọn</PcbButton>}
+        />}
       </div>
-    </div>
+    </div>}
     {picker && <ScopePicker
       kind={picker}
       schoolId={value.schoolId ?? undefined}
+      allowAllSchools={allowAllSchools && picker === 'school'}
       onClose={() => setPicker(null)}
       onChoose={scope => {
+        if (!scope) {
+          onChange(emptyScope);
+          setPicker(null);
+          return;
+        }
         onChange(picker === 'school' ? {
           ...emptyScope,
           schoolId: scope.id,

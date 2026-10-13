@@ -12,8 +12,8 @@ export type InfoItem = {
 const SPAN_CLASS = { wide: ' sep-span-2', full: ' sep-span-full' };
 
 /** Lưới thông tin chỉ đọc: nhãn ở trên, giá trị trong ô nền nhạt (cùng kiểu ô bị khoá). */
-export const InfoGrid = ({ items }: { items: InfoItem[] }) => (
-  <dl className="sep-fields">
+export const InfoGrid = ({ items, className }: { items: InfoItem[]; className?: string }) => (
+  <dl className={className ? `sep-fields ${className}` : 'sep-fields'}>
     {items.map((item) => (
       <div key={item.label} className={`sep-readfield${item.span ? SPAN_CLASS[item.span] : ''}`}>
         <dt className="pcb-label">{item.label}</dt>

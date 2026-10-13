@@ -4,6 +4,9 @@ import type { ReactNode } from 'react';
 import { PcbIconButton, Icon } from '../pcb';
 import { getUsername, roleLabel } from '../../utils/jwt';
 import { storage } from '../../utils/storage';
+import { api } from '../../services/api';
+import { useAsync } from '../../hooks/useAsync';
+import { formatActiveAcademicYear } from '../../utils/academicYear';
 
 type Props = {
   title: string;
@@ -16,10 +19,14 @@ type Props = {
    * không vẽ thêm một thanh trên thứ hai.
    */
   inline?: boolean;
+  /**
+   * Cụm nút bấm bên phải tiêu đề (ví dụ: Lưu, Xóa, ...)
+   */
+  actions?: ReactNode;
 };
 
 /** Thanh trên cùng của mọi màn ma trận: tên màn bên trái, người đang đăng nhập bên phải. */
-export const PageHeader = ({ title, onBack, badge, inline }: Props) => {
+export const PageHeader = ({ title, onBack, badge, inline, actions }: Props) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -41,18 +48,32 @@ export const PageHeader = ({ title, onBack, badge, inline }: Props) => {
 
   if (inline) {
     return (
-      <div className="sep-pagehead">
-        {onBack && <PcbIconButton icon="arrow_back" label="Quay lại" onClick={onBack} />}
-        <h1 className="sep-topbar__title">
-          <span>{title}</span>
-          {badge}
-        </h1>
+      <div className="sep-pagehead" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {onBack && <PcbIconButton icon="arrow_back" label="Quay lại" onClick={onBack} />}
+          <h1 className="sep-topbar__title" style={{ margin: 0 }}>
+            <span>{title}</span>
+            {badge}
+          </h1>
+        </div>
+        {actions && <div>{actions}</div>}
       </div>
     );
   }
 
   const username = getUsername();
   const role = roleLabel();
+  
+  const activeAcademicYear = useAsync(() => api.academicYear.current().catch(e => {
+    if (e?.response?.status === 404) return { data: null };
+    throw e;
+  }), []);
+  
+  const activeAcademicYearLabel = activeAcademicYear.loading
+    ? 'Đang tải năm học...'
+    : activeAcademicYear.error
+      ? 'Không tải được năm học'
+      : formatActiveAcademicYear(activeAcademicYear.data?.data?.name);
 
   return (
     <header className="sep-topbar">
@@ -62,7 +83,14 @@ export const PageHeader = ({ title, onBack, badge, inline }: Props) => {
         {badge}
       </h1>
       
-      <div className="sep-user" ref={userMenuRef} style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setShowUserMenu(!showUserMenu)}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div aria-live="polite" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569', fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+          <Icon name="calendar_month" size={18} />
+          {activeAcademicYearLabel}
+          {Boolean(activeAcademicYear.error) && <button type="button" onClick={activeAcademicYear.reload}>Thử lại</button>}
+        </div>
+
+        <div className="sep-user" ref={userMenuRef} style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setShowUserMenu(!showUserMenu)}>
         <span className="sep-user__avatar" aria-hidden="true">
           {(username || role || '?').charAt(0).toUpperCase()}
         </span>
@@ -109,6 +137,7 @@ export const PageHeader = ({ title, onBack, badge, inline }: Props) => {
             `}</style>
           </div>
         )}
+      </div>
       </div>
     </header>
   );

@@ -21,10 +21,17 @@ body {
 }
 
 /* Toast System */
-#toast {
+#toast, .toast-stack {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
   position: fixed;
   top: 32px;
   right: 32px;
+  left: auto;
+  bottom: auto;
   z-index: 999999;
 }
 
@@ -100,6 +107,7 @@ body {
 }
 
 .toast_body {
+  min-width: 0;
   flex-grow: 1;
   text-align: left;
 }
@@ -113,6 +121,7 @@ body {
 }
 
 .toast_msg {
+  overflow-wrap: anywhere;
   font-size: 14px;
   color: #666;
   margin: 0;
@@ -120,11 +129,19 @@ body {
 }
 
 .toast_close {
+  border: 0;
+  background: transparent;
   padding: 0 16px;
   font-size: 20px;
   color: #999;
   cursor: pointer;
   transition: 0.3s;
+}
+
+.toast_close:focus-visible { outline: 2px solid #2f86eb; outline-offset: -4px; }
+@media (max-width: 540px) {
+  #toast, .toast-stack { top: 16px; right: 16px; left: 16px; }
+  .toast { min-width: 0; max-width: 100%; }
 }
 
 .toast_close:hover {

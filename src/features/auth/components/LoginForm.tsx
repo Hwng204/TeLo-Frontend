@@ -7,6 +7,7 @@ import { storage } from '../../../utils/storage';
 import { displayToast } from '../../../utils/toast';
 import { api } from '../../../services/api';
 import { getRoles, parseJwt } from '../../../utils/jwt';
+import { validateLogin } from '../../../utils/validators';
 
 export const LoginForm: React.FC<{ onForgotPassword?: () => void }> = ({ onForgotPassword }) => {
   const navigate = useNavigate();
@@ -18,8 +19,9 @@ export const LoginForm: React.FC<{ onForgotPassword?: () => void }> = ({ onForgo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!username.trim() || !password.trim()) {
-      displayToast('error', 'Lỗi', 'Vui lòng nhập đầy đủ tài khoản và mật khẩu.');
+    const validation = validateLogin({ username, password });
+    if (!validation.isValid) {
+      displayToast('error', 'Lỗi', validation.firstError || 'Vui lòng nhập đầy đủ tài khoản và mật khẩu.');
       return;
     }
 

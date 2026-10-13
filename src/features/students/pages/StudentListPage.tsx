@@ -5,12 +5,11 @@ import { PageHeader } from '../../../components/common/PageHeader';
 import { Pager } from '../../../components/common/Pager';
 import { RowAction, RowActionButton } from '../../../components/common/RowAction';
 import { StatusPill } from '../../../components/common/StatusPill';
-import { StatusTabs } from '../../../components/common/StatusTabs';
 import { TableState } from '../../../components/common/TableState';
 import { useAsync, useBusy, useDebounce, useDirectoryScope, useNotice } from '../../../hooks';
 import { api } from '../../../services/api';
 import type { StudentListItem, StudentStatus } from '../../../types';
-import { branchLabel, formatDay, statusOf, STUDENT_STATUS } from '../../../utils/directory';
+import { formatDay, statusOf, STUDENT_STATUS } from '../../../utils/directory';
 import { isTeacher } from '../../../utils/jwt';
 import { toProblem } from '../../../utils/problem';
 
@@ -32,7 +31,7 @@ export const StudentListPage = () => {
   const [status, setStatus] = useState<StudentStatus | ''>('');
   const [gradeLevelId, setGradeLevelId] = useState<number>();
   const [classId, setClassId] = useState<number>();
-  const [schoolBranchId, setSchoolBranchId] = useState<number>();
+  const [schoolBranchId, setSchoolBranchId] = useState<number | undefined>(() => scope.branchId);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const popup = useNotice();
@@ -44,7 +43,6 @@ export const StudentListPage = () => {
     async () => (scope.ready ? api.directory.referenceData(undefined, scope.schoolId) : null),
     [scope.ready, scope.schoolId],
   );
-  const grades = reference.data?.gradeLevels ?? [];
   const classes = reference.data?.classes ?? [];
   const branches = reference.data?.schoolBranches ?? [];
 
@@ -74,7 +72,7 @@ export const StudentListPage = () => {
     setStatus('');
     setGradeLevelId(undefined);
     setClassId(undefined);
-    setSchoolBranchId(undefined);
+    setSchoolBranchId(scope.branchId);
     setPage(1);
   };
   const numberOrUndefined = (raw: string) => (raw ? Number(raw) : undefined);

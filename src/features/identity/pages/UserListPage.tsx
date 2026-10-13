@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { RowAction, RowActionButton } from '../../../components/common/RowAction';
@@ -11,8 +11,8 @@ import { api } from '../../../services/api';
 import type { IdentityUser, UserStatus } from '../../../types';
 import { emptyScope, identityError } from '../../../utils/identity';
 import { getUserId } from '../../../utils/jwt';
+import { storage } from '../../../utils/storage';
 import { IdentityPager, IdentitySearch, IdentityState, IdentityStatusBadge } from '../components/IdentityUi';
-import { ScopeFields } from '../components/ScopeFields';
 import { UserRoleEditor } from '../components/UserRoleEditor';
 import './identity.css';
 
@@ -21,7 +21,38 @@ export function UserListPage() {
   const currentUserId = getUserId();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-  const [scope, setScope] = useState(emptyScope);
+  const [scope, setScope] = useState(() => {
+    const s = storage.getSelectedBranch();
+    if (s.schoolId || s.branchId) {
+      return {
+        schoolId: s.schoolId ? Number(s.schoolId) : null,
+        schoolName: s.schoolName || null,
+        schoolBranchId: s.branchId ? Number(s.branchId) : null,
+        schoolBranchName: s.branchName || null,
+      };
+    }
+    return emptyScope;
+  });
+
+  useEffect(() => {
+    const handleBranchChange = () => {
+      const s = storage.getSelectedBranch();
+      if (s.schoolId || s.branchId) {
+        setScope({
+          schoolId: s.schoolId ? Number(s.schoolId) : null,
+          schoolName: s.schoolName || null,
+          schoolBranchId: s.branchId ? Number(s.branchId) : null,
+          schoolBranchName: s.branchName || null,
+        });
+      } else {
+        setScope(emptyScope);
+      }
+      setPage(1);
+    };
+    window.addEventListener('branch_changed', handleBranchChange);
+    return () => window.removeEventListener('branch_changed', handleBranchChange);
+  }, []);
+
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [roleUser, setRoleUser] = useState<IdentityUser | null>(null);
@@ -96,14 +127,6 @@ export function UserListPage() {
       <PcbButton variant="secondary" disabled={busy} onClick={() => navigate('/users/create')}>Thêm tài khoản</PcbButton>
       <PcbButton disabled={busy} onClick={() => navigate('/users/create-admin')}>Thêm tài khoản Admin</PcbButton>
     </div>
-    <ScopeFields
-      filter
-      value={scope}
-      onChange={value => {
-        setScope(value);
-        setPage(1);
-      }}
-    />
     <section className="identity-panel" aria-label="Danh sách người dùng">
       <IdentityState {...result} count={result.data?.items.length ?? 0} />
       {!!result.data?.items.length && <div className="pcb-table-wrap">

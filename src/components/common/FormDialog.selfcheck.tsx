@@ -18,9 +18,13 @@ export const formDialogSelfCheck = async () => {
     const dialog = host.querySelector('dialog');
     console.assert(dialog?.open, 'Dialog must remain open after StrictMode effect replay');
     console.assert(closeEvents === 0, 'Effect cleanup must not report a user close when the dialog has reopened');
-    dialog?.close();
-    await new Promise(resolve => setTimeout(resolve, 100));
-    console.assert(closeEvents === 1, 'A real close must notify the parent once');
+    await new Promise<void>((resolve, reject) => {
+      if (!dialog) { reject(new Error('Missing test dialog')); return; }
+      const timeout = setTimeout(() => reject(new Error('Dialog close event did not arrive')), 3000);
+      dialog.addEventListener('close', () => { clearTimeout(timeout); resolve(); }, { once: true });
+      dialog.close();
+    });
+    console.assert(closeEvents === 1, 'A real close must notify the parent once', closeEvents);
   } finally {
     root.unmount();
     host.remove();

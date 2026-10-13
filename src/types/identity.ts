@@ -31,6 +31,7 @@ export interface RoleItem extends IdentityItem {
   schoolBranchName: string | null;
   isSystem: boolean;
   userCount: number;
+  deleteBlockedReason?: string | null;
 }
 export interface ModuleItem extends IdentityItem { navbarCount: number; }
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'LOCKED';

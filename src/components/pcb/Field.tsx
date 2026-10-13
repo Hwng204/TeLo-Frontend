@@ -184,6 +184,7 @@ export const SelectField = ({
                 if (open) choose(activeValue);
                 else openMenu();
               } else if (event.key === 'Escape') {
+                if (open) event.preventDefault();
                 setOpen(false);
               }
             }}

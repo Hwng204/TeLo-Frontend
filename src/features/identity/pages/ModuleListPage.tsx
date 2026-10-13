@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { PageHeader } from '../../../components/common/PageHeader';
-import { PcbButton, SelectField } from '../../../components/pcb';
+import { Icon, PcbButton, SelectField } from '../../../components/pcb';
+import { RowActionButton } from '../../../components/common/RowAction';
 import { useAsync } from '../../../hooks/useAsync';
 import { useBusy } from '../../../hooks/useBusy';
 import { useDebounce } from '../../../hooks/useDebounce';
-import { useNotice } from '../../../hooks/useNotice';
 import { api } from '../../../services/api';
 import type { ModuleItem } from '../../../types';
 import { identityError } from '../../../utils/identity';
 import { IdentityEditor } from '../components/IdentityEditor';
 import { IdentityPager, IdentitySearch, IdentityState, IdentityStatusBadge } from '../components/IdentityUi';
+import { useIdentityNotice } from '../components/useIdentityNotice';
 import './identity.css';
 
 export function ModuleListPage() {
@@ -25,9 +26,16 @@ export function ModuleListPage() {
     page,
     pageSize
   }), [debounced, status, page, pageSize]);
-  const notice = useNotice();
+  const notice = useIdentityNotice();
   const [busy, run] = useBusy();
-  const mutate = (item: ModuleItem, remove = false) => notice.confirm(remove ? `Xóa module “${item.name}” chưa được sử dụng?` : `${item.status === 'ACTIVE' ? 'Ngừng' : 'Bắt đầu'} áp dụng module “${item.name}”?`, () => void run(async () => {
+  const actionsDisabled = busy || result.loading || !!result.error;
+  const hasFilters = !!search.trim() || !!status;
+  const clearFilters = () => {
+    setSearch('');
+    setStatus('');
+    setPage(1);
+  };
+  const mutate = (item: ModuleItem, remove = false) => notice.confirm(remove ? `Xóa module “${item.name}”? Thao tác này không thể hoàn tác.` : `${item.status === 'ACTIVE' ? 'Ngừng' : 'Bắt đầu'} áp dụng module “${item.name}”?`, () => void run(async () => {
     try {
       if (remove) await api.modules.remove(item.id, item.version);
       else await api.modules.status(item.id, item.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE', item.version);
@@ -38,16 +46,21 @@ export function ModuleListPage() {
       result.reload();
       notice.error(identityError(error));
     }
-  }));
-  return <div className="sep-page identity-page">
-    <PageHeader title="Quản lý module" inline />
-    <div className="identity-toolbar">
-      <IdentitySearch value={search} onChange={value => {
+  }), remove ? 'Xóa module' : item.status === 'ACTIVE' ? 'Ngừng áp dụng' : 'Kích hoạt', remove);
+  return <div className="sep-page identity-page identity-module-page">
+    <div className="identity-module-heading">
+      <PageHeader title="Quản lý module" inline />
+      <PcbButton disabled={busy} onClick={() => setEditor('new')}><Icon name="add" />Thêm module</PcbButton>
+    </div>
+    <section className="identity-panel identity-module-panel" aria-label="Danh sách module" aria-busy={result.loading}>
+      <div className="identity-module-toolbar">
+      <IdentitySearch label="Tìm module" hideLabel placeholder="Tìm theo mã hoặc tên module…" value={search} onChange={value => {
         setSearch(value);
         setPage(1);
       }} />
       <SelectField
         label="Trạng thái"
+        hideLabel
         value={status}
         onChange={event => {
           setStatus(event.target.value);
@@ -58,57 +71,53 @@ export function ModuleListPage() {
         <option value="ACTIVE">Đang áp dụng</option>
         <option value="INACTIVE">Ngừng áp dụng</option>
       </SelectField>
-      <PcbButton disabled={busy} onClick={() => setEditor('new')}>Thêm module</PcbButton>
-    </div>
-    <section className="identity-panel" aria-label="Danh sách module">
-      <IdentityState {...result} count={result.data?.items.length ?? 0} />
-      {!!result.data?.items.length && <div className="identity-modules">
-        {result.data.items.map(item => <article className="identity-panel identity-module" key={item.id}>
-          <div>
-            <h2>
-              {item.name}
-            </h2>
-            <span className="sep-subline">
-              {item.code}
-            </span>
-          </div>
-          <IdentityStatusBadge status={item.status} />
-          <p>
-            {item.description || 'Chưa có mô tả.'}
-          </p>
-          <small className="sep-muted">{item.navbarCount} mục điều hướng liên kết</small>
-          <div className="identity-actions">
-            <PcbButton
-              variant="secondary"
-              size="sm"
-              disabled={busy}
-              onClick={() => setEditor(item)}
-            >Chỉnh sửa</PcbButton>
-            <PcbButton
-              variant="secondary"
-              size="sm"
-              disabled={busy}
-              onClick={() => mutate(item)}
-            >
-              {item.status === 'ACTIVE' ? 'Ngừng áp dụng' : 'Kích hoạt'}
-            </PcbButton>
-            {item.canDelete && <PcbButton
-              variant="danger"
-              size="sm"
-              disabled={busy}
-              onClick={() => mutate(item, true)}
-            >Xóa</PcbButton>}
-          </div>
-        </article>)}
+      {hasFilters && <RowActionButton icon="filter_alt_off" label="Bỏ bộ lọc" onClick={clearFilters} />}
+      {result.data && <span className="identity-module-total" role="status">Tổng {result.data.totalCount} module</span>}
+      </div>
+      <div className="identity-module-feedback">
+        <IdentityState {...result} loading={result.loading && !result.data?.items.length} count={result.data?.items.length ?? 0}
+          columns={5}
+          emptyTitle={hasFilters ? 'Không tìm thấy module' : 'Chưa có module'}
+          emptyHint=""
+          emptyAction={hasFilters
+            ? <PcbButton variant="secondary" onClick={clearFilters}><Icon name="filter_alt_off" />Bỏ bộ lọc</PcbButton>
+            : <PcbButton disabled={busy} onClick={() => setEditor('new')}><Icon name="add" />Thêm module</PcbButton>}
+        />
+      </div>
+      {!!result.data?.items.length && <div className="pcb-table-wrap" tabIndex={0} role="region" aria-label="Bảng module">
+        <table className="pcb-table identity-module-table" aria-label="Danh sách module">
+          <thead><tr>
+            <th scope="col">Module</th>
+            <th scope="col">Mô tả</th>
+            <th scope="col">Mục điều hướng</th>
+            <th scope="col">Trạng thái</th>
+            <th scope="col">Thao tác</th>
+          </tr></thead>
+          <tbody>{result.data.items.map(item => <tr key={item.id}>
+            <td><strong className="identity-module-name">{item.name}</strong><code className="identity-module-code">{item.code}</code></td>
+            <td><p className="identity-module-description" title={item.description || undefined}>{item.description || '—'}</p></td>
+            <td><span className="identity-module-links"><Icon name="account_tree" size={18} />{item.navbarCount}</span></td>
+            <td><IdentityStatusBadge status={item.status} /></td>
+            <td><div className="sep-row-actions">
+              <RowActionButton icon="edit" label={`Sửa module ${item.name}`} disabled={actionsDisabled} onClick={() => setEditor(item)} />
+              <RowActionButton icon={item.status === 'ACTIVE' ? 'pause_circle' : 'play_circle'} label={`${item.status === 'ACTIVE' ? 'Ngừng áp dụng' : 'Kích hoạt'} module ${item.name}`} disabled={actionsDisabled} onClick={() => mutate(item)} />
+              <span className="identity-delete-action" title={!item.canDelete ? 'Module đang có mục điều hướng liên kết.' : undefined}>
+                <RowActionButton icon="delete" label={item.canDelete ? `Xóa module ${item.name}` : `Không thể xóa module ${item.name}: đang có mục điều hướng liên kết`} disabled={actionsDisabled || !item.canDelete} onClick={() => mutate(item, true)} />
+              </span>
+            </div></td>
+          </tr>)}</tbody>
+        </table>
       </div>}
-      <IdentityPager
-        data={result.data}
-        page={page}
-        pageSize={pageSize}
-        setPage={setPage}
-        setPageSize={setPageSize}
-        label="module"
-      />
+      <div className="identity-module-footer">
+        <IdentityPager
+          data={result.data}
+          page={page}
+          pageSize={pageSize}
+          setPage={setPage}
+          setPageSize={setPageSize}
+          label="module"
+        />
+      </div>
     </section>
     {editor && <IdentityEditor
       kind="module"
@@ -118,7 +127,7 @@ export function ModuleListPage() {
       onSaved={() => {
         setEditor(null);
         result.reload();
-        notice.success('Đã lưu module.');
+        notice.success(editor === 'new' ? 'Đã thêm module.' : 'Đã cập nhật module.');
       }}
     />}
     {notice.dialog}

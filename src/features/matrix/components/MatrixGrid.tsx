@@ -205,7 +205,7 @@ export const MatrixGrid = ({ rows, lessons, matrixTotalScore, readOnly, errors =
                   <td className="sep-col-actions">
                     <PcbIconButton
                       icon="delete"
-                      label="Xoá dòng"
+                      label="Xóa dòng"
                       onClick={() => update(rows.filter((item) => item.key !== row.key))}
                     />
                   </td>

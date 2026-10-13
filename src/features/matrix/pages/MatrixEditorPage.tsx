@@ -91,13 +91,23 @@ const MatrixEditor = () => {
 
   // Hai lời gọi tách rời: danh sách ngữ cảnh không phụ thuộc gì, còn danh sách bài học
   // chỉ có khi đã biết academicContextId — mà id đó lại suy ra từ danh sách ngữ cảnh.
-  const reference = useAsync(() => api.matrix.referenceData(), []);
+  const task = useAsync(async () => (taskId ? api.matrixTask.get(taskId) : null), [taskId]);
+  const selectedContextId = matrix?.academicContextId ?? task.data?.academicContextId;
+  const reference = useAsync(async () => {
+    const active = await api.matrix.referenceData();
+    if (!selectedContextId || active.academicContexts.some(item => item.id === selectedContextId)) return active;
+    const current = await api.matrix.referenceData(selectedContextId);
+    return {
+      ...active,
+      academicContexts: [...active.academicContexts, ...current.academicContexts],
+      semesters: [...active.semesters, ...current.semesters.filter(item => !active.semesters.some(existing => existing.id === item.id))],
+    };
+  }, [selectedContextId]);
   const contexts = reference.data?.academicContexts ?? [];
   const semesters = reference.data?.semesters ?? [];
 
   // Ma trận gắn nhiệm vụ: backend bỏ qua ngữ cảnh gửi lên và dùng ngữ cảnh của nhiệm vụ,
   // nên form phải điền sẵn và khoá lại, nếu không người dùng chọn sai sẽ nhận 422 InvalidReference.
-  const task = useAsync(async () => (taskId ? api.matrixTask.get(taskId) : null), [taskId]);
   const delegated = Boolean(taskId ?? matrix?.taskId);
 
   const selection =
@@ -160,6 +170,7 @@ const MatrixEditor = () => {
       empty ??
         totalError ??
         totalScoreError ??
+        found.totalQuestions ??
         (Object.keys(found).length > 0 ? 'Vui lòng kiểm tra lại các ô được đánh dấu.' : null),
     );
     return Object.keys(found).length === 0 && !empty && !totalError && !totalScoreError;
@@ -233,6 +244,17 @@ const MatrixEditor = () => {
     );
   }
 
+  if (taskId && !task.data) {
+    return (
+      <>
+        <PageHeader title={title} onBack={() => navigate('/matrix-tasks')} />
+        <div className="sep-page">
+          <div className="sep-alert" role="alert">{task.error ? toProblem(task.error).message : 'Không tìm thấy nhiệm vụ.'}</div>
+        </div>
+      </>
+    );
+  }
+
   if (matrixId && (!matrix || !matrix.allowedActions.includes('Update'))) {
     return (
       <>
@@ -242,9 +264,6 @@ const MatrixEditor = () => {
             {!matrix ? (detail.error ? toProblem(detail.error).message : 'Không tìm thấy ma trận.') :
               'Bạn không thể chỉnh sửa ma trận ở trạng thái hiện tại.'}
           </div>
-          <PcbButton variant="secondary" onClick={() => navigate(matrix ? `/matrices/${matrixId}` : '/matrices')}>
-            {matrix ? 'Về chi tiết' : 'Về danh sách'}
-          </PcbButton>
         </div>
       </>
     );
@@ -341,7 +360,7 @@ const MatrixEditor = () => {
               disabledHint={
                 delegated
                   ? 'Ngữ cảnh do nhiệm vụ được giao quy định'
-                  : 'Xoá hết dòng chi tiết trước khi đổi ngữ cảnh'
+                  : 'Xóa hết dòng chi tiết trước khi đổi ngữ cảnh'
               }
               onChange={setDraftSelection}
             />

@@ -1,0 +1,124 @@
+/* Phần riêng của màn Nhiệm vụ. Mẫu dùng chung ở src/styles/sep-ui.css, màu trạng thái ở features/matrix/matrix.css. */
+
+/* Một hàng trường chia đều theo số ô (1, 2 hoặc 3 ô như bản thiết kế).
+   emails.css, identity.css @import lại sep-ui.css sau file này, nên ghi đè .sep-fields bằng độ ưu tiên chứ không dựa vào thứ tự nạp. */
+.sep-task-row, .sep-fields.sep-task-row { display: grid; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 20px 24px; margin: 0; }
+
+/* Ô tìm của màn Nhiệm vụ rộng như bản thiết kế để đọc hết "Tìm nội dung nhiệm vụ". */
+.sep-toolbar__filters > .sep-toolbar__search.sep-task-search { width: 260px; }
+
+/* Phạm vi ma trận trong form nhiệm vụ: 4 ô chia đều cả hàng (màn soạn ma trận giữ lưới 5 cột của matrix.css). */
+.sep-context.sep-task-context { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+/* Danh sách: độ rộng cột cố định để bảng không nhảy khi đổi bộ lọc hay rỗng; Nội dung lấy phần còn lại.
+   Độ rộng tính phần chữ, cộng thêm 20px đệm của .sep-table--dense. Hành động vừa 3 icon 34px. */
+.pcb-table.sep-task-list { table-layout: fixed; }
+.sep-task-list .sep-task-col-type { width: 100px; }
+.sep-task-list .sep-task-col-person { width: 124px; }
+.sep-task-list .sep-task-col-status { width: 120px; }
+.sep-task-list .sep-col-actions { width: 108px; }
+
+.sep-task-status { display: flex; align-items: center; gap: 12px; font: 500 14px/20px 'Inter', sans-serif; color: var(--pcb-color-text-secondary); }
+
+/* Cột Trạng thái của danh sách: quá hạn hiện ngay dưới nhãn trạng thái. */
+.sep-task-state { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.sep-task-overdue { display: inline-flex; align-items: center; gap: 4px; font: 500 12px/16px 'Inter', sans-serif; color: var(--pcb-color-text-danger); white-space: nowrap; }
+
+/* Bảng con trong màn chi tiết (Ma trận đã lập, Các đề cần tạo): khung mảnh, đầu cột nền nhạt. */
+.sep-task-table { table-layout: fixed; }
+.pcb-table.sep-task-table th { padding: 12px 16px; border-bottom: 1px solid var(--pcb-color-border-default); background: var(--pcb-color-bg-subtle); vertical-align: middle; }
+.pcb-table.sep-task-table td { padding: 12px 16px; vertical-align: middle; }
+.pcb-table.sep-task-table tbody tr:hover { background: transparent; }
+
+/* PHT trả lại ma trận: ghi chú trung tính (cùng khung với banner khoá), nhận xét giữ xuống dòng. */
+.sep-alert.sep-task-revision { flex-direction: column; align-items: flex-start; gap: 4px; }
+.sep-task-revision p { margin: 0; }
+.sep-task-revision__comment { white-space: pre-line; overflow-wrap: anywhere; }
+
+/* Thẻ một bài học của nhiệm vụ câu hỏi. */
+.sep-lesson-card { display: flex; flex-direction: column; gap: 16px; padding: 16px; border: 1px solid var(--pcb-color-border-default); border-radius: 12px; background: var(--pcb-color-bg-surface); }
+.sep-lesson-card__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.sep-lesson-card__title { margin: 0; font: 600 15px/22px 'Inter', sans-serif; color: var(--pcb-color-text-primary); white-space: nowrap; }
+.sep-lesson-card__head .sep-status { border: 1px solid var(--pcb-color-border-default); background: var(--pcb-color-bg-surface); color: var(--pcb-color-text-primary); }
+
+/* Lưới số câu theo mức nhận thức: một hàng "Số câu (trắc nghiệm)", cột Tổng tự cộng. */
+.sep-level-scroll { overflow-x: auto; }
+.sep-level-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; border: 1px solid var(--pcb-color-border-default); border-radius: 8px; overflow: hidden; font: 400 14px/20px 'Inter', sans-serif; color: var(--pcb-color-text-primary); }
+.sep-level-table th, .sep-level-table td { padding: 10px 12px; text-align: center; }
+.sep-level-table th { background: var(--pcb-color-bg-subtle); color: var(--pcb-color-text-brand); font-weight: 500; }
+.sep-level-table td { border-top: 1px solid var(--pcb-color-border-default); }
+.sep-level-table th + th, .sep-level-table td + td { border-left: 1px solid var(--pcb-color-border-default); }
+.sep-level-table tr > :first-child { text-align: left; background: var(--pcb-color-bg-subtle); font-weight: 500; }
+.sep-level-table tbody tr > :first-child { color: var(--pcb-color-text-primary); }
+.sep-level-table__total { font-weight: 500; }
+.sep-level-input { width: 72px; height: 36px; box-sizing: border-box; padding: 0 8px; border: 1px solid var(--pcb-color-border-default); border-radius: 8px; background: var(--pcb-color-bg-surface); font: 400 14px/20px 'Inter', sans-serif; color: var(--pcb-color-text-primary); text-align: center; appearance: textfield; -moz-appearance: textfield; transition: border-color var(--sep-transition), box-shadow var(--sep-transition); }
+.sep-level-input::-webkit-inner-spin-button, .sep-level-input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+.sep-level-input:hover:not(:focus):not(:disabled) { border-color: #c5d3f1; }
+.sep-level-input:focus { outline: 0; border-color: var(--pcb-color-border-focus); box-shadow: var(--sep-focus-ring); }
+.sep-level-input:disabled { background: var(--pcb-color-bg-subtle); color: var(--pcb-color-text-secondary); cursor: not-allowed; }
+.sep-level-input[aria-invalid='true'] { border-color: #d64545; }
+
+.sep-task-types { display: flex; flex-wrap: wrap; gap: 16px; }
+.sep-task-back { align-self: flex-start; }
+
+/* Xoá / yêu cầu chỉnh sửa ở màn chi tiết là nút viền đỏ như bản thiết kế. */
+.sep-actions .pcb-btn--danger { border-color: currentColor; }
+
+/* 1024–1279px: 7 cột cố định không còn chỗ cho Nội dung; ẩn STT và hai cột người, giữ Nội dung đủ rộng. */
+@media (max-width: 1279px) {
+  .sep-task-list .sep-task-col-wide { display: none; }
+}
+
+@media (max-width: 1200px) {
+  .sep-context.sep-task-context { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .sep-toolbar__filters > .sep-toolbar__search.sep-task-search { width: 100%; }
+  .sep-task-row, .sep-fields.sep-task-row { grid-auto-flow: row; grid-auto-columns: auto; }
+  .sep-context.sep-task-context { grid-template-columns: 1fr; }
+  /* Bảng rỗng chỉ còn dòng tiêu đề cột, rộng hơn màn hẹp: ẩn đi để trạng thái rỗng không kéo theo thanh cuộn ngang. */
+  .pcb-table.sep-task-list--empty { display: none; }
+  .sep-level-table { table-layout: auto; min-width: 320px; }
+  .sep-level-table th, .sep-level-table td { padding: 8px 6px; }
+  .sep-level-input { width: 56px; }
+}
+
+
+@media (max-width: 1023px) {
+  /* Dưới 1024px (sidebar còn chiếm chỗ) bảng 7 cột không đủ rộng: chuyển sang dạng thẻ, tên hiện đủ. */
+  .sep-task-list .sep-task-col-wide { display: none; }
+  .sep-task-list .sep-clamp-2 { display: block; }
+  /* Màn hẹp: mỗi nhiệm vụ là một thẻ — tên + hành động ở hàng trên, loại + trạng thái ở hàng dưới. */
+  .pcb-table-wrap > .pcb-table.sep-task-list { min-width: 0; }
+  .sep-task-list thead { display: none; }
+  .sep-task-list, .sep-task-list tbody { display: block; }
+  .sep-task-list tr { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: 'name name actions' 'type status status'; column-gap: 12px; row-gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--pcb-color-border-default); }
+  .pcb-table.sep-task-list td { display: block; padding: 0; border: 0; }
+  .pcb-table.sep-task-list .sep-task-col-wide { display: none; }
+  .sep-task-list .sep-task-cell-name { grid-area: name; font-weight: 500; }
+  .sep-task-list .sep-task-cell-type { grid-area: type; align-self: center; color: var(--pcb-color-text-secondary); }
+  .sep-task-list .sep-task-cell-status { grid-area: status; }
+  .sep-task-list .sep-task-state { flex-direction: row; align-items: center; flex-wrap: wrap; }
+  .sep-task-list .sep-col-actions { grid-area: actions; width: auto; }
+}
+
+@media (max-width: 480px) {
+  /* Hàng nút của trang chi tiết / form: mỗi nút một dòng, đủ bề ngang. */
+  .sep-actions.sep-task-actions { flex-direction: column; align-items: stretch; width: 100%; }
+  .sep-actions.sep-task-actions .pcb-btn { flex: none; }
+
+  /* Bảng mức nhận thức xoay dọc: mỗi mức một dòng (nhãn + ô nhập), dòng cuối là Tổng. Viền là khe 1px trên nền viền. */
+  .sep-level-table { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(5, auto); grid-auto-flow: column; gap: 1px; min-width: 0; background: var(--pcb-color-border-default); }
+  .sep-level-table thead, .sep-level-table tbody, .sep-level-table tr { display: contents; }
+  .sep-level-table th, .sep-level-table td, .sep-level-table th + th, .sep-level-table td + td { display: flex; align-items: center; border: 0; text-align: left; }
+  .sep-level-table td { justify-content: center; background: var(--pcb-color-bg-surface); }
+
+  /* Bảng con của màn chi tiết: mỗi dòng thành danh sách nhãn – giá trị. */
+  .sep-task-table thead { display: none; }
+  .sep-task-table, .sep-task-table tbody, .sep-task-table tr { display: block; }
+  .sep-task-table tr + tr { border-top: 1px solid var(--pcb-color-border-default); }
+  .pcb-table.sep-task-table td { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); justify-items: start; align-items: center; gap: 12px; padding: 8px 16px; border-top: 0; }
+  .sep-task-table td::before { content: attr(data-label); font: 500 14px/20px 'Inter', sans-serif; color: var(--pcb-color-text-secondary); }
+  .sep-task-table td:empty { display: none; }
+}

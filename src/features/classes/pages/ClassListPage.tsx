@@ -28,6 +28,7 @@ export const ClassListPage = () => {
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState<ClassStatus | ''>('');
   const [academicYearId, setAcademicYearId] = useState<number>();
+  const [schoolBranchId, setSchoolBranchId] = useState<number | undefined>(() => scope.branchId);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const popup = useNotice();
@@ -39,6 +40,7 @@ export const ClassListPage = () => {
     [scope.ready, scope.schoolId],
   );
   const years = reference.data?.academicYears ?? [];
+  const branches = reference.data?.schoolBranches ?? [];
 
   const query = {
     page,
@@ -46,6 +48,7 @@ export const ClassListPage = () => {
     search: debouncedKeyword.trim() || undefined,
     status: status || undefined,
     academicYearId,
+    schoolBranchId: schoolBranchId ?? scope.branchId,
   };
   const list = useAsync(
     async () => (scope.ready ? api.directory.classes(query, scope.schoolId) : null),
@@ -53,7 +56,7 @@ export const ClassListPage = () => {
   );
   const items = list.data?.items ?? [];
   const totalCount = list.data?.totalCount ?? 0;
-  const filtered = Boolean(keyword || status || academicYearId);
+  const filtered = Boolean(keyword || status || academicYearId || schoolBranchId);
 
   // Mọi thay đổi bộ lọc đều quay về trang 1, nếu không sẽ thấy trang trống.
   const onFilter = <T,>(setter: (value: T) => void) => (value: T) => {
@@ -64,6 +67,7 @@ export const ClassListPage = () => {
     setKeyword('');
     setStatus('');
     setAcademicYearId(undefined);
+    setSchoolBranchId(scope.branchId);
     setPage(1);
   };
   const numberOrUndefined = (raw: string) => (raw ? Number(raw) : undefined);
@@ -109,6 +113,22 @@ export const ClassListPage = () => {
                 {scope.schools.map((school) => (
                   <option key={school.id} value={school.id}>
                     {school.name}
+                  </option>
+                ))}
+              </SelectField>
+            )}
+            {scope.admin && branches.length > 0 && (
+              <SelectField
+                label="Cơ sở / Phân hiệu"
+                hideLabel
+                placeholder="Tất cả cơ sở"
+                value={schoolBranchId ?? ''}
+                onChange={(event) => onFilter(setSchoolBranchId)(numberOrUndefined(event.target.value))}
+              >
+                <option value="">Tất cả cơ sở</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
                   </option>
                 ))}
               </SelectField>

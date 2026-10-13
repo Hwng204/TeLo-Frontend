@@ -19,6 +19,7 @@ import type {
 } from '../types';
 
 export const LEVELS: readonly CognitiveLevel[] = ['NHAN_BIET', 'THONG_HIEU', 'VAN_DUNG'];
+const MAX_QUESTIONS = 4294967295;
 
 export const LEVEL_LABELS: Record<CognitiveLevel, string> = {
   NHAN_BIET: 'Nhận biết',
@@ -90,7 +91,7 @@ const parsePercentage = (value: string): number | null => {
 export const hasValidCellValues = (cell: GridCell): boolean => {
   const count = parseCount(cell.questionCount);
   const percentage = parsePercentage(cell.percentage);
-  return count !== null && count > 0 && percentage !== null && percentage > 0 && percentage <= MAX_PERCENTAGE;
+  return count !== null && count > 0 && count <= MAX_QUESTIONS && percentage !== null && percentage > 0 && percentage <= MAX_PERCENTAGE;
 };
 
 /** % của một ô, hoặc 0 nếu chưa gõ/không hợp lệ — dùng khi cộng tổng. */
@@ -241,6 +242,8 @@ export const validateGrid = (
         errors[cellErrorKey(row.key, level, 'count')] = 'Số câu phải là số nguyên.';
       } else if (count < 1) {
         errors[cellErrorKey(row.key, level, 'count')] = 'Số câu phải lớn hơn 0.';
+      } else if (count > MAX_QUESTIONS) {
+        errors[cellErrorKey(row.key, level, 'count')] = `Số câu tối đa ${MAX_QUESTIONS}.`;
       }
 
       const percentage = parsePercentage(cell.percentage);
@@ -257,6 +260,7 @@ export const validateGrid = (
     }
   }
 
+  if (gridTotal(rows).questions > MAX_QUESTIONS) errors.totalQuestions = `Tổng số câu tối đa ${MAX_QUESTIONS}.`;
   return errors;
 };
 

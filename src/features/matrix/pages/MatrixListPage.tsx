@@ -111,7 +111,7 @@ export const MatrixListPage = () => {
             />
             {filtered && (
               <PcbButton variant="ghost" size="sm" onClick={reset}>
-                Xoá lọc
+                Xóa lọc
               </PcbButton>
             )}
           </div>
@@ -154,10 +154,10 @@ export const MatrixListPage = () => {
                         {matrix.name}
                       </Link>
                     </td>
-                    <td className="sep-nowrap">{names?.subjectId ?? dash}</td>
-                    <td className="sep-nowrap">{names?.gradeLevelId ?? dash}</td>
-                    <td className="sep-nowrap">{names?.academicYearId ?? dash}</td>
-                    <td className="sep-nowrap">{semester?.name ?? dash}</td>
+                    <td className="sep-nowrap">{matrix.subjectName ?? names?.subjectId ?? dash}</td>
+                    <td className="sep-nowrap">{matrix.gradeLevelName ?? names?.gradeLevelId ?? dash}</td>
+                    <td className="sep-nowrap">{matrix.academicYearName ?? names?.academicYearId ?? dash}</td>
+                    <td className="sep-nowrap">{matrix.semesterName ?? semester?.name ?? dash}</td>
                     <td className="sep-nowrap">
                       <PersonCell person={matrix.createdBy} />
                     </td>
@@ -189,7 +189,7 @@ export const MatrixListPage = () => {
             action={
               filtered && (
                 <PcbButton variant="secondary" size="sm" onClick={reset}>
-                  Xoá bộ lọc
+                  Xóa bộ lọc
                 </PcbButton>
               )
             }

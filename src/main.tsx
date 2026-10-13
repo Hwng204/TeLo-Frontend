@@ -7,6 +7,7 @@ if (import.meta.env.DEV) {
   void import('./utils/academicContext.selfcheck').then((m) => m.academicContextSelfCheck())
   void import('./utils/formatters.selfcheck').then((m) => m.formattersSelfCheck())
   void import('./utils/matrixImport.selfcheck').then((m) => m.matrixImportSelfCheck())
+  void import('./utils/curriculumFilter.selfcheck').then((m) => m.curriculumFilterSelfCheck())
 }
 import App from './App.tsx'
 

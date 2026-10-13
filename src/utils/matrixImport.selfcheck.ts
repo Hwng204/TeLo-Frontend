@@ -52,5 +52,30 @@ export const matrixImportSelfCheck = async () => {
   const wrong = readMatrixSheet([['Họ tên', 'Lớp']], lessons);
   console.assert(wrong.rows.length === 0 && wrong.issues[0]?.line === null, 'matrixImport 4: thiếu dòng tiêu đề phải báo lỗi cả file');
 
+  // 5. Cùng tên bài ở hai chương ("Luyện tập chung"): file mẫu ghi nhãn kèm chương nên nhập lại nhận đúng từng bài;
+  //    kiểu "Chương / Bài" của file Xuất Excel cũng nhận đúng; tên trơn thì không đoán.
+  const practice = (id: number, code: string, chapterCode: string, chapterTitle: string): LessonOption => ({
+    ...lesson(id, 'Luyện tập chung'), code, chapterCode, chapterTitle,
+  });
+  const twins = [practice(10, '9', '1', 'Ôn tập và bổ sung'), practice(11, '14', '2', 'Số thập phân')];
+  const twinSheet = await readFirstSheet(
+    await writeSheet('Ma trận', templateRows({ name: 'T', totalScore: 10, contextLabel: 'Toán 5', semesterName: null, lessons: twins })).arrayBuffer(),
+  );
+  const twinHeader = twinSheet.findIndex((row) => row[0] === 'Bài học');
+  console.assert(twinSheet[twinHeader + 1][0] === 'Bài 9. Luyện tập chung — Chương 1. Ôn tập và bổ sung',
+    'matrixImport 5a: file mẫu ghi nhãn bài kèm chương');
+  const twinFilled = twinSheet.map((row) => [...row]);
+  twinFilled[twinHeader + 1][3] = '1'; twinFilled[twinHeader + 1][4] = '10';  // bài 9 · Nhận biết
+  twinFilled[twinHeader + 4][3] = '1'; twinFilled[twinHeader + 4][4] = '10';  // bài 14 · Nhận biết
+  twinFilled.push(['Số thập phân / Luyện tập chung', 'Thông hiểu', '', '1', '10']);
+  twinFilled.push(['Luyện tập chung', 'Vận dụng', '', '1', '10']);
+  const twinResult = readMatrixSheet(twinFilled, twins);
+  console.assert(twinResult.rows.map((row) => row.lessonId).join() === '10,11',
+    'matrixImport 5b: hai bài cùng tên được nhận đúng theo nhãn có chương');
+  console.assert(twinResult.rows[1].cells.THONG_HIEU.questionCount === '1',
+    'matrixImport 5c: "Chương / Bài" của file Xuất Excel trỏ đúng bài của chương đó');
+  console.assert(twinResult.issues.filter((issue) => issue.skipped).length === 1,
+    'matrixImport 5d: tên bài trơn bị trùng thì bỏ qua, không đoán');
+
   console.info('[matrixImport] self-check xong');
 };
