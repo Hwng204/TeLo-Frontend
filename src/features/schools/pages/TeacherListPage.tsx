@@ -1,16 +1,32 @@
 import React, { useState } from 'react';
 import { PageHeader } from '../../../components/common/PageHeader';
-import { Icon, Field } from '../../../components/pcb';
+import { Icon, Field, PcbButton, SelectField } from '../../../components/pcb';
 import { Pager } from '../../../components/common/Pager';
 import { useAsync } from '../../../hooks/useAsync';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { api } from '../../../services/api';
 import { storage } from '../../../utils/storage';
 import { BranchSelectModal } from '../../../components/common/BranchSelectModal';
+import { useAdminAcademicYear } from '../../../contexts/AdminAcademicYearContext';
+import { formatDay } from '../../../utils/directory';
+import { toProblem } from '../../../utils/problem';
+
+const employmentLabels: Record<string, string> = {
+  WORKING: 'Đang công tác', ON_LEAVE: 'Đang nghỉ phép', RESIGNED: 'Đã nghỉ việc', INACTIVE: 'Ngừng hoạt động',
+};
 
 export const TeacherListPage: React.FC = () => {
+  const yearContext = useAdminAcademicYear();
+  const selected = storage.getSelectedBranch();
+  return <TeacherDirectory key={`${yearContext?.year?.id ?? 'default'}:${selected.schoolId ?? ''}:${selected.branchId ?? ''}`} />;
+};
+
+const TeacherDirectory = () => {
+  const yearContext = useAdminAcademicYear();
+  const academicYearId = yearContext?.year ? Number(yearContext.year.id) : undefined;
   const [selected, setSelected] = useState(storage.getSelectedBranch);
   const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [showModal, setShowModal] = useState(false);
@@ -18,21 +34,20 @@ export const TeacherListPage: React.FC = () => {
 
   const schoolId = selected.schoolId ? Number(selected.schoolId) : undefined;
   const branchId = selected.branchId ? Number(selected.branchId) : undefined;
+  const ready = Boolean(schoolId && branchId && academicYearId && yearContext?.ready);
 
   const teachersAsync = useAsync(
-    async () => (schoolId && branchId ? api.directory.teachers(schoolId, branchId) : null),
-    [schoolId, branchId]
+    async () => (ready ? api.teacherDirectory.list(schoolId!, branchId!, {
+      academicYearId, search: debouncedSearch.trim() || undefined, employmentStatus: status || undefined, page, pageSize,
+    }) : null),
+    [ready, schoolId, branchId, academicYearId, debouncedSearch, status, page, pageSize],
   );
 
-  const rawItems = teachersAsync.data?.items ?? [];
-  const filtered = rawItems.filter(t => {
-    const q = debouncedSearch.trim().toLowerCase();
-    if (!q) return true;
-    return t.fullName.toLowerCase().includes(q) || (t.staffCode && t.staffCode.toLowerCase().includes(q));
-  });
-
-  const totalCount = filtered.length;
-  const pagedItems = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const pagedItems = teachersAsync.data?.items ?? [];
+  const totalCount = teachersAsync.data?.totalCount ?? 0;
+  const error = teachersAsync.error ?? yearContext?.error;
+  const lastPage = Math.max(1, Math.ceil(totalCount / pageSize));
+  if (!teachersAsync.loading && teachersAsync.data && page > lastPage) setPage(lastPage);
 
   const handleBranchSelect = (
     sId: string,
@@ -142,16 +157,33 @@ export const TeacherListPage: React.FC = () => {
                 }}
               />
             </div>
+            <SelectField label="Trạng thái công tác" hideLabel value={status} onChange={event => {
+              setStatus(event.target.value);
+              setPage(1);
+            }}>
+              <option value="">Tất cả trạng thái</option>
+              {Object.entries(employmentLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </SelectField>
+            {Boolean(search || status) && <PcbButton variant="ghost" size="sm" onClick={() => {
+              setSearch(''); setStatus(''); setPage(1);
+            }}>Xóa lọc</PcbButton>}
           </div>
         </div>
 
-        <div className="sep-table-container">
-          <table className="sep-table">
+        {Boolean(error) && <div className="sep-alert" role="alert">
+          {toProblem(error).message}
+          <button type="button" onClick={teachersAsync.reload}>Thử lại</button>
+        </div>}
+        <div className="sep-table-container pcb-table-wrap">
+          <table className="sep-table pcb-table">
             <thead>
               <tr>
                 <th style={{ width: '60px' }}>STT</th>
                 <th style={{ width: '160px' }}>Mã giáo viên</th>
                 <th>Họ và tên</th>
+                <th>Tổ chuyên môn</th>
+                <th>Môn dạy chính</th>
+                <th>Ngày vào trường</th>
                 <th style={{ width: '180px' }}>Trạng thái công tác</th>
                 <th style={{ width: '200px' }}>Phân hiệu trực thuộc</th>
               </tr>
@@ -159,13 +191,13 @@ export const TeacherListPage: React.FC = () => {
             <tbody>
               {teachersAsync.loading ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#64748b' }}>
+                  <td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: '#64748b' }}>
                     Đang tải danh sách giáo viên...
                   </td>
                 </tr>
               ) : pagedItems.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#64748b' }}>
+                  <td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: '#64748b' }}>
                     {search ? 'Không tìm thấy giáo viên nào phù hợp với từ khóa.' : 'Phân hiệu chưa có dữ liệu giáo viên nào.'}
                   </td>
                 </tr>
@@ -179,17 +211,20 @@ export const TeacherListPage: React.FC = () => {
                     <td>
                       <div style={{ fontWeight: 600, color: '#0f172a' }}>{teacher.fullName}</div>
                     </td>
+                    <td>{teacher.department ?? '—'}</td>
+                    <td>{teacher.mainSubjectName ?? '—'}</td>
+                    <td className="sep-nowrap">{formatDay(teacher.joinedOn)}</td>
                     <td>
                       <span style={{
-                        backgroundColor: teacher.employmentStatus === 'ACTIVE' || !teacher.employmentStatus ? '#ecfdf5' : '#f1f5f9',
-                        color: teacher.employmentStatus === 'ACTIVE' || !teacher.employmentStatus ? '#059669' : '#64748b',
+                        backgroundColor: teacher.employmentStatus === 'WORKING' ? '#ecfdf5' : '#f1f5f9',
+                        color: teacher.employmentStatus === 'WORKING' ? '#059669' : '#64748b',
                         padding: '3px 8px',
                         borderRadius: '6px',
                         fontSize: '12px',
                         fontWeight: 600,
                         display: 'inline-block'
                       }}>
-                        {teacher.employmentStatus === 'ACTIVE' || !teacher.employmentStatus ? 'Đang công tác' : teacher.employmentStatus}
+                        {employmentLabels[teacher.employmentStatus] ?? teacher.employmentStatus}
                       </span>
                     </td>
                     <td className="sep-nowrap" style={{ color: '#64748b' }}>
@@ -210,7 +245,7 @@ export const TeacherListPage: React.FC = () => {
               totalCount={totalCount}
               itemLabel="giáo viên"
               onChange={setPage}
-              onPageSizeChange={setPageSize}
+              onPageSizeChange={size => { setPageSize(size); setPage(1); }}
               pageSizes={[10, 20, 50]}
             />
           </div>

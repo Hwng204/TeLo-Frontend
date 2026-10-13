@@ -52,6 +52,8 @@ export interface ClassListQuery {
 
 export interface StudentListQuery {
   search?: string;
+  /** Explicit working year; omitted keeps existing school-side behavior. */
+  academicYearId?: number;
   gradeLevelId?: number;
   /** Lọc theo lớp hiện tại (năm học đang hoạt động). */
   classId?: number;

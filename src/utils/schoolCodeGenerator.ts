@@ -80,7 +80,7 @@ export function extractSchoolAcronym(name: string): string {
 /**
  * Tự động sinh mã trường học:
  * [Mã_Tỉnh]-[Viết_Tắt_Tên_Trường] (hoặc thêm hậu tố số 1, 2, 3... nếu bị trùng)
- * 
+ *
  * Ví dụ:
  *  - Tỉnh Hà Nội (mã "01") -> 1-TL
  *  - Nếu 1-TL đã tồn tại -> 1-TL1, 1-TL2...

@@ -55,8 +55,11 @@ export interface TaskMatrixItem {
 }
 
 export interface TaskPaper {
+  id: number | null;
+  examSetId: number | null;
+  questionCount: number;
   name: string;
-  status: 'NOT_CREATED';
+  status: 'NOT_CREATED' | 'DRAFT';
   statusLabel: string;
   updatedAt: string | null;
 }

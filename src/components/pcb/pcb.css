@@ -1,6 +1,6 @@
 .pcb-icon { font-family: 'Material Symbols Rounded'; font-weight: 400; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap; font-feature-settings: 'liga'; -webkit-font-smoothing: antialiased; user-select: none; }
 
-.pcb-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--pcb-spacing-xs); height: 44px; min-width: 100px; padding: 0 var(--pcb-spacing-md); border-radius: 10px; border: var(--pcb-stroke-default) solid transparent; font: 600 14px/20px 'Inter', sans-serif; white-space: nowrap; cursor: pointer; transition: background-color var(--sep-transition), border-color var(--sep-transition), color var(--sep-transition); }
+.pcb-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--pcb-spacing-xs); box-sizing: border-box; height: 44px; min-width: 100px; padding: 0 var(--pcb-spacing-md); border-radius: 10px; border: var(--pcb-stroke-default) solid transparent; font: 600 14px/20px 'Inter', sans-serif; text-decoration: none; white-space: nowrap; cursor: pointer; transition: background-color var(--sep-transition), border-color var(--sep-transition), color var(--sep-transition); }
 .pcb-btn--primary { background: var(--pcb-color-bg-accent); color: var(--pcb-color-text-on-accent); }
 .pcb-btn--primary:hover:not(:disabled) { background: var(--pcb-color-bg-accent-hover); }
 .pcb-btn--primary:active:not(:disabled) { background: var(--pcb-color-bg-accent-active); }

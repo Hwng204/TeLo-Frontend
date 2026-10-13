@@ -4,6 +4,7 @@
  * Đổi đường dẫn hay kiểu dữ liệu của một endpoint chỉ phải sửa trong file này.
  */
 import { apiClient } from './apiClient';
+import type { TeacherDirectoryItem, TeacherDirectoryQuery } from '../types/teacherDirectory';
 import type {
   EmailListQuery,
   EmailSchoolItem,
@@ -355,6 +356,12 @@ export const api = {
     closeTerm: (id: string, termId: string) => post<ApiResponse<unknown>>(`/academic-years/${id}/terms/${termId}/close`),
     configureTerms: (id: string, body: ConfigureTermsRequest) =>
       apiClient.put<ApiResponse<AcademicYearDetail>>(`/academic-years/${id}/terms`, body).then(r => r.data),
+  },
+
+  teacherDirectory: {
+    branches: (schoolId: number) => unwrap(get<ApiResponse<DirectoryPage<AdminSchoolOption>>>(`/admin/schools/${schoolId}/teacher-branches`, { pageSize: 100 })),
+    list: (schoolId: number, branchId: number, query: TeacherDirectoryQuery) =>
+      unwrap(get<ApiResponse<DirectoryPage<TeacherDirectoryItem>>>(`/admin/schools/${schoolId}/branches/${branchId}/teachers`, query)),
   },
 
   exam: {

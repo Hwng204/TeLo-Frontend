@@ -16,6 +16,9 @@ import { PageHeader } from '../../../components/common/PageHeader';
 import { RejectDialog } from '../components/RejectDialog';
 import { FormDialog } from '../../../components/common/FormDialog';
 import { ConfirmDialog, DeleteMessage } from '../../../components/common/ConfirmDialog';
+import { questionApi } from '../../questions/questionApi';
+import { QuestionPicker } from '../../questions/components/QuestionPicker';
+import '../../questions/questions.css';
 import '../matrix.css';
 
 /** M03 / M03-A / M03-B chỉ khác nhau ở tiêu đề và cụm nút, mà cụm nút đọc từ allowedActions. */
@@ -38,6 +41,8 @@ export const MatrixDetailPage = () => {
   const [rejecting, setRejecting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [questionDetailId, setQuestionDetailId] = useState<number | null>(null);
+  const availability = useAsync(() => questionApi.availability(matrixId), [matrixId]);
 
   const detail = useAsync(() => api.matrix.get(matrixId), [matrixId]);
   const matrix = detail.data;
@@ -174,7 +179,12 @@ export const MatrixDetailPage = () => {
 
       <section className="sep-section">
         <h2 className="sep-section-title">Nội dung và mức nhận thức</h2>
-        <MatrixGrid readOnly rows={rows} lessons={lessons} matrixTotalScore={matrix.totalScore} />
+        <MatrixGrid readOnly rows={rows} lessons={lessons} matrixTotalScore={matrix.totalScore} renderAvailability={(lessonId, level) => {
+          const cell = availability.data?.find(x => x.lessonId === lessonId && x.cognitiveLevel === level);
+          return cell ? <button className="question-count" onClick={() => setQuestionDetailId(cell.detailId)}>Có {cell.availableCount} câu trong ngân hàng</button> : null;
+        }} />
+        {Boolean(availability.error) && <p className="sep-alert">{toProblem(availability.error).message}<PcbButton variant="ghost" onClick={availability.reload}>Thử lại</PcbButton></p>}
+        {questionDetailId !== null && <QuestionPicker matrixId={matrixId} detailId={questionDetailId} onClose={() => setQuestionDetailId(null)} />}
       </section>
 
       <div className="sep-actions">

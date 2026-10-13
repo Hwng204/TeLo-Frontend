@@ -7,6 +7,7 @@ import { api } from '../../../services/api';
 import type { ClassStatus, SaveClassRequest } from '../../../types';
 import { CLASS_STATUS } from '../../../utils/directory';
 import { problemLines, toProblem } from '../../../utils/problem';
+import { useAdminAcademicYear } from '../../../contexts/AdminAcademicYearContext';
 
 type Draft = {
   schoolBranchId: string;
@@ -23,6 +24,7 @@ export const ClassFormPage = () => {
   const params = useParams();
   const classId = params.id ? Number(params.id) : null;
   const scope = useDirectoryScope();
+  const yearContext = useAdminAcademicYear();
 
   const [draft, setDraft] = useState<Draft | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -30,8 +32,8 @@ export const ClassFormPage = () => {
   const [busy, runExclusive] = useBusy();
 
   const reference = useAsync(
-    async () => (scope.schoolId ? api.directory.referenceData(undefined, scope.schoolId) : null),
-    [scope.schoolId],
+    async () => (scope.schoolId && yearContext?.ready ? api.directory.referenceData(yearContext.year ? Number(yearContext.year.id) : undefined, scope.schoolId) : null),
+    [scope.schoolId, yearContext?.ready, yearContext?.year?.id],
   );
   const existing = useAsync(
     async () => (classId && scope.schoolId ? api.directory.classDetail(classId, { page: 1, pageSize: 1 }, scope.schoolId) : null),
@@ -43,7 +45,7 @@ export const ClassFormPage = () => {
   const emptyDraft: Draft = {
     schoolBranchId: scope.branchId ? String(scope.branchId) : '',
     name: '',
-    academicYearId: '',
+    academicYearId: yearContext?.year?.id ?? '',
     gradeLevelId: '',
     status: 'ACTIVE',
     homeroomTeacherId: '',

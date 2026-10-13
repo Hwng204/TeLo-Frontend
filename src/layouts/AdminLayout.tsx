@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from '../components/pcb';
-import { api } from '../services/api';
-import { useAsync } from '../hooks/useAsync';
+import { useAdminYearSelection } from '../hooks/useAdminYearSelection';
+import { AdminAcademicYearContext } from '../contexts/AdminAcademicYearContext';
+import { AdminAcademicYearSelect } from '../components/common/AdminAcademicYearSelect';
 import { formatActiveAcademicYear } from '../utils/academicYear';
 import { storage } from '../utils/storage';
 import { BranchSelectModal } from '../components/common/BranchSelectModal';
@@ -78,6 +79,10 @@ const isRequiresBranchPath = (path?: string) => {
 
 const COLLAPSED_KEY = 'sep-rail-collapsed';
 
+const isAuthPath = (path: string) => ['/users', '/roles', '/modules', '/permissions', '/navbars'].some(
+  prefix => path === prefix || path.startsWith(`${prefix}/`),
+);
+
 export type AdminOutletContext = {
   reloadActiveAcademicYear: () => void;
   activeAcademicYearLabel: string;
@@ -98,11 +103,8 @@ export const AdminLayout = () => {
   const isOperationRoute = isOperationPath(pathname);
 
   const [user] = useState(() => storage.getUser<{ fullName: string; role: string }>());
-  const activeAcademicYear = useAsync(() => api.academicYear.current().catch(e => {
-    if (e.response?.status === 404) return { data: null };
-    throw e;
-  }), [pathname]);
-  const reloadActiveAcademicYear = activeAcademicYear.reload;
+  const academicYears = useAdminYearSelection();
+  const reloadActiveAcademicYear = academicYears.reload;
   const [showBranchModal, setShowBranchModal] = useState(false);
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -135,18 +137,17 @@ export const AdminLayout = () => {
 
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    'auth': false, // Khi login/vào trang mục phân quyền sẽ auto đóng
+    auth: isAuthPath(pathname),
   });
+  const [previousPath, setPreviousPath] = useState(pathname);
 
   // Tự động mở menu Phân quyền khi người dùng đang ở các trang con thuộc Phân quyền
-  useEffect(() => {
-    const isAuthRoute = ['/users', '/roles', '/modules', '/permissions', '/navbars'].some(
-      p => pathname === p || pathname.startsWith(`${p}/`)
-    );
-    if (isAuthRoute) {
+  if (previousPath !== pathname) {
+    setPreviousPath(pathname);
+    if (isAuthPath(pathname)) {
       setExpandedGroups(prev => ({ ...prev, auth: true }));
     }
-  }, [pathname]);
+  }
 
   const toggleRail = () => {
     const next = !collapsed;
@@ -223,11 +224,11 @@ export const AdminLayout = () => {
   };
 
   const initials = getUserInitials(user?.fullName);
-  const activeAcademicYearLabel = activeAcademicYear.loading
+  const activeAcademicYearLabel = academicYears.loading
     ? 'Đang tải năm học...'
-    : activeAcademicYear.error
+    : academicYears.error
       ? 'Không tải được năm học'
-      : formatActiveAcademicYear(activeAcademicYear.data?.data?.name);
+      : formatActiveAcademicYear(academicYears.activeYear?.name);
 
   const renderNavGroup = (item: MenuItem) => {
     const isExpanded = Boolean(expandedGroups[item.id]);
@@ -316,6 +317,7 @@ export const AdminLayout = () => {
   };
 
   return (
+    <AdminAcademicYearContext.Provider value={{ year: academicYears.year, ready: academicYears.ready, error: academicYears.error }}>
     <div className={`sep-app sep-shell${collapsed ? ' sep-shell--collapsed' : ''}`}>
       {/* Sidebar */}
       <aside className="sep-rail sep-rail--wide" aria-label="Điều hướng chính">
@@ -355,12 +357,10 @@ export const AdminLayout = () => {
         `}</style>
 
         <header className="sep-topbar" style={{ justifyContent: 'space-between', backgroundColor: '#ffffff' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <div aria-live="polite" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#475569', fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap' }}>
-              <Icon name="calendar_month" size={18} />
-              {activeAcademicYearLabel}
-              {Boolean(activeAcademicYear.error) && <button type="button" onClick={reloadActiveAcademicYear}>Thử lại</button>}
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flex: '1 1 auto', minWidth: 0 }}>
+            <AdminAcademicYearSelect years={academicYears.data ?? []} year={academicYears.year}
+              loading={academicYears.loading} error={academicYears.error}
+              onChange={academicYears.selectYear} onRetry={reloadActiveAcademicYear} />
 
             {/* Ô chọn/đổi trường & phân hiệu: cạnh năm học, tự động ẩn khi ra ngoài Quản trị hệ thống */}
             {isOperationRoute && (
@@ -499,7 +499,7 @@ export const AdminLayout = () => {
             )}
           </div>
 
-          <div className="sep-user" ref={userMenuRef} style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setShowUserMenu(!showUserMenu)}>
+          <div className="sep-user" ref={userMenuRef} style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }} onClick={() => setShowUserMenu(!showUserMenu)}>
             <div className="sep-user__avatar">
               {initials}
             </div>
@@ -564,5 +564,6 @@ export const AdminLayout = () => {
         />
       )}
     </div>
+    </AdminAcademicYearContext.Provider>
   );
 };

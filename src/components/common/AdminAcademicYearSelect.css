@@ -1,0 +1,27 @@
+.admin-year-select { display:flex; align-items:center; flex:0 1 400px; max-width:400px; gap:8px; min-width:0; color:var(--pcb-color-text-brand); }
+.admin-year-select > .pcb-icon { flex-shrink:0; }
+.admin-year-field { width:240px; max-width:100%; min-width:0; flex:1; }
+.admin-year-field .pcb-control { min-height:42px; background:var(--pcb-color-bg-row-hover); border-radius:8px; }
+.admin-year-field .pcb-select-trigger { padding:0 8px; font-size:13px; font-weight:600; overflow:visible; text-overflow:clip; white-space:normal; }
+.admin-year-selected { display:flex; flex-wrap:wrap; align-items:center; column-gap:4px; line-height:18px; }
+.admin-year-selected > span:last-child { white-space:nowrap; }
+.admin-year-current-status { flex-shrink:0; }
+.admin-year-option { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:4px 8px; width:100%; }
+.admin-year-option > span:first-child { white-space:normal; }
+.admin-year-status { font-size:11px; line-height:18px; font-weight:500; padding:2px 6px; border-radius:4px; }
+.admin-year-status--active { color:#137449; background:#eaf7ef; }
+.admin-year-status--draft { color:#8a5b12; background:#fff5dc; }
+.admin-year-status--closed { color:var(--pcb-color-text-secondary); background:var(--pcb-color-bg-row-hover); }
+.admin-year-error { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--pcb-color-text-secondary); }
+.admin-year-error button { display:grid; place-items:center; width:32px; height:32px; border:1px solid var(--pcb-color-border-default); border-radius:6px; background:white; cursor:pointer; }
+@media(max-width:600px) {
+  .admin-year-field { width:220px; }
+  .admin-year-select { gap:4px; }
+  .admin-year-current-status { display:none; }
+  .admin-year-selected { flex-direction:column; align-items:flex-start; }
+  .admin-year-selected > span:first-child { font-size:11px; color:var(--pcb-color-text-secondary); }
+}
+@media(max-width:480px) {
+  .admin-year-selected > span:first-child { display:none; }
+  .admin-year-selected > span:last-child { white-space:normal; }
+}

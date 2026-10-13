@@ -19,6 +19,9 @@ import { TaskTypePage } from '../features/tasks/pages/TaskTypePage';
 import { MatrixTaskFormPage } from '../features/tasks/pages/MatrixTaskFormPage';
 import { ExamTaskFormPage } from '../features/tasks/pages/ExamTaskFormPage';
 import { QuestionTaskFormPage } from '../features/tasks/pages/QuestionTaskFormPage';
+import { QuestionPackagePage } from '../features/questions/pages/QuestionPackagePage';
+import { QuestionBankPage } from '../features/questions/pages/QuestionBankPage';
+import { PaperQuestionsPage } from '../features/questions/pages/PaperQuestionsPage';
 import { TaskDetailPage } from '../features/tasks/pages/TaskDetailPage';
 import { TaskEditPage } from '../features/tasks/pages/TaskEditPage';
 import { CurriculumPage } from '../features/curriculum/pages/CurriculumPage';
@@ -67,7 +70,7 @@ const DirectoryShell: React.FC = () => {
 import { SchoolListPage } from '../features/schools/pages/SchoolListPage';
 import { BranchListPage } from '../features/schools/pages/BranchListPage';
 import { OverviewPage } from '../features/schools/pages/OverviewPage';
-import { TeacherListPage } from '../features/schools/pages/TeacherListPage';
+import { TeacherListPage as AdminTeacherListPage } from '../features/schools/pages/TeacherListPage';
 import { ProfilePage } from '../features/profile/pages/ProfilePage';
 import { ChangePasswordPage } from '../features/profile/pages/ChangePasswordPage';
 import { StudentDashboardPage } from '../features/student/pages/StudentDashboardPage';
@@ -114,6 +117,9 @@ const router = createBrowserRouter(createRoutesFromElements(
           <Route element={<RequireRole allow={[...BOTH, ...TEACHER]} />}>
             <Route path="/matrix-tasks" element={<TaskListPage />} />
             <Route path="/matrix-tasks/:id" element={<TaskDetailPage />} />
+            <Route path="/matrix-tasks/:id/questions" element={<QuestionPackagePage />} />
+            <Route path="/question-bank" element={<QuestionBankPage />} />
+            <Route path="/matrix-tasks/:id/papers/:paperId/questions" element={<PaperQuestionsPage />} />
             <Route path="/matrix-tasks/:id/edit" element={<TaskEditPage />} />
           </Route>
 
@@ -144,6 +150,7 @@ const router = createBrowserRouter(createRoutesFromElements(
           </Route>
           {/* Nhà trường mở nhầm form thêm/sửa: về danh sách lớp của mình, không sang trang quản trị trường. */}
           <Route element={<RequireRole allow={ADMIN} fallback="/classes" />}>
+            <Route path="/teachers" element={<AdminTeacherListPage />} />
             <Route path="/classes/new" element={<ClassFormPage />} />
             <Route path="/classes/:id/edit" element={<ClassFormPage />} />
             <Route path="/students/new" element={<StudentFormPage />} />
@@ -171,7 +178,6 @@ const router = createBrowserRouter(createRoutesFromElements(
           <Route path="/schools" element={<SchoolListPage />} />
           <Route path="/schools/:schoolId/branches" element={<BranchListPage />} />
           <Route path="/overview" element={<OverviewPage />} />
-          <Route path="/teachers" element={<TeacherListPage />} />
           <Route path="/permissions" element={<Navigate to="/roles" replace />} />
           <Route path="/navbars" element={<Navigate to="/modules" replace />} />
           <Route path="/academic-years" element={<AcademicYearListPage />} />
