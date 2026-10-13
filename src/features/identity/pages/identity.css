@@ -38,14 +38,24 @@
 .identity-user-form, .identity-user-form fieldset { gap: 12px; }
 .identity-user-form .identity-form-grid { gap: 12px 16px; }
 .identity-user-form > .sep-actions { position: sticky; z-index: 2; bottom: -20px; margin: 0 -20px -20px; padding: 14px 20px; background: var(--pcb-color-bg-surface, white); box-shadow: 0 -8px 18px rgb(15 23 42 / 8%); }
-.identity-dialog .pcb-control input:focus-visible { outline: 0; }
+.identity-dialog .pcb-control input:focus-visible,
+.identity-dialog .pcb-select-trigger:focus-visible,
+.identity-page .pcb-control input:focus-visible,
+.identity-page .pcb-select-trigger:focus-visible { outline: 0; }
 .identity-status-action--stop { background: #dc2626; border-color: #dc2626; color: white; }
 .identity-status-action--stop:hover:not(:disabled) { background: #b91c1c; border-color: #b91c1c; }
 .identity-status-action--start { background: #15803d; border-color: #15803d; color: white; }
 .identity-status-action--start:hover:not(:disabled) { background: #166534; border-color: #166534; }
-.identity-user-table { min-width: 1120px; }
-.identity-password { display: inline-block; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: 2px; color: var(--pcb-color-text-secondary); }
-.identity-user-table td:nth-child(2) .pcb-btn { margin-top: 4px; padding-inline: 0; }
+.identity-user-table { min-width: 880px; }
+.identity-user-form--page, .identity-user-form--page fieldset { gap: 20px; }
+.identity-user-form--page fieldset { display: contents; }
+.identity-form-section { display: flex; flex-direction: column; gap: 16px; }
+.identity-form-section > h2, .identity-form-section > p { margin: 0; }
+.identity-password-toggle { display: inline-grid; place-items: center; flex: 0 0 36px; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--pcb-color-text-secondary); cursor: pointer; }
+.identity-password-toggle:hover { background: var(--pcb-color-bg-hover); color: var(--pcb-color-text-brand); }
+.identity-password-toggle:disabled { cursor: not-allowed; opacity: .55; }
+.identity-form-actions { position: sticky; z-index: 2; bottom: 0; padding: 16px 0; background: var(--pcb-color-bg-surface, white); }
+.identity-page-loading { padding: 24px; text-align: center; color: var(--pcb-color-text-secondary); }
 .identity-description { display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: var(--pcb-color-text-primary); }
 .identity-description textarea { box-sizing: border-box; width: 100%; resize: vertical; min-height: 80px; padding: 12px; font: inherit; border: 1px solid var(--pcb-color-border-default); border-radius: var(--sep-radius-md); color: inherit; background: var(--pcb-color-bg-surface, white); }
 .identity-description small { color: var(--pcb-color-text-secondary); }
