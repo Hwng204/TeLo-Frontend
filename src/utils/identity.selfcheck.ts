@@ -24,6 +24,10 @@ assert.ok(validateRole({
   schoolId: null,
   schoolBranchId: 2
 }).scope);
+assert.deepEqual(validateRole({ ...valid, schoolId: null, schoolBranchId: null }), {});
+assert.ok(validateRole({ ...valid, schoolId: 0, schoolBranchId: null }).schoolId);
+assert.ok(validateRole({ ...valid, schoolId: 10, schoolBranchId: 20 }).schoolBranchId);
+assert.deepEqual(validateRole({ ...valid, schoolId: 10, schoolBranchId: null }), {});
 assert.deepEqual(toggleSelection([1, 50], 2), [1, 50, 2]);
 assert.deepEqual(toggleSelection([1, 50, 2], 50), [1, 2]);
 assert.ok(identityConflict({ isAxiosError: true, response: { status: 409, data: { error: { code: 'STALE_VERSION' } } } }));
@@ -94,4 +98,4 @@ assert.ok(validateCreateUser({ ...createUser, username: 'a' }, createUser.passwo
 assert.ok(validateCreateUser({ ...createUser, email: 'invalid' }, createUser.password).email);
 assert.ok(validateCreateUser(createUser, 'different').confirmPassword);
 assert.ok(validatePassword('weak'));
-console.log('[identity] 27 self-checks passed');
+console.log('[identity] self-checks passed');

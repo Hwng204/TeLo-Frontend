@@ -1,16 +1,17 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
-import { Field, PcbButton } from '../../../components/pcb';
+import { Field, Icon, PcbButton, PcbIconButton } from '../../../components/pcb';
 import { TableState } from '../../../components/common/TableState';
 import { Pager } from '../../../components/common/Pager';
 import { identityError, identityPageWithinRange } from '../../../utils/identity';
 import type { DirectoryPage } from '../../../types';
 
-export function IdentityDialog({ title, children, onClose, busy = false, className = '' }: {
+export function IdentityDialog({ title, children, onClose, busy = false, className = '', icon = 'manage_accounts' }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
   busy?: boolean;
   className?: string;
+  icon?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const id = useId();
@@ -23,44 +24,56 @@ export function IdentityDialog({ title, children, onClose, busy = false, classNa
     ref={ref}
     className={`sep-dialog identity-dialog${className ? ` ${className}` : ''}`}
     aria-labelledby={id}
+    aria-busy={busy}
     onCancel={event => {
       event.preventDefault();
       if (!busy) onClose();
     }}
   >
     <div className="identity-dialog__head">
-      <h2 id={id}>
-        {title}
-      </h2>
-      <PcbButton
-        variant="ghost"
+      <div className="identity-dialog__title">
+        <span className="identity-dialog__icon"><Icon name={icon} size={24} /></span>
+        <div>
+          <h2 id={id}>{title}</h2>
+        </div>
+      </div>
+      <PcbIconButton
+        icon="close"
+        label="Đóng hộp thoại"
         disabled={busy}
         onClick={onClose}
-        aria-label="Đóng hộp thoại"
-      >Đóng</PcbButton>
+      />
     </div>
     {children}
   </dialog>;
 }
-export function IdentitySearch({ value, onChange, label = 'Tìm theo mã hoặc tên' }: {
+export function IdentitySearch({ value, onChange, label = 'Tìm theo mã hoặc tên', hideLabel = false, placeholder }: {
   value: string;
   onChange: (value: string) => void;
-  label?: string
+  label?: string;
+  hideLabel?: boolean;
+  placeholder?: string;
 }) {
   return <Field
     type="search"
     label={label}
+    hideLabel={hideLabel}
+    placeholder={placeholder}
     value={value}
     maxLength={150}
     onChange={event => onChange(event.target.value)}
     leading="search"
   />;
 }
-export function IdentityState({ loading, error, count, reload }: {
+export function IdentityState({ loading, error, count, reload, columns = 3, emptyTitle = 'Không có kết quả phù hợp', emptyHint = 'Thử thay đổi từ khóa hoặc bộ lọc.', emptyAction }: {
   loading: boolean;
   error: unknown;
   count: number;
-  reload: () => void
+  reload: () => void;
+  columns?: number;
+  emptyTitle?: string;
+  emptyHint?: string;
+  emptyAction?: ReactNode;
 }) {
   return <>
     {!!error && <div className="sep-alert" role="alert">
@@ -71,9 +84,10 @@ export function IdentityState({ loading, error, count, reload }: {
       loading={loading}
       failed={!!error}
       empty={!count}
-      columns={3}
-      title="Không có kết quả phù hợp"
-      hint="Thử thay đổi từ khóa hoặc bộ lọc."
+      columns={columns}
+      title={emptyTitle}
+      hint={emptyHint}
+      action={emptyAction}
     />
   </>;
 }

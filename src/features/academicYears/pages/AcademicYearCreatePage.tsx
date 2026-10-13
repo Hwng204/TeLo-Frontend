@@ -1,135 +1,47 @@
 import { useState, type FormEvent } from 'react';
-import { ArrowLeft, CalendarPlus, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '../../../components/common/PageHeader';
+import { Icon, PcbButton } from '../../../components/pcb';
+import { useBusy } from '../../../hooks/useBusy';
 import { api } from '../../../services/api';
+import { initialAcademicTerms, initialAcademicYear, validateAcademicTerms, validateAcademicYear, type CalendarErrors } from '../../../utils/academicYear';
+import { problemLines, toProblem } from '../../../utils/problem';
 import { displayToast } from '../../../utils/toast';
+import { AcademicTermFields, AcademicYearFields } from '../components/AcademicCalendarFields';
 import './AcademicYearPages.css';
 
-const currentYear = new Date().getFullYear() - (new Date().getMonth() < 7 ? 1 : 0);
-const initialStartDate = `${currentYear}-08-15`;
-const initialEndDate = `${currentYear + 1}-05-31`;
-const initialTermOneEnd = `${currentYear + 1}-01-15`;
-const initialTermTwoStart = `${currentYear + 1}-01-16`;
-
 export const AcademicYearCreatePage = () => {
-    const navigate = useNavigate();
-    const [name, setName] = useState(`${currentYear}-${currentYear + 1}`);
-    const [startDate, setStartDate] = useState(initialStartDate);
-    const [endDate, setEndDate] = useState(initialEndDate);
-    const [termOneStart, setTermOneStart] = useState(initialStartDate);
-    const [termOneEnd, setTermOneEnd] = useState(initialTermOneEnd);
-    const [termTwoStart, setTermTwoStart] = useState(initialTermTwoStart);
-    const [termTwoEnd, setTermTwoEnd] = useState(initialEndDate);
-    const [saving, setSaving] = useState(false);
-
-    const submit = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setSaving(true);
-        try {
-            await api.academicYear.create({
-                name,
-                startDate,
-                endDate,
-                terms: [
-                    { order: 1, name: 'Học kỳ I', startDate: termOneStart, endDate: termOneEnd },
-                    { order: 2, name: 'Học kỳ II', startDate: termTwoStart, endDate: termTwoEnd },
-                ],
-            });
-            displayToast('success', 'Thành công', 'Đã tạo năm học thành công');
-            navigate(`/academic-years`);
-        } catch (requestError: any) {
-            const data = requestError.response?.data;
-            let message = data?.message || 'Có lỗi xảy ra';
-            if (data?.errors) {
-                const detailedErrors = Object.values(data.errors).flat().join('\n');
-                if (detailedErrors) {
-                    message += '\n' + detailedErrors;
-                }
-            }
-            displayToast('error', 'Lỗi', message);
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    return (
-        <main className="academic-page">
-            <header className="academic-page__heading">
-                <button className="academic-icon-button" type="button" aria-label="Quay lại danh sách" title="Quay lại danh sách" onClick={() => navigate('/academic-years')}>
-                    <ArrowLeft size={18} />
-                </button>
-                <div>
-                    <p className="academic-eyebrow">Quản trị vận hành</p>
-                    <h1>Tạo năm học</h1>
-                    <p className="academic-page__subtitle">Thiết lập thời gian áp dụng chung cho toàn hệ thống.</p>
-                </div>
-            </header>
-
-            <form className="academic-form" onSubmit={submit}>
-                <section className="academic-section">
-                    <div className="academic-section__title">
-                        <CalendarPlus size={18} />
-                        <h2>Thông tin năm học</h2>
-                    </div>
-                    <div className="academic-fields">
-                        <label className="academic-field academic-field--wide">
-                            <span>Tên năm học <b>*</b></span>
-                            <input required maxLength={50} value={name} onChange={(event) => setName(event.target.value)} placeholder="2026-2027" />
-                        </label>
-                        <label className="academic-field">
-                            <span>Ngày bắt đầu <b>*</b></span>
-                            <input required type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
-                        </label>
-                        <label className="academic-field">
-                            <span>Ngày kết thúc <b>*</b></span>
-                            <input required type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
-                        </label>
-                    </div>
-                </section>
-
-                <section className="academic-section">
-                    <div className="academic-section__title">
-                        <CalendarPlus size={18} />
-                        <h2>Lịch học kỳ</h2>
-                    </div>
-                    <div className="academic-terms">
-                        <fieldset className="academic-term">
-                            <legend><span>01</span> Học kỳ I</legend>
-                            <div className="academic-fields academic-fields--term">
-                                <label className="academic-field">
-                                    <span>Ngày bắt đầu <b>*</b></span>
-                                    <input required type="date" value={termOneStart} onChange={(event) => setTermOneStart(event.target.value)} />
-                                </label>
-                                <label className="academic-field">
-                                    <span>Ngày kết thúc <b>*</b></span>
-                                    <input required type="date" value={termOneEnd} onChange={(event) => setTermOneEnd(event.target.value)} />
-                                </label>
-                            </div>
-                        </fieldset>
-                        <fieldset className="academic-term">
-                            <legend><span>02</span> Học kỳ II</legend>
-                            <div className="academic-fields academic-fields--term">
-                                <label className="academic-field">
-                                    <span>Ngày bắt đầu <b>*</b></span>
-                                    <input required type="date" value={termTwoStart} onChange={(event) => setTermTwoStart(event.target.value)} />
-                                </label>
-                                <label className="academic-field">
-                                    <span>Ngày kết thúc <b>*</b></span>
-                                    <input required type="date" value={termTwoEnd} onChange={(event) => setTermTwoEnd(event.target.value)} />
-                                </label>
-                            </div>
-                        </fieldset>
-                    </div>
-                </section>
-
-                <div className="academic-actions">
-                    <button className="academic-button academic-button--secondary" type="button" onClick={() => navigate('/academic-years')}>Hủy</button>
-                    <button className="academic-button academic-button--primary" type="submit" disabled={saving}>
-                        <Save size={16} />
-                        {saving ? 'Đang lưu...' : 'Lưu năm học'}
-                    </button>
-                </div>
-            </form>
-        </main>
-    );
+  const navigate = useNavigate();
+  const [year, setYear] = useState(initialAcademicYear);
+  const [terms, setTerms] = useState(() => initialAcademicTerms(year.startDate, year.endDate));
+  const [errors, setErrors] = useState<CalendarErrors>({});
+  const [busy, run] = useBusy();
+  const back = () => navigate('/academic-years');
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    const nextErrors = { ...validateAcademicYear(year), ...validateAcademicTerms(terms, year.startDate, year.endDate) };
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
+    void run(async () => {
+      try {
+        await api.academicYear.create({ ...year, name: year.name.trim(), terms });
+        displayToast('success', 'Thành công', 'Đã tạo năm học.');
+        back();
+      } catch (error) {
+        const problem = toProblem(error);
+        setErrors(problem.fieldErrors ?? {});
+        displayToast('error', 'Lỗi', problemLines(problem).join(' '), 5);
+      }
+    });
+  };
+  return <main className="sep-page academic-page academic-page--editor">
+    <PageHeader title="Thêm năm học" inline onBack={back} />
+    <form className="academic-form" onSubmit={submit} noValidate>
+      <fieldset className="academic-form-body" disabled={busy}>
+        <section className="academic-section"><h2><Icon name="calendar_month" />Thông tin năm học</h2><AcademicYearFields value={year} onChange={setYear} errors={errors} /></section>
+        <section className="academic-section"><h2><Icon name="date_range" />Lịch học kỳ</h2><AcademicTermFields terms={terms} onChange={setTerms} errors={errors} /></section>
+      </fieldset>
+      <div className="academic-actions"><PcbButton variant="secondary" disabled={busy} onClick={back}><Icon name="close" />Hủy</PcbButton><PcbButton type="submit" disabled={busy}><Icon name="save" />{busy ? 'Đang lưu…' : 'Lưu năm học'}</PcbButton></div>
+    </form>
+  </main>;
 };

@@ -14,11 +14,13 @@ export const validateIdentity = (value: SaveIdentityRequest): Record<string, str
   if ((value.description?.trim().length ?? 0) > 500) errors.description = 'Mô tả tối đa 500 ký tự.';
   return errors;
 };
-export const validateRole = (value: SaveRoleRequest) => ({
+export const validateRole = (value: SaveRoleRequest, allowLegacyScope = false): Record<string, string> => ({
   ...validateIdentity(value),
   ...(value.schoolBranchId && !value.schoolId ? { scope: 'Hãy chọn trường trước khi chọn phân hiệu.' } : {}),
+  ...(value.schoolId === 0 ? { schoolId: 'Trường không hợp lệ.' } : {}),
+  ...(!allowLegacyScope && value.schoolBranchId ? { schoolBranchId: 'Vai trò áp dụng cho tất cả phân hiệu thuộc trường đã chọn.' } : {}),
 });
-export const roleScopeLabel = (role: Pick<RoleItem, 'schoolName' | 'schoolBranchName'>) => role.schoolBranchName ? `${role.schoolName} / ${role.schoolBranchName}` : role.schoolName || 'Toàn hệ thống';
+export const roleScopeLabel = (role: Pick<RoleItem, 'schoolName' | 'schoolBranchName'>) => role.schoolBranchName ? `${role.schoolName} / ${role.schoolBranchName}` : role.schoolName ? `${role.schoolName} · Tất cả phân hiệu` : 'Tất cả các trường';
 export const canAssignRole = (role: RoleItem, user: IdentityUser) => role.status === 'ACTIVE'
   && (!role.schoolId || role.schoolId === user.schoolId)
   && (!role.schoolBranchId || role.schoolBranchId === user.schoolBranchId);
