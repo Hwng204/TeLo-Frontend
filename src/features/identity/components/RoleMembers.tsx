@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { PcbButton } from '../../../components/pcb';
+import { Icon, PcbButton } from '../../../components/pcb';
+import { RowActionButton } from '../../../components/common/RowAction';
 import { useAsync } from '../../../hooks/useAsync';
 import { useBusy } from '../../../hooks/useBusy';
 import { useDebounce } from '../../../hooks/useDebounce';
-import { useNotice } from '../../../hooks/useNotice';
 import { api } from '../../../services/api';
 import type { RoleItem } from '../../../types';
 import { identityConflict, identityError, roleScopeLabel, toggleSelection } from '../../../utils/identity';
 import { IdentityDialog, IdentityPager, IdentitySearch, IdentityState } from './IdentityUi';
+import { useIdentityNotice } from './useIdentityNotice';
+import { displayToast } from '../../../utils/toast';
 
 function AddRoleMembers({ role, onClose, onSaved }: {
   role: RoleItem;
@@ -18,7 +20,6 @@ function AddRoleMembers({ role, onClose, onSaved }: {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selected, setSelected] = useState<number[]>([]);
-  const [failure, setFailure] = useState('');
   const [stale, setStale] = useState(false);
   const [busy, run] = useBusy();
   const debounced = useDebounce(search, 300);
@@ -29,13 +30,12 @@ function AddRoleMembers({ role, onClose, onSaved }: {
     pageSize
   }), [role.id, debounced, page, pageSize]);
   const save = () => void run(async () => {
-    setFailure('');
     try {
       await api.roles.addUsers(role.id, selected, role.version);
       onSaved();
     }
     catch (error) {
-      setFailure(identityError(error));
+      displayToast('error', 'Lỗi', identityError(error), 5);
       if (identityConflict(error)) setStale(true);
     }
   });
@@ -43,11 +43,8 @@ function AddRoleMembers({ role, onClose, onSaved }: {
     title={`Thêm người dùng vào “${role.name}”`}
     onClose={onClose}
     busy={busy}
+    icon="group_add"
   >
-    <p className="sep-muted">{roleScopeLabel(role)}. Chỉ hiển thị người dùng đang hoạt động, đúng phạm vi và chưa có vai trò này.</p>
-    {failure && <div className="sep-alert" role="alert">
-      {failure}
-    </div>}
     {stale && <p className="sep-alert sep-alert--info">Dữ liệu đã thay đổi. Đóng và mở lại hộp thoại để kiểm tra trước khi gán.</p>}
     <IdentitySearch
       label="Tìm tài khoản, họ tên hoặc email"
@@ -101,7 +98,7 @@ function AddRoleMembers({ role, onClose, onSaved }: {
         onClick={onClose}
       >Hủy</PcbButton>
       <PcbButton disabled={busy || stale || !selected.length} onClick={save}>
-        {busy ? 'Đang gán…' : 'Gán vai trò'}
+        <Icon name="person_add" />{busy ? 'Đang gán…' : 'Gán vai trò'}
       </PcbButton>
     </div>
   </IdentityDialog>;
@@ -117,7 +114,7 @@ export function RoleMembers({ role, onChanged, refreshing }: {
   const [pageSize, setPageSize] = useState(10);
   const [adding, setAdding] = useState(false);
   const [busy, run] = useBusy();
-  const notice = useNotice();
+  const notice = useIdentityNotice();
   const debounced = useDebounce(search, 300);
   const result = useAsync(() => api.identity.users({
     roleId: role.id,
@@ -138,7 +135,7 @@ export function RoleMembers({ role, onChanged, refreshing }: {
       result.reload();
       notice.error(identityError(error));
     }
-  }), 'Thu hồi');
+  }), 'Thu hồi', true);
   return <section className="identity-panel" aria-label={`Người dùng có vai trò ${role.name}`}>
     <h2>
       {role.name}
@@ -155,7 +152,7 @@ export function RoleMembers({ role, onChanged, refreshing }: {
           setPage(1);
         }}
       />
-      <PcbButton disabled={busy || refreshing || role.status !== 'ACTIVE'} onClick={() => setAdding(true)}>Thêm người dùng</PcbButton>
+      <PcbButton disabled={busy || refreshing || role.status !== 'ACTIVE'} onClick={() => setAdding(true)}><Icon name="person_add" />Thêm người dùng</PcbButton>
     </div>
     {role.status !== 'ACTIVE' && <p className="sep-alert sep-alert--info">Vai trò ngừng áp dụng: giữ lại danh sách đã gán, không cho cấp mới.</p>}
     <IdentityState {...result} count={result.data?.items.length ?? 0} />
@@ -172,13 +169,12 @@ export function RoleMembers({ role, onChanged, refreshing }: {
             {user.email}
           </small>
         </span>
-        <PcbButton
-          variant="danger"
-          size="sm"
+        <RowActionButton
+          icon="person_remove"
+          label={`Thu hồi vai trò của ${user.fullName}`}
           disabled={busy || refreshing}
           onClick={() => remove(user.id, user.fullName)}
-          aria-label={`Thu hồi vai trò của ${user.fullName}`}
-        >Thu hồi</PcbButton>
+        />
       </li>)}
     </ul>
     <IdentityPager
