@@ -93,6 +93,7 @@ import type {
   ExamRoom,
   ExamRoomOption,
   SaveExamRoomRequest,
+  CloudinarySignatureResponse,
   TaskDetail,
   TaskListItem,
   TaskListQuery,
@@ -387,4 +388,8 @@ export const api = {
     remove: (examId: number, id: number) =>
       unwrap(del<ApiResponse<boolean>>(`/exams/${examId}/rooms/${id}`)),
   },
+
+  media: {
+    signature: () => get<CloudinarySignatureResponse>('/cloudinary/signature')
+  }
 };

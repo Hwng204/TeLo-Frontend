@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { api } from '../../../services/api';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { displayToast } from '../../../utils/toast';
+import { isDirectoryAdmin, isStudent } from '../../../utils/jwt';
+import { validateChangePassword } from '../../../utils/validators';
 
 export const ChangePasswordPage: React.FC = () => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -14,13 +16,14 @@ export const ChangePasswordPage: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    if (newPassword !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp.');
-      return;
-    }
+    const validation = validateChangePassword({
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    });
 
-    if (newPassword.length < 6) {
-      setError('Mật khẩu mới phải có ít nhất 6 ký tự.');
+    if (!validation.isValid) {
+      setError(validation.firstError || 'Vui lòng kiểm tra lại thông tin mật khẩu.');
       return;
     }
 
@@ -38,10 +41,12 @@ export const ChangePasswordPage: React.FC = () => {
     }
   };
 
+  const hasLayoutHeader = isDirectoryAdmin() || isStudent();
+
   return (
     <>
-      <PageHeader title="Đổi mật khẩu" />
-      <div style={{ padding: '24px' }}>
+      <PageHeader title="Đổi mật khẩu" inline={hasLayoutHeader} />
+      <div style={{ padding: hasLayoutHeader ? '0' : '24px 32px' }}>
         <div style={{ 
           backgroundColor: 'white', 
         padding: '32px', 
