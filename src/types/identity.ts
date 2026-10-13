@@ -70,6 +70,7 @@ export interface UpdateUserRequest {
   fullName: string;
   moetIdentifier: string | null;
   schoolBranchId: number | null;
+  newPassword: string | null;
   version: number;
 }
 export interface UserRoles {

@@ -94,6 +94,7 @@ import type {
   ExamRoom,
   ExamRoomOption,
   SaveExamRoomRequest,
+  CloudinarySignatureResponse,
   TaskDetail,
   TaskListItem,
   TaskListQuery,
@@ -178,8 +179,6 @@ export const api = {
     updateUser: (id: number, body: UpdateUserRequest) => unwrap(put<ApiResponse<UserDetail>>(`/users/${id}`, body)),
     userStatus: (id: number, status: UserStatus, version: number) =>
       unwrap(patch<ApiResponse<UserDetail>>(`/users/${id}/status`, { status, version })),
-    resetUserPassword: (id: number, newPassword: string, version: number) =>
-      unwrap(patch<ApiResponse<UserDetail>>(`/users/${id}/password`, { newPassword, version })),
     removeUser: (id: number, version: number) => unwrap(del<ApiResponse<boolean>>(`/users/${id}?version=${version}`)),
     userRoles: (id: number) => unwrap(get<ApiResponse<UserRoles>>(`/users/${id}/roles`)),
     assignRoles: (id: number, roleIds: number[], version: number) => unwrap(put<ApiResponse<UserRoles>>(`/users/${id}/roles`, { roleIds, version })),
@@ -394,4 +393,8 @@ export const api = {
     remove: (examId: number, id: number) =>
       unwrap(del<ApiResponse<boolean>>(`/exams/${examId}/rooms/${id}`)),
   },
+
+  media: {
+    signature: () => get<CloudinarySignatureResponse>('/cloudinary/signature')
+  }
 };

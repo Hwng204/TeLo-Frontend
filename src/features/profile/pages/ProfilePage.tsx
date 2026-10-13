@@ -5,6 +5,8 @@ import { storage } from '../../../utils/storage';
 import { uploadToCloudinary } from '../../../utils/cloudinary';
 import { displayToast } from '../../../utils/toast';
 import { PageHeader } from '../../../components/common/PageHeader';
+import { isDirectoryAdmin, isStudent as checkIsStudent, isTeacher as checkIsTeacher } from '../../../utils/jwt';
+import { validateAvatarFile } from '../../../utils/validators';
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -19,13 +21,46 @@ const inputStyle: React.CSSProperties = {
   cursor: 'default'
 };
 
-const HeaderButtons = ({ onSave }: { onSave: () => void }) => (
-  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-    <button type="button" onClick={() => window.history.back()} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569', fontWeight: 500, cursor: 'pointer' }}>
+const ActionButtons = ({ onSave }: { onSave: () => void }) => (
+  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px', marginTop: '28px', marginBottom: '36px' }}>
+    <button
+      type="button"
+      onClick={() => window.history.back()}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '10px 20px',
+        backgroundColor: 'white',
+        border: '1px solid #cbd5e1',
+        borderRadius: '8px',
+        color: '#475569',
+        fontWeight: 500,
+        cursor: 'pointer',
+        fontSize: '14px'
+      }}
+    >
       <Icon name="arrow_back" size={18} />
       Quay lại
     </button>
-    <button type="button" onClick={onSave} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', backgroundColor: '#3b82f6', border: '1px solid #3b82f6', borderRadius: '6px', color: 'white', fontWeight: 500, cursor: 'pointer' }}>
+    <button
+      type="button"
+      onClick={onSave}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '10px 24px',
+        backgroundColor: '#2563eb',
+        border: 'none',
+        borderRadius: '8px',
+        color: 'white',
+        fontWeight: 500,
+        cursor: 'pointer',
+        fontSize: '14px',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+      }}
+    >
       <Icon name="save" size={18} />
       Lưu thay đổi
     </button>
@@ -56,10 +91,9 @@ const AvatarUpload = ({ uploading, onAvatarChange, avatarUrl }: any) => (
   </div>
 );
 
-const StudentProfile = ({ profile, onSave, uploading, onAvatarChange, avatarUrl }: any) => {
+const StudentProfile = ({ profile, uploading, onAvatarChange, avatarUrl }: any) => {
   return (
-    <div style={{ padding: '16px' }}>
-      <HeaderButtons onSave={onSave} />
+    <div>
 
       <div style={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
         <div style={{ padding: '16px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f8fafc' }}>
@@ -106,10 +140,9 @@ const StudentProfile = ({ profile, onSave, uploading, onAvatarChange, avatarUrl 
   );
 };
 
-const TeacherProfile = ({ profile, onSave, uploading, onAvatarChange, avatarUrl }: any) => {
+const TeacherProfile = ({ profile, uploading, onAvatarChange, avatarUrl }: any) => {
   return (
-    <div style={{ padding: '16px' }}>
-      <HeaderButtons onSave={onSave} />
+    <div>
 
       <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
         {/* Left column */}
@@ -187,16 +220,54 @@ const TeacherProfile = ({ profile, onSave, uploading, onAvatarChange, avatarUrl 
           </div>
         </div>
       </div>
+    </div>
+  );
+};
 
-      {/* Footer text */}
-      <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', color: '#64748b', fontSize: '12px' }}>
-        <div>© 2024 Trường Tiểu học Phạm Công Bình. All rights reserved.</div>
-        <div style={{ display: 'flex', gap: '24px' }}>
-          <span>Chính sách bảo mật</span>
-          <span>Điều khoản sử dụng</span>
-          <span>Liên hệ hỗ trợ</span>
+const BasicProfile = ({ profile, uploading, onAvatarChange, avatarUrl, title }: any) => {
+  return (
+    <div>
+
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+        {/* Left column */}
+        <div style={{ width: '320px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0', padding: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', alignItems: 'center' }}>
+              <span style={{ color: '#64748b', fontSize: '13px' }}>Mã đăng nhập:</span>
+              <span style={{ backgroundColor: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', color: '#334155', fontSize: '13px', fontFamily: 'monospace' }}>{profile?.username}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', alignItems: 'center' }}>
+              <span style={{ color: '#64748b', fontSize: '13px' }}>Trạng thái:</span>
+              <span style={{ color: '#10b981', fontSize: '13px', fontWeight: 500 }}>Đang hoạt động</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right column */}
+        <div style={{ flex: 1, backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ backgroundColor: '#eff6ff', color: '#3b82f6', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '14px' }}>01</div>
+            <div style={{ fontWeight: 600, color: '#1e293b' }}>THÔNG TIN CÁ NHÂN</div>
+          </div>
+
+          <div style={{ padding: '24px' }}>
+            <AvatarUpload uploading={uploading} onAvatarChange={onAvatarChange} avatarUrl={avatarUrl} />
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Họ và tên {title}</label>
+                <input type="text" readOnly value={profile?.fullName || ''} style={inputStyle} />
+              </div>
+
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px' }}>Email liên hệ</label>
+                <input type="text" readOnly value={profile?.email || ''} style={inputStyle} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
     </div>
   );
 };
@@ -210,7 +281,9 @@ export const ProfilePage: React.FC = () => {
   const [uploading, setUploading] = useState(false);
 
   const currentUser = storage.getUser<{ role: string }>();
-  const isStudent = currentUser?.role?.toLowerCase() === 'student';
+  const isStudent = checkIsStudent() || currentUser?.role?.toLowerCase() === 'student' || currentUser?.role?.toLowerCase() === 'hoc_sinh';
+  const isTeacher = checkIsTeacher() || currentUser?.role?.toLowerCase() === 'teacher' || currentUser?.role?.toLowerCase() === 'giao_vien';
+  const hasLayoutHeader = isDirectoryAdmin() || isStudent;
 
   useEffect(() => {
     api.auth.profile()
@@ -229,8 +302,9 @@ export const ProfilePage: React.FC = () => {
     }
 
     const file = e.target.files[0];
-    if (file.size > 2 * 1024 * 1024) {
-      displayToast('error', 'Lỗi', 'Kích thước ảnh tối đa là 2MB');
+    const validation = validateAvatarFile(file);
+    if (!validation.isValid) {
+      displayToast('error', 'Lỗi', validation.firstError || 'Kích thước ảnh tối đa là 2MB');
       return;
     }
 
@@ -257,10 +331,68 @@ export const ProfilePage: React.FC = () => {
   if (loading) return <div style={{ padding: '24px' }}>Đang tải dữ liệu...</div>;
   if (error) return <div style={{ padding: '24px', color: '#ef4444' }}>{error}</div>;
 
+  // Đối với Admin và Student (đã có header cố định của AdminLayout hoặc StudentLayout):
+  if (hasLayoutHeader) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 'calc(100vh - 112px)' }}>
+        <PageHeader
+          title="Hồ sơ cá nhân"
+          inline={true}
+        />
+        <div style={{ marginTop: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+          {isStudent ? (
+            <StudentProfile
+              profile={profile}
+              onSave={handleSave}
+              uploading={uploading}
+              onAvatarChange={handleAvatarChange}
+              avatarUrl={avatarUrl}
+            />
+          ) : isTeacher ? (
+            <TeacherProfile
+              profile={profile}
+              onSave={handleSave}
+              uploading={uploading}
+              onAvatarChange={handleAvatarChange}
+              avatarUrl={avatarUrl}
+            />
+          ) : (
+            <BasicProfile
+              profile={profile}
+              onSave={handleSave}
+              uploading={uploading}
+              onAvatarChange={handleAvatarChange}
+              avatarUrl={avatarUrl}
+              title={currentUser?.role?.toLowerCase() === 'admin' ? 'quản trị viên' : 'nhân viên'}
+            />
+          )}
+
+          {/* Nút hành động chuyển xuống dưới form với khoảng cách thoáng đãng */}
+          <ActionButtons onSave={handleSave} />
+        </div>
+
+        {/* Footer text ghim ở đáy trang */}
+        <div style={{ marginTop: 'auto', paddingTop: '20px', paddingBottom: '24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', color: '#64748b', fontSize: '12px' }}>
+          <div>© 2024 Trường Tiểu học Phạm Công Bình. All rights reserved.</div>
+          <div style={{ display: 'flex', gap: '24px' }}>
+            <span>Chính sách bảo mật</span>
+            <span>Điều khoản sử dụng</span>
+            <span>Liên hệ hỗ trợ</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Đối với Teacher và các vai trò khác trong AppShell (header gắn cố định ở mép trên cùng, footer ghim ở chân trang):
   return (
-    <>
-      <PageHeader title="Hồ sơ cá nhân" />
-      <div className="sep-page sep-page--flush">
+    <div style={{ minHeight: '100vh', flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f8fafc' }}>
+      <PageHeader
+        title="Hồ sơ cá nhân"
+        inline={false}
+      />
+
+      <div style={{ padding: '24px 32px 0 32px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         {isStudent ? (
           <StudentProfile
             profile={profile}
@@ -269,7 +401,7 @@ export const ProfilePage: React.FC = () => {
             onAvatarChange={handleAvatarChange}
             avatarUrl={avatarUrl}
           />
-        ) : (
+        ) : isTeacher ? (
           <TeacherProfile
             profile={profile}
             onSave={handleSave}
@@ -277,8 +409,30 @@ export const ProfilePage: React.FC = () => {
             onAvatarChange={handleAvatarChange}
             avatarUrl={avatarUrl}
           />
+        ) : (
+          <BasicProfile
+            profile={profile}
+            onSave={handleSave}
+            uploading={uploading}
+            onAvatarChange={handleAvatarChange}
+            avatarUrl={avatarUrl}
+            title={currentUser?.role?.toLowerCase() === 'admin' ? 'quản trị viên' : 'nhân viên'}
+          />
         )}
+
+        {/* Nút hành động chuyển xuống dưới form với khoảng cách thoáng đãng */}
+        <ActionButtons onSave={handleSave} />
       </div>
-    </>
+
+      {/* Footer text ghim ở đáy trang */}
+      <div style={{ padding: '20px 32px 24px 32px', marginTop: 'auto', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', color: '#64748b', fontSize: '12px' }}>
+        <div>© 2024 Trường Tiểu học Phạm Công Bình. All rights reserved.</div>
+        <div style={{ display: 'flex', gap: '24px' }}>
+          <span>Chính sách bảo mật</span>
+          <span>Điều khoản sử dụng</span>
+          <span>Liên hệ hỗ trợ</span>
+        </div>
+      </div>
+    </div>
   );
 };

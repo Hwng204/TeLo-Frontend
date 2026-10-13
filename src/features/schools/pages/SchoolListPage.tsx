@@ -598,6 +598,7 @@ export const SchoolListPage: React.FC = () => {
       {modal.open && modal.mode === 'create' && (
         <SchoolFormModal
           mode="create"
+          existingCodes={schools.map(s => s.code)}
           onClose={() => setModal({ open: false })}
           onSubmit={handleCreate}
         />
@@ -606,6 +607,7 @@ export const SchoolListPage: React.FC = () => {
         <SchoolFormModal
           mode="edit"
           school={modal.school}
+          existingCodes={schools.filter(s => s.id !== modal.school.id).map(s => s.code)}
           onClose={() => setModal({ open: false })}
           onSubmit={handleUpdate}
         />

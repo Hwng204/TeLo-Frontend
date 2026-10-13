@@ -74,4 +74,14 @@ export const validateCreateUser = (value: CreateUserRequest, confirmPassword: st
   return errors;
 };
 
-export const validateUpdateUser = (value: UpdateUserRequest) => validateUserFields(value);
+export const validateUpdateUser = (value: UpdateUserRequest, confirmPassword: string) => {
+  const errors = validateUserFields(value);
+  if (value.newPassword) {
+    const passwordError = validatePassword(value.newPassword);
+    if (passwordError) errors.newPassword = passwordError;
+    if (value.newPassword !== confirmPassword) errors.confirmPassword = 'Mật khẩu nhập lại không khớp.';
+  } else if (confirmPassword) {
+    errors.confirmPassword = 'Hãy nhập mật khẩu mới trước khi xác nhận.';
+  }
+  return errors;
+};

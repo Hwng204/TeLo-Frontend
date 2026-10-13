@@ -14,12 +14,13 @@ type ShellProps = {
   /** Gợi ý không chặn, hiện dưới ô khi không có lỗi. */
   hint?: string;
   leading?: string;
+  trailing?: ReactNode;
   select?: boolean;
   className?: string;
   children: (id: string) => ReactNode;
 };
 
-const Shell = ({ label, hideLabel, error, invalid, hint, leading, select, className, children }: ShellProps) => {
+const Shell = ({ label, hideLabel, error, invalid, hint, leading, trailing, select, className, children }: ShellProps) => {
   const id = useId();
   return (
     <div className={`pcb-field${className ? ` ${className}` : ''}`}>
@@ -27,6 +28,7 @@ const Shell = ({ label, hideLabel, error, invalid, hint, leading, select, classN
       <div className={`pcb-control${error || invalid ? ' pcb-control--error' : ''}`}>
         {leading && <Icon name={leading} size={18} />}
         {children(id)}
+        {trailing}
         {select && <Icon name="expand_more" size={18} />}
       </div>
       {error ? <span className="pcb-error" role="alert">{error}</span> : hint && <span className="pcb-hint">{hint}</span>}
@@ -41,12 +43,13 @@ type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   invalid?: boolean;
   hint?: string;
   leading?: string;
+  trailing?: ReactNode;
   /** Lớp cho khung ngoài `.pcb-field`, không phải cho thẻ input. */
   fieldClassName?: string;
 };
 
-export const Field = ({ label, hideLabel, error, invalid, hint, leading, fieldClassName, ...input }: FieldProps) => (
-  <Shell label={label} hideLabel={hideLabel} error={error} invalid={invalid} hint={hint} leading={leading} className={fieldClassName}>
+export const Field = ({ label, hideLabel, error, invalid, hint, leading, trailing, fieldClassName, ...input }: FieldProps) => (
+  <Shell label={label} hideLabel={hideLabel} error={error} invalid={invalid} hint={hint} leading={leading} trailing={trailing} className={fieldClassName}>
     {(id) => <input id={id} {...input} />}
   </Shell>
 );

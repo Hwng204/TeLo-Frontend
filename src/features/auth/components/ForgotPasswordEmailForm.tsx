@@ -4,6 +4,7 @@ import { Button } from '../../../components/common/Button';
 import { displayToast } from '../../../utils/toast';
 import { api } from '../../../services/api';
 import { isAxiosError } from 'axios';
+import { validateForgotPasswordEmail } from '../../../utils/validators';
 
 interface ForgotPasswordEmailFormProps {
   onSuccess: (email: string) => void;
@@ -18,8 +19,9 @@ export const ForgotPasswordEmailForm: React.FC<ForgotPasswordEmailFormProps> = (
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email.trim()) {
-      displayToast('error', 'Lỗi', 'Vui lòng nhập địa chỉ email.');
+    const validation = validateForgotPasswordEmail({ email });
+    if (!validation.isValid) {
+      displayToast('error', 'Lỗi', validation.firstError || 'Vui lòng nhập địa chỉ email hợp lệ.');
       return;
     }
 

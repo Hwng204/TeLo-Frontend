@@ -4,6 +4,7 @@ export interface SchoolBranchSummary {
   code: string;
   name: string;
   address?: string;
+  logo?: string;
   status: string;
 }
 
@@ -31,6 +32,7 @@ export interface CreateSchoolBranchRequest {
   code?: string;
   name: string;
   address?: string;
+  logo?: string;
   status?: string;
 }
 

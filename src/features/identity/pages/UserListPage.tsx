@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../../components/common/PageHeader';
+import { RowAction, RowActionButton } from '../../../components/common/RowAction';
 import { PcbButton, SelectField } from '../../../components/pcb';
 import { useAsync } from '../../../hooks/useAsync';
 import { useBusy } from '../../../hooks/useBusy';
@@ -8,24 +10,52 @@ import { useNotice } from '../../../hooks/useNotice';
 import { api } from '../../../services/api';
 import type { IdentityUser, UserStatus } from '../../../types';
 import { emptyScope, identityError } from '../../../utils/identity';
+import { getUserId } from '../../../utils/jwt';
+import { storage } from '../../../utils/storage';
 import { IdentityPager, IdentitySearch, IdentityState, IdentityStatusBadge } from '../components/IdentityUi';
-import { ResetUserPasswordDialog } from '../components/ResetUserPasswordDialog';
-import { ScopeFields } from '../components/ScopeFields';
-import { UserEditor } from '../components/UserEditor';
 import { UserRoleEditor } from '../components/UserRoleEditor';
 import './identity.css';
 
-type EditorState = { item?: IdentityUser; admin?: boolean };
-
 export function UserListPage() {
+  const navigate = useNavigate();
+  const currentUserId = getUserId();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-  const [scope, setScope] = useState(emptyScope);
+  const [scope, setScope] = useState(() => {
+    const s = storage.getSelectedBranch();
+    if (s.schoolId || s.branchId) {
+      return {
+        schoolId: s.schoolId ? Number(s.schoolId) : null,
+        schoolName: s.schoolName || null,
+        schoolBranchId: s.branchId ? Number(s.branchId) : null,
+        schoolBranchName: s.branchName || null,
+      };
+    }
+    return emptyScope;
+  });
+
+  useEffect(() => {
+    const handleBranchChange = () => {
+      const s = storage.getSelectedBranch();
+      if (s.schoolId || s.branchId) {
+        setScope({
+          schoolId: s.schoolId ? Number(s.schoolId) : null,
+          schoolName: s.schoolName || null,
+          schoolBranchId: s.branchId ? Number(s.branchId) : null,
+          schoolBranchName: s.branchName || null,
+        });
+      } else {
+        setScope(emptyScope);
+      }
+      setPage(1);
+    };
+    window.addEventListener('branch_changed', handleBranchChange);
+    return () => window.removeEventListener('branch_changed', handleBranchChange);
+  }, []);
+
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [roleUser, setRoleUser] = useState<IdentityUser | null>(null);
-  const [passwordUser, setPasswordUser] = useState<IdentityUser | null>(null);
-  const [editor, setEditor] = useState<EditorState | null>(null);
   const [busy, run] = useBusy();
   const notice = useNotice();
   const debounced = useDebounce(search, 300);
@@ -39,6 +69,7 @@ export function UserListPage() {
   }), [debounced, status, scope, page, pageSize]);
 
   const refresh = () => result.reload();
+  const isSelf = (user: IdentityUser) => String(user.id) === currentUserId;
   const changeStatus = (user: IdentityUser, nextStatus: UserStatus) => {
     const action = nextStatus === 'ACTIVE' ? 'kích hoạt' : 'ngừng hoạt động';
     notice.confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} tài khoản “${user.username}”? Người dùng sẽ phải đăng nhập lại.`, () => void run(async () => {
@@ -70,7 +101,7 @@ export function UserListPage() {
 
   return <div className="sep-page identity-page">
     <PageHeader title="Quản lý người dùng" inline />
-    <p className="sep-muted">Quản lý thông tin đăng nhập, mật khẩu, trạng thái và vai trò của tài khoản trong hệ thống.</p>
+    <p className="sep-muted">Quản lý thông tin đăng nhập, trạng thái và vai trò của tài khoản trong hệ thống.</p>
     <div className="identity-toolbar">
       <IdentitySearch
         label="Tìm tài khoản, họ tên hoặc email"
@@ -93,17 +124,9 @@ export function UserListPage() {
         <option value="INACTIVE">Ngừng hoạt động</option>
         <option value="LOCKED">Đã khóa</option>
       </SelectField>
-      <PcbButton variant="secondary" disabled={busy} onClick={() => setEditor({})}>Thêm tài khoản</PcbButton>
-      <PcbButton disabled={busy} onClick={() => setEditor({ admin: true })}>Thêm tài khoản Admin</PcbButton>
+      <PcbButton variant="secondary" disabled={busy} onClick={() => navigate('/users/create')}>Thêm tài khoản</PcbButton>
+      <PcbButton disabled={busy} onClick={() => navigate('/users/create-admin')}>Thêm tài khoản Admin</PcbButton>
     </div>
-    <ScopeFields
-      filter
-      value={scope}
-      onChange={value => {
-        setScope(value);
-        setPage(1);
-      }}
-    />
     <section className="identity-panel" aria-label="Danh sách người dùng">
       <IdentityState {...result} count={result.data?.items.length ?? 0} />
       {!!result.data?.items.length && <div className="pcb-table-wrap">
@@ -111,7 +134,6 @@ export function UserListPage() {
           <thead>
             <tr>
               <th>Tài khoản</th>
-              <th>Mật khẩu</th>
               <th>Họ và tên</th>
               <th>Trường / Phân hiệu</th>
               <th>Trạng thái</th>
@@ -119,32 +141,40 @@ export function UserListPage() {
             </tr>
           </thead>
           <tbody>
-            {result.data.items.map(user => <tr key={user.id}>
-              <td>
-                <strong>{user.username}</strong>
-                <div className="sep-subline">{user.email}</div>
-              </td>
-              <td>
-                <span className="identity-password" aria-label="Mật khẩu đã được mã hóa">••••••••</span>
-                <div className="sep-subline">Không thể xem lại</div>
-                <PcbButton variant="ghost" size="sm" disabled={busy} onClick={() => setPasswordUser(user)}>Đặt lại</PcbButton>
-              </td>
-              <td><strong>{user.fullName}</strong></td>
-              <td>
-                {user.schoolName || 'Toàn hệ thống'}
-                {user.schoolBranchName && <div className="sep-subline">{user.schoolBranchName}</div>}
-              </td>
-              <td><IdentityStatusBadge status={user.status} account /></td>
-              <td>
-                <div className="identity-actions">
-                  <PcbButton variant="secondary" size="sm" disabled={busy} onClick={() => setEditor({ item: user })}>Sửa</PcbButton>
-                  <PcbButton variant="secondary" size="sm" disabled={busy} onClick={() => setRoleUser(user)}>Vai trò</PcbButton>
-                  {user.status === 'ACTIVE'
-                    ? <PcbButton className="identity-status-action--stop" size="sm" disabled={busy} onClick={() => changeStatus(user, 'INACTIVE')}>Ngừng</PcbButton>
-                    : <PcbButton className="identity-status-action--start" size="sm" disabled={busy} onClick={() => changeStatus(user, 'ACTIVE')}>Kích hoạt</PcbButton>}
-                </div>
-              </td>
-            </tr>)}
+            {result.data.items.map(user => {
+              const ownAccount = isSelf(user);
+              return <tr key={user.id}>
+                <td>
+                  <strong>{user.username}</strong>
+                  <div className="sep-subline">{user.email}</div>
+                </td>
+                <td><strong>{user.fullName}</strong></td>
+                <td>
+                  {user.schoolName || 'Toàn hệ thống'}
+                  {user.schoolBranchName && <div className="sep-subline">{user.schoolBranchName}</div>}
+                </td>
+                <td>
+                  <IdentityStatusBadge status={user.status} account />
+                  {ownAccount && <div className="sep-subline">Tài khoản đang dùng</div>}
+                </td>
+                <td>
+                  <div className="sep-row-actions">
+                    <RowAction to={`/users/${user.id}/edit`} icon="edit" label={`Chỉnh sửa ${user.username}`} />
+                    <RowActionButton icon="manage_accounts" label={`Phân quyền ${user.username}`} disabled={busy}
+                      onClick={() => setRoleUser(user)} />
+                    {user.status === 'ACTIVE'
+                      ? <RowActionButton icon="person_off"
+                        label={ownAccount ? 'Không thể tự ngừng hoạt động tài khoản đang dùng' : `Ngừng hoạt động ${user.username}`}
+                        disabled={busy || ownAccount} onClick={() => changeStatus(user, 'INACTIVE')} />
+                      : <RowActionButton icon="person_add" label={`Kích hoạt ${user.username}`} disabled={busy}
+                        onClick={() => changeStatus(user, 'ACTIVE')} />}
+                    <RowActionButton icon="delete"
+                      label={ownAccount ? 'Không thể tự xóa tài khoản đang dùng' : `Xóa ${user.username}`}
+                      disabled={busy || ownAccount} onClick={() => remove(user)} />
+                  </div>
+                </td>
+              </tr>;
+            })}
           </tbody>
         </table>
       </div>}
@@ -157,30 +187,6 @@ export function UserListPage() {
         label="người dùng"
       />
     </section>
-    {editor && <UserEditor
-      {...editor}
-      onClose={() => setEditor(null)}
-      onConflict={refresh}
-      onDelete={user => {
-        setEditor(null);
-        remove(user);
-      }}
-      onSaved={() => {
-        setEditor(null);
-        refresh();
-        notice.success(editor.item ? 'Đã cập nhật tài khoản.' : editor.admin ? 'Đã tạo tài khoản Admin.' : 'Đã tạo tài khoản.');
-      }}
-    />}
-    {passwordUser && <ResetUserPasswordDialog
-      user={passwordUser}
-      onClose={() => setPasswordUser(null)}
-      onConflict={refresh}
-      onSaved={() => {
-        setPasswordUser(null);
-        refresh();
-        notice.success('Đã đặt lại mật khẩu. Các phiên đăng nhập cũ đã hết hiệu lực.');
-      }}
-    />}
     {roleUser && <UserRoleEditor
       userId={roleUser.id}
       userName={roleUser.fullName}

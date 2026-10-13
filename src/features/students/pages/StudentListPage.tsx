@@ -40,7 +40,7 @@ const StudentDirectory = () => {
   const [status, setStatus] = useState<StudentStatus | ''>('');
   const [gradeLevelId, setGradeLevelId] = useState<number>();
   const [classId, setClassId] = useState<number>();
-  const [schoolBranchId, setSchoolBranchId] = useState<number>();
+  const [schoolBranchId, setSchoolBranchId] = useState<number | undefined>(() => scope.branchId);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const popup = useNotice();
@@ -82,7 +82,7 @@ const StudentDirectory = () => {
     setStatus('');
     setGradeLevelId(undefined);
     setClassId(undefined);
-    setSchoolBranchId(undefined);
+    setSchoolBranchId(scope.branchId);
     setPage(1);
   };
   const numberOrUndefined = (raw: string) => (raw ? Number(raw) : undefined);

@@ -23,12 +23,12 @@ const STATUS_TABS: { value: ClassStatus | ''; label: string }[] = [
 /** SC-CL01. Nhà trường chỉ xem (giáo viên: chỉ lớp mình chủ nhiệm); admin xem + thêm/sửa/xoá theo trường đã chọn. */
 export const ClassListPage = () => {
   const context = useAdminAcademicYear();
-  return <ClassDirectory key={context?.year?.id ?? 'default'} />;
+  const scope = useDirectoryScope();
+  return <ClassDirectory key={`${context?.year?.id ?? 'default'}:${scope.schoolId ?? 'self'}:${scope.branchId ?? 'all'}`} scope={scope} />;
 };
 
-const ClassDirectory = () => {
+const ClassDirectory = ({ scope }: { scope: ReturnType<typeof useDirectoryScope> }) => {
   const navigate = useNavigate();
-  const scope = useDirectoryScope();
   const teacher = !scope.admin && isTeacher();
 
   const [keyword, setKeyword] = useState('');
@@ -37,6 +37,7 @@ const ClassDirectory = () => {
   const [localYearId, setAcademicYearId] = useState<number>();
   const academicYearId = scope.admin ? (yearContext?.year ? Number(yearContext.year.id) : undefined) : localYearId;
   const ready = scope.ready && (!scope.admin || Boolean(yearContext?.ready && academicYearId));
+  const [schoolBranchId, setSchoolBranchId] = useState<number | undefined>(() => scope.branchId);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const popup = useNotice();
@@ -44,10 +45,11 @@ const ClassDirectory = () => {
   const debouncedKeyword = useDebounce(keyword, 300);
 
   const reference = useAsync(
-    async () => (!scope.admin && scope.ready ? api.directory.referenceData(undefined, scope.schoolId) : null),
-    [scope.admin, scope.ready, scope.schoolId],
+    async () => (ready ? api.directory.referenceData(academicYearId, scope.schoolId) : null),
+    [ready, scope.schoolId, academicYearId],
   );
   const years = reference.data?.academicYears ?? [];
+  const branches = reference.data?.schoolBranches ?? [];
 
   const query = {
     page,
@@ -55,6 +57,7 @@ const ClassDirectory = () => {
     search: debouncedKeyword.trim() || undefined,
     status: status || undefined,
     academicYearId,
+    schoolBranchId,
   };
   const list = useAsync(
     async () => (ready ? api.directory.classes(query, scope.schoolId) : null),
@@ -62,7 +65,7 @@ const ClassDirectory = () => {
   );
   const items = list.data?.items ?? [];
   const totalCount = list.data?.totalCount ?? 0;
-  const filtered = Boolean(keyword || status || (!scope.admin && academicYearId));
+  const filtered = Boolean(keyword || status || (!scope.admin && academicYearId) || schoolBranchId !== scope.branchId);
 
   // Mọi thay đổi bộ lọc đều quay về trang 1, nếu không sẽ thấy trang trống.
   const onFilter = <T,>(setter: (value: T) => void) => (value: T) => {
@@ -73,6 +76,7 @@ const ClassDirectory = () => {
     setKeyword('');
     setStatus('');
     setAcademicYearId(undefined);
+    setSchoolBranchId(scope.branchId);
     setPage(1);
   };
   const numberOrUndefined = (raw: string) => (raw ? Number(raw) : undefined);
@@ -93,7 +97,7 @@ const ClassDirectory = () => {
   };
 
   const error = list.error ?? reference.error ?? scope.schoolsError ?? yearContext?.error;
-  const columns = 8;
+  const columns = 9;
   const title = scope.admin ? 'Quản lý lớp học' : teacher ? 'Lớp chủ nhiệm' : 'Lớp học';
 
   return (
@@ -118,6 +122,22 @@ const ClassDirectory = () => {
                 {scope.schools.map((school) => (
                   <option key={school.id} value={school.id}>
                     {school.name}
+                  </option>
+                ))}
+              </SelectField>
+            )}
+            {scope.admin && branches.length > 0 && (
+              <SelectField
+                label="Cơ sở / Phân hiệu"
+                hideLabel
+                placeholder="Tất cả cơ sở"
+                value={schoolBranchId ?? ''}
+                onChange={(event) => onFilter(setSchoolBranchId)(numberOrUndefined(event.target.value))}
+              >
+                <option value="">Tất cả cơ sở</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
                   </option>
                 ))}
               </SelectField>

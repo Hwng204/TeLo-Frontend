@@ -18,8 +18,6 @@ type Draft = {
   homeroomTeacherId: string;
 };
 
-const EMPTY: Draft = { schoolBranchId: '', name: '', academicYearId: '', gradeLevelId: '', status: 'ACTIVE', homeroomTeacherId: '' };
-
 /** Admin: thêm lớp (/classes/new) hoặc sửa lớp (/classes/:id/edit) của trường đang chọn. */
 export const ClassFormPage = () => {
   const navigate = useNavigate();
@@ -44,6 +42,14 @@ export const ClassFormPage = () => {
 
   // Chưa chạm vào thì lấy giá trị đang có (sửa) hoặc mặc định (thêm); chạm rồi thì giữ bản của người dùng.
   const current = existing.data?.class;
+  const emptyDraft: Draft = {
+    schoolBranchId: scope.branchId ? String(scope.branchId) : '',
+    name: '',
+    academicYearId: yearContext?.year?.id ?? '',
+    gradeLevelId: '',
+    status: 'ACTIVE',
+    homeroomTeacherId: '',
+  };
   const value: Draft =
     draft ??
     (current
@@ -55,7 +61,7 @@ export const ClassFormPage = () => {
           status: current.status,
           homeroomTeacherId: current.homeroomTeacherId ? String(current.homeroomTeacherId) : '',
         }
-      : { ...EMPTY, academicYearId: yearContext?.year?.id ?? '' });
+      : emptyDraft);
   const set = (key: keyof Draft, next: string) => {
     setDraft({ ...value, [key]: next, ...(key === 'schoolBranchId' ? { homeroomTeacherId: '' } : {}) });
     setErrors((old) => ({ ...old, [key]: '' }));

@@ -122,8 +122,10 @@
   .sep-pager { position: sticky; bottom: 0; z-index: 2; }
 }
 .sep-pager__size { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.sep-pager__select { width: 84px; }
-.sep-pager__select .pcb-control { height: 34px; border-radius: 8px; }
+.sep-pager__select { position: relative; display: inline-flex; align-items: center; width: 84px; height: 34px; border: 1px solid var(--pcb-color-border-default); border-radius: 8px; background: var(--pcb-color-bg-surface, #fff); }
+.sep-pager__select select { width: 100%; height: 100%; padding: 0 30px 0 10px; border: 0; outline: 0; appearance: none; background: transparent; color: var(--pcb-color-text-primary); font: inherit; cursor: pointer; }
+.sep-pager__select .pcb-icon { position: absolute; right: 8px; pointer-events: none; color: var(--pcb-color-text-secondary); }
+.sep-pager__select:focus-within { border-color: var(--pcb-color-border-focus); box-shadow: 0 0 0 2px rgb(79 124 232 / 14%); }
 .sep-pager__total { padding-left: 12px; border-left: 1px solid var(--pcb-color-border-default); }
 .sep-pager__pages { display: flex; align-items: center; gap: 4px; }
 .sep-pager__page, .sep-pager__step { display: inline-grid; place-items: center; min-width: 32px; height: 32px; padding: 0 6px; box-sizing: border-box; border: 0; border-radius: 6px; background: transparent; color: var(--pcb-color-text-primary); font: 500 14px/20px 'Inter', sans-serif; font-variant-numeric: tabular-nums; cursor: pointer; transition: background-color var(--sep-transition), color var(--sep-transition); }

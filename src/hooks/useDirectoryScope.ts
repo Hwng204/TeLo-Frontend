@@ -1,6 +1,7 @@
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { isDirectoryAdmin } from '../utils/jwt';
+import { storage } from '../utils/storage';
 import { useAsync } from './useAsync';
 
 /**
@@ -16,14 +17,26 @@ export const useDirectoryScope = () => {
   const location = useLocation();
   const schools = useAsync(async () => (admin ? api.directory.schools() : null), [admin]);
 
+  const selected = storage.getSelectedBranch();
   const fromUrl = Number(params.get('schoolId')) || undefined;
-  const schoolId = admin ? (fromUrl ?? schools.data?.items[0]?.id) : undefined;
+  const storedSchoolId = Number(selected.schoolId) || undefined;
+  const schoolId = admin ? (fromUrl ?? storedSchoolId ?? schools.data?.items[0]?.id) : undefined;
+
+  const fromUrlBranch = Number(params.get('schoolBranchId')) || undefined;
+  const storedBranchId = Number(selected.branchId) || undefined;
+  const branchId = admin ? (fromUrlBranch ?? (schoolId === storedSchoolId ? storedBranchId : undefined)) : undefined;
+
+  const schoolCode = selected.schoolCode || '';
+  const branchCode = selected.branchCode || '';
+  const schoolName = selected.schoolName || '';
+  const branchName = selected.branchName || '';
 
   const setSchool = (id: number) =>
     setParams(
       (current) => {
         const next = new URLSearchParams(current);
         next.set('schoolId', String(id));
+        next.delete('schoolBranchId');
         return next;
       },
       { replace: true },
@@ -31,6 +44,17 @@ export const useDirectoryScope = () => {
 
   /** Giữ trường đang chọn khi điều hướng sang màn khác của admin. */
   const withSchool = (path: string) => (admin && schoolId ? `${path}${path.includes('?') ? '&' : '?'}schoolId=${schoolId}` : path);
+
+  const withBranch = (path: string) => {
+    let result = path;
+    if (admin && schoolId) {
+      result = `${result}${result.includes('?') ? '&' : '?'}schoolId=${schoolId}`;
+    }
+    if (admin && branchId) {
+      result = `${result}${result.includes('?') ? '&' : '?'}schoolBranchId=${branchId}`;
+    }
+    return result;
+  };
 
   /** Vào từ trong app thì lùi đúng một bước (giữ bộ lọc/trang của màn trước); mở thẳng link/F5 thì về `fallback`. */
   const canGoBack = location.key !== 'default';
@@ -41,11 +65,17 @@ export const useDirectoryScope = () => {
     canGoBack,
     back,
     schoolId,
+    schoolCode,
+    schoolName,
+    branchId,
+    branchCode,
+    branchName,
     /** Admin cần biết trường trước khi gọi API; phía trường thì luôn sẵn sàng. */
     ready: !admin || schoolId !== undefined,
     schools: schools.data?.items ?? [],
     schoolsError: schools.error,
     setSchool,
     withSchool,
+    withBranch,
   };
 };
