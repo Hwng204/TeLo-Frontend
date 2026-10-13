@@ -10,7 +10,6 @@ import { useAsync, useBusy, useDebounce, useDirectoryScope, useNotice } from '..
 import { api } from '../../../services/api';
 import type { ClassListItem, ClassStatus } from '../../../types';
 import { CLASS_STATUS, statusOf } from '../../../utils/directory';
-import { CLASS_STATUS, statusOf } from '../../../utils/directory';
 import { isTeacher } from '../../../utils/jwt';
 import { toProblem } from '../../../utils/problem';
 

@@ -1,6 +1,6 @@
-import { Icon, SelectField } from '../pcb';
+import { Icon } from '../pcb';
 
-const DEFAULT_PAGE_SIZES = [10, 20, 50];
+const DEFAULT_PAGE_SIZES = [10, 20, 50, 100];
 
 type Props = {
   page: number;
@@ -41,19 +41,13 @@ export const Pager = ({
     <div className="sep-pager">
       <div className="sep-pager__size">
         <span>Hiển thị</span>
-        <SelectField
-          label="Số bản ghi mỗi trang"
-          hideLabel
-          value={pageSize}
-          fieldClassName="sep-pager__select"
-          onChange={(event) => onPageSizeChange(Number(event.target.value))}
-        >
-          {pageSizes.map((size) => (
-            <option key={size} value={size}>
-              {size}
-            </option>
-          ))}
-        </SelectField>
+        <label className="sep-pager__select">
+          <span className="pcb-label pcb-label--hidden">Số bản ghi mỗi trang</span>
+          <select value={pageSize} onChange={(event) => onPageSizeChange(Number(event.target.value))}>
+            {pageSizes.map((size) => <option key={size} value={size}>{size}</option>)}
+          </select>
+          <Icon name="expand_more" size={18} />
+        </label>
         <span>bản ghi / trang</span>
         <span className="sep-pager__total">
           Tổng {totalCount} {itemLabel}

@@ -29,6 +29,7 @@ import { RoleListPage } from '../features/identity/pages/RoleListPage';
 import { ModuleListPage } from '../features/identity/pages/ModuleListPage';
 import { EmailManagementPage } from '../features/emails/pages/EmailManagementPage';
 import { UserListPage } from '../features/identity/pages/UserListPage';
+import { UserFormPage } from '../features/identity/pages/UserFormPage';
 import { ExamListPage } from '../features/exams/pages/ExamListPage';
 import { ExamFormPage } from '../features/exams/pages/ExamFormPage';
 import { ExamRoomListPage } from '../features/exams/pages/ExamRoomListPage';
@@ -161,6 +162,9 @@ const router = createBrowserRouter(createRoutesFromElements(
             <Route path="/roles" element={<RoleListPage />} />
             <Route path="/modules" element={<ModuleListPage />} />
             <Route path="/users" element={<UserListPage />} />
+            <Route path="/users/create" element={<UserFormPage mode="create" />} />
+            <Route path="/users/create-admin" element={<UserFormPage mode="create" admin />} />
+            <Route path="/users/:id/edit" element={<UserFormPage mode="edit" />} />
           </Route>
           {/* Sau khi login, admin được điều hướng đến trang danh sách trường */}
           <Route path="/" element={<Navigate to="/schools" replace />} />
