@@ -4,10 +4,13 @@ import { Button } from '../../../components/common/Button';
 import type { School, CreateSchoolRequest } from '../../../types';
 import { api } from '../../../services/api';
 import { useAsync } from '../../../hooks/useAsync';
+import { validateCreateSchool } from '../../../utils/validators';
+import { generateSchoolCode } from '../../../utils/schoolCodeGenerator';
 
 interface SchoolFormModalProps {
   mode: 'create' | 'edit';
   school?: School;
+  existingCodes?: string[];
   onClose: () => void;
   onSubmit: (data: CreateSchoolRequest) => Promise<void>;
 }
@@ -284,9 +287,10 @@ const SearchableProvinceSelect: React.FC<{
 };
 
 export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
-  mode, school, onClose, onSubmit,
+  mode, school, existingCodes = [], onClose, onSubmit,
 }) => {
   const isEdit = mode === 'edit';
+  const [isCodeManuallyEdited, setIsCodeManuallyEdited] = useState(false);
 
   const [form, setForm] = useState<CreateSchoolRequest>({
     name: school?.name ?? '',
@@ -308,13 +312,45 @@ export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
     if (e.target === overlayRef.current) onClose();
   };
 
+  const handleNameChange = (val: string) => {
+    setForm((prev) => {
+      const next = { ...prev, name: val };
+      if (!isEdit && !isCodeManuallyEdited) {
+        next.code = generateSchoolCode(val, prev.provinceCode, existingCodes);
+      }
+      return next;
+    });
+    if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
+    if (!isCodeManuallyEdited && errors.code) setErrors((prev) => ({ ...prev, code: undefined }));
+  };
+
+  const handleProvinceChange = (code: string) => {
+    setForm((prev) => {
+      const next = { ...prev, provinceCode: code };
+      if (!isEdit && !isCodeManuallyEdited) {
+        next.code = generateSchoolCode(prev.name, code, existingCodes);
+      }
+      return next;
+    });
+  };
+
+  const handleCodeChange = (val: string) => {
+    setIsCodeManuallyEdited(true);
+    setForm((prev) => ({ ...prev, code: val.toUpperCase() }));
+    if (errors.code) setErrors((prev) => ({ ...prev, code: undefined }));
+  };
+
+  const handleRegenerateCode = () => {
+    setIsCodeManuallyEdited(false);
+    const auto = generateSchoolCode(form.name, form.provinceCode, existingCodes);
+    setForm((prev) => ({ ...prev, code: auto }));
+    if (errors.code) setErrors((prev) => ({ ...prev, code: undefined }));
+  };
+
   const validate = (): boolean => {
-    const errs: Partial<Record<keyof CreateSchoolRequest, string>> = {};
-    if (!form.name.trim()) errs.name = 'Vui lòng nhập tên trường.';
-    if (!form.code.trim()) errs.code = 'Vui lòng nhập mã trường.';
-    else if (!/^[A-Za-z0-9\-_]+$/.test(form.code.trim())) errs.code = 'Chỉ gồm chữ in hoa, số và dấu gạch ngang (-).';
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
+    const result = validateCreateSchool(form);
+    setErrors(result.errors);
+    return result.isValid;
   };
 
   const handleSubmit = async () => {
@@ -414,8 +450,8 @@ export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
                 <input
                   type="text"
                   value={form.name}
-                  onChange={(e) => set('name')(e.target.value)}
-                  placeholder="VD: Trường Tiểu học Ánh Dương"
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  placeholder="VD: Trường Tiểu học Tề Lỗ"
                   style={inputStyle(!!errors.name)}
                   onFocus={onFocus}
                   onBlur={(e) => onBlur(e, !!errors.name)}
@@ -425,14 +461,45 @@ export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
                 )}
               </div>
 
+              {/* Tỉnh / thành phố */}
+              <div>
+                <label style={labelStyle}>Tỉnh/thành phố (Tùy chọn)</label>
+                <SearchableProvinceSelect
+                  value={form.provinceCode}
+                  onChange={(code) => handleProvinceChange(code)}
+                />
+              </div>
+
               {/* Mã trường – full width */}
               <div>
-                <label style={labelStyle}>Mã trường {requiredMark}</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ ...labelStyle, marginBottom: 0 }}>Mã trường {requiredMark}</label>
+                  {!isEdit && (
+                    <button
+                      type="button"
+                      onClick={handleRegenerateCode}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#2563eb',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        padding: 0,
+                        transition: 'opacity 0.15s',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.7')}
+                      onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+                    >
+                      Tạo lại mã tự động
+                    </button>
+                  )}
+                </div>
                 <input
                   type="text"
                   value={form.code}
-                  onChange={(e) => set('code')(e.target.value)}
-                  placeholder="VD: TEN-AD001"
+                  onChange={(e) => handleCodeChange(e.target.value)}
+                  placeholder="VD: 1-TL"
                   disabled={isEdit}
                   style={{
                     ...inputStyle(!!errors.code),
@@ -445,20 +512,15 @@ export const SchoolFormModal: React.FC<SchoolFormModalProps> = ({
                 />
                 {errors.code ? (
                   <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#ef4444' }}>{errors.code}</p>
+                ) : !isEdit ? (
+                  <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#64748b' }}>
+                    Tự động sinh: [Mã tỉnh]-[Tên viết tắt] (VD: Hà Nội + Tề Lỗ &rarr; 1-TL). Bạn có thể chỉnh sửa nếu muốn.
+                  </p>
                 ) : (
                   <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#94a3b8' }}>
                     Chỉ gồm chữ in hoa, số và dấu gạch ngang (-)
                   </p>
                 )}
-              </div>
-
-              {/* Mã tỉnh / thành phố */}
-              <div>
-                <label style={labelStyle}>Tỉnh/thành phố (Tùy chọn)</label>
-                <SearchableProvinceSelect
-                  value={form.provinceCode}
-                  onChange={(code) => set('provinceCode')(code)}
-                />
               </div>
             </div>
           </div>

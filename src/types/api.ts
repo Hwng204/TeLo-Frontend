@@ -20,4 +20,9 @@ export interface ProvinceOption {
   activeSchoolCount: number;
 }
 
-
+export interface CloudinarySignatureResponse {
+  timestamp: string;
+  signature: string;
+  apiKey: string;
+  cloudName: string;
+}

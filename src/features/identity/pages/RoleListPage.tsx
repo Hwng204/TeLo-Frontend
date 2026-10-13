@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { Icon, PcbButton, SelectField } from '../../../components/pcb';
 import { RowActionButton } from '../../../components/common/RowAction';
@@ -8,17 +8,48 @@ import { useDebounce } from '../../../hooks/useDebounce';
 import { api } from '../../../services/api';
 import type { RoleItem } from '../../../types';
 import { emptyScope, identityError, roleScopeLabel } from '../../../utils/identity';
+import { storage } from '../../../utils/storage';
 import { IdentityEditor } from '../components/IdentityEditor';
 import { IdentityPager, IdentitySearch, IdentityState, IdentityStatusBadge } from '../components/IdentityUi';
 import { RoleMembers } from '../components/RoleMembers';
-import { ScopeFields } from '../components/ScopeFields';
 import { useIdentityNotice } from '../components/useIdentityNotice';
 import './identity.css';
 
 export function RoleListPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-  const [scope, setScope] = useState(emptyScope);
+  const [scope, setScope] = useState(() => {
+    const s = storage.getSelectedBranch();
+    if (s.schoolId || s.branchId) {
+      return {
+        schoolId: s.schoolId ? Number(s.schoolId) : null,
+        schoolName: s.schoolName || null,
+        schoolBranchId: s.branchId ? Number(s.branchId) : null,
+        schoolBranchName: s.branchName || null,
+      };
+    }
+    return emptyScope;
+  });
+
+  useEffect(() => {
+    const handleBranchChange = () => {
+      const s = storage.getSelectedBranch();
+      if (s.schoolId || s.branchId) {
+        setScope({
+          schoolId: s.schoolId ? Number(s.schoolId) : null,
+          schoolName: s.schoolName || null,
+          schoolBranchId: s.branchId ? Number(s.branchId) : null,
+          schoolBranchName: s.branchName || null,
+        });
+      } else {
+        setScope(emptyScope);
+      }
+      setPage(1);
+    };
+    window.addEventListener('branch_changed', handleBranchChange);
+    return () => window.removeEventListener('branch_changed', handleBranchChange);
+  }, []);
+
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [selected, setSelected] = useState<RoleItem | null>(null);
@@ -76,15 +107,6 @@ export function RoleListPage() {
       </SelectField>
       <PcbButton disabled={busy} onClick={() => setEditor('new')}><Icon name="add" />Thêm vai trò</PcbButton>
     </div>
-    <ScopeFields
-      value={scope}
-      filter
-      schoolOnly
-      onChange={value => {
-        setScope(value);
-        setPage(1);
-      }}
-    />
     <div className="identity-split">
       <section className="identity-panel" aria-label="Danh sách vai trò">
         <IdentityState {...result} count={result.data?.items.length ?? 0} />
@@ -136,12 +158,12 @@ export function RoleListPage() {
                       onClick={() => mutate(item)}
                     />}
                     <span className="identity-delete-action" title={!item.canDelete ? item.deleteBlockedReason || 'Vai trò hệ thống hoặc đã phát sinh sử dụng không thể xóa.' : undefined}>
-                    <RowActionButton
-                      icon="delete"
-                      label={`Xóa vai trò ${item.name}`}
-                      disabled={busy || result.loading || !item.canDelete}
-                      onClick={() => mutate(item, true)}
-                    />
+                      <RowActionButton
+                        icon="delete"
+                        label={`Xóa vai trò ${item.name}`}
+                        disabled={busy || result.loading || !item.canDelete}
+                        onClick={() => mutate(item, true)}
+                      />
                     </span>
                   </div>
                   {!item.canDelete && <p className="identity-delete-hint">{item.deleteBlockedReason || 'Vai trò hệ thống hoặc đã phát sinh sử dụng không thể xóa.'}</p>}

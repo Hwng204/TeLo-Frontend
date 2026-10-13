@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '../../../components/common/Button';
 import { displayToast } from '../../../utils/toast';
 import { api } from '../../../services/api';
-
+import { validateOtp } from '../../../utils/validators';
 
 interface ForgotPasswordOtpFormProps {
   email: string;
@@ -67,8 +67,9 @@ export const ForgotPasswordOtpForm: React.FC<ForgotPasswordOtpFormProps> = ({ em
     e.preventDefault();
 
     const otpString = otp.join('');
-    if (otpString.length < 6) {
-      displayToast('error', 'Lỗi', 'Vui lòng nhập đủ 6 số OTP.');
+    const validation = validateOtp({ otp: otpString });
+    if (!validation.isValid) {
+      displayToast('error', 'Lỗi', validation.firstError || 'Vui lòng nhập đủ 6 số OTP.');
       return;
     }
 

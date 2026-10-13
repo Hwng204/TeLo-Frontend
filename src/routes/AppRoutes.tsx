@@ -33,7 +33,7 @@ import { ExamListPage } from '../features/exams/pages/ExamListPage';
 import { ExamFormPage } from '../features/exams/pages/ExamFormPage';
 import { ExamRoomListPage } from '../features/exams/pages/ExamRoomListPage';
 import { storage } from '../utils/storage';
-import { getRoles, isDirectoryAdmin } from '../utils/jwt';
+import { getRoles, isDirectoryAdmin, isStudent } from '../utils/jwt';
 
 /**
  * Chặn theo vai trò chỉ để giấu màn không dùng được. Backend mới là nơi quyết định:
@@ -55,14 +55,18 @@ const ADMIN = ['OperationalAdmin', 'ADMIN'];
 
 /**
  * Lớp học / học sinh dùng chung một bộ màn cho nhà trường (chỉ xem) và admin (thêm/sửa/xoá):
- * admin ở trong khung AdminLayout, nhà trường ở khung AppShell.
+ * admin ở trong khung AdminLayout, học sinh ở khung StudentLayout, nhà trường ở khung AppShell.
  */
 const DirectoryShell: React.FC = () => {
   if (!storage.getToken()) return <Navigate to="/login" replace />;
-  return isDirectoryAdmin() ? <AdminLayout /> : <AppShell />;
+  if (isDirectoryAdmin()) return <AdminLayout />;
+  if (isStudent()) return <StudentLayout />;
+  return <AppShell />;
 };
 import { SchoolListPage } from '../features/schools/pages/SchoolListPage';
 import { BranchListPage } from '../features/schools/pages/BranchListPage';
+import { OverviewPage } from '../features/schools/pages/OverviewPage';
+import { TeacherListPage } from '../features/schools/pages/TeacherListPage';
 import { ProfilePage } from '../features/profile/pages/ProfilePage';
 import { ChangePasswordPage } from '../features/profile/pages/ChangePasswordPage';
 import { StudentDashboardPage } from '../features/student/pages/StudentDashboardPage';
@@ -162,6 +166,10 @@ const router = createBrowserRouter(createRoutesFromElements(
           <Route path="/" element={<Navigate to="/schools" replace />} />
           <Route path="/schools" element={<SchoolListPage />} />
           <Route path="/schools/:schoolId/branches" element={<BranchListPage />} />
+          <Route path="/overview" element={<OverviewPage />} />
+          <Route path="/teachers" element={<TeacherListPage />} />
+          <Route path="/permissions" element={<Navigate to="/roles" replace />} />
+          <Route path="/navbars" element={<Navigate to="/modules" replace />} />
           <Route path="/academic-years" element={<AcademicYearListPage />} />
           <Route path="/academic-years/new" element={<AcademicYearCreatePage />} />
           <Route path="/academic-years/:id" element={<AcademicYearConfigPage />} />

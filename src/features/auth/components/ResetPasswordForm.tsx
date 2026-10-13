@@ -5,6 +5,7 @@ import { displayToast } from '../../../utils/toast';
 
 import { api } from '../../../services/api';
 import { isAxiosError } from 'axios';
+import { validateResetPassword } from '../../../utils/validators';
 
 interface ResetPasswordFormProps {
   email: string;
@@ -22,13 +23,14 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ email, otp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!password || !confirmPassword) {
-      displayToast('error', 'Lỗi', 'Vui lòng nhập đầy đủ mật khẩu mới.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      displayToast('error', 'Lỗi', 'Mật khẩu xác nhận không khớp.');
+    const validation = validateResetPassword({
+      email,
+      otp,
+      newPassword: password,
+      confirmPassword,
+    });
+    if (!validation.isValid) {
+      displayToast('error', 'Lỗi', validation.firstError || 'Vui lòng kiểm tra lại mật khẩu mới.');
       return;
     }
 

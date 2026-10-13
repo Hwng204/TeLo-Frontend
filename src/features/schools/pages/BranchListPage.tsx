@@ -1,23 +1,51 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Search, Building2, Users, BookOpen, Home, ChevronDown } from 'lucide-react';
 import { api } from '../../../services/api';
+import { storage } from '../../../utils/storage';
 import { displayToast } from '../../../utils/toast';
 import type { SchoolBranchSummary, CreateSchoolBranchRequest } from '../../../types';
 import { Pager } from '../../../components/common/Pager';
 import { useAsync, useDebounce } from '../../../hooks';
 import { BranchFormModal } from '../components/BranchFormModal';
-import type { AdminOutletContext } from '../../../layouts/AdminLayout';
 
 type ModalState =
   | { open: false }
   | { open: true; mode: 'create' }
   | { open: true; mode: 'edit'; branch: SchoolBranchSummary };
 
+const BranchAvatar: React.FC<{ logo?: string; name: string }> = ({ logo, name }) => {
+  const [hasError, setHasError] = useState(false);
+
+  React.useEffect(() => {
+    setHasError(false);
+  }, [logo]);
+
+  const hasLogo = Boolean(logo && logo.trim());
+
+  return (
+    <div style={{
+      width: '42px', height: '42px', borderRadius: '50%',
+      backgroundColor: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      color: '#2563eb', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+      overflow: 'hidden', flexShrink: 0
+    }}>
+      {hasLogo && !hasError ? (
+        <img
+          src={logo}
+          alt={name}
+          onError={() => setHasError(true)}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      ) : (
+        <Home size={20} />
+      )}
+    </div>
+  );
+};
 
 export const BranchListPage: React.FC = () => {
   const { schoolId } = useParams();
-  const { activeAcademicYearLabel } = useOutletContext<AdminOutletContext>();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
@@ -97,15 +125,8 @@ export const BranchListPage: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
           <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '-0.5px' }}>
-            <span style={{ color: '#64748b', fontWeight: 600 }}>Cơ sở •</span> {school.name}
+            <span style={{ color: '#64748b', fontWeight: 600 }}></span> {school.name}
           </h1>
-          <div style={{ fontSize: '14px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ padding: '4px 8px', backgroundColor: '#f1f5f9', borderRadius: '6px', fontWeight: 500 }}>Công lập</span>
-            <span>•</span>
-            <span>{school.code}</span>
-            <span>•</span>
-            <span>{activeAcademicYearLabel}</span>
-          </div>
         </div>
         <button
           onClick={() => setModal({ open: true, mode: 'create' })}
@@ -214,26 +235,25 @@ export const BranchListPage: React.FC = () => {
           <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Hãy thêm cơ sở mới để bắt đầu quản lý.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px', flex: 1 }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+          gap: '20px',
+          flex: 1
+        }}>
           {paginatedBranches.map(branch => (
             <div key={branch.id} style={{
-              backgroundColor: '#ffffff', borderRadius: '12px', padding: '24px',
+              backgroundColor: '#ffffff', borderRadius: '12px', padding: '20px',
               display: 'flex', flexDirection: 'column',
               border: '1px solid #e5e7eb',
               boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
               transition: 'transform 0.2s, box-shadow 0.2s',
             }}>
               {/* Header: Icon and Status */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-                <div style={{
-                  width: '42px', height: '42px', borderRadius: '50%',
-                  backgroundColor: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#2563eb', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-                }}>
-                  <Home size={20} />
-                </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                <BranchAvatar logo={branch.logo} name={branch.name} />
                 <span style={{
-                  display: 'inline-flex', padding: '4px 16px', borderRadius: '100px', fontSize: '13px',
+                  display: 'inline-flex', padding: '4px 12px', borderRadius: '100px', fontSize: '12px',
                   fontWeight: 500, backgroundColor: branch.status === 'ACTIVE' ? '#ecfdf5' : '#f1f5f9',
                   color: branch.status === 'ACTIVE' ? '#059669' : '#64748b',
                   border: branch.status === 'ACTIVE' ? '1px solid #a7f3d0' : '1px solid #cbd5e1'
@@ -243,28 +263,50 @@ export const BranchListPage: React.FC = () => {
               </div>
 
               {/* Title & Code */}
-              <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 600, color: '#1f2937' }}>{branch.name}</h3>
-              <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
-                Mã cơ sở: {branch.code}
+              <h3 style={{ margin: '0 0 4px 0', fontSize: '17px', fontWeight: 600, color: '#1f2937' }}>{branch.name}</h3>
+              <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '12px' }}>
+                Mã cơ sở: <strong style={{ color: '#0f172a', fontWeight: 700 }}>{branch.code}</strong>
               </div>
 
               {/* Address */}
-              <div style={{ fontSize: '14px', color: '#4b5563', marginBottom: '24px', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+              <div style={{
+                fontSize: '13px',
+                color: '#64748b',
+                marginBottom: '16px',
+                lineHeight: 1.5,
+                minHeight: '38px',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden'
+              }}>
                 {branch.address || 'Chưa cập nhật địa chỉ'}
               </div>
 
-              {/* Stats Block (no background) */}
-              <div style={{ fontSize: '14px', color: '#4b5563', lineHeight: 1.6, marginBottom: '24px' }}>
-                <div>0 học sinh • 0 lớp</div>
-                <div>0 cán bộ, giáo viên</div>
+              {/* Stats Block (3 trường 1 hàng, bold số lượng nổi bật) */}
+              <div style={{
+                fontSize: '13px',
+                color: '#475569',
+                lineHeight: 1.5,
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '8px'
+              }}>
+                <span><strong style={{ fontWeight: 700, color: '#0f172a' }}>0</strong> học sinh</span>
+                <span style={{ color: '#cbd5e1' }}>•</span>
+                <span><strong style={{ fontWeight: 700, color: '#0f172a' }}>0</strong> lớp</span>
+                <span style={{ color: '#cbd5e1' }}>•</span>
+                <span><strong style={{ fontWeight: 700, color: '#0f172a' }}>0</strong> cán bộ, giáo viên</span>
               </div>
 
               {/* Footer Actions */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: 'auto', paddingTop: '8px' }}>
                 <button
                   style={{
                     background: '#ffffff', border: '1px solid #2563eb', borderRadius: '6px',
-                    color: '#2563eb', fontSize: '14px', fontWeight: 500, padding: '8px 16px', cursor: 'pointer',
+                    color: '#2563eb', fontSize: '13px', fontWeight: 500, padding: '7px 14px', cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#eff6ff'; }}
@@ -276,16 +318,20 @@ export const BranchListPage: React.FC = () => {
                 <button
                   style={{
                     background: '#2563eb', border: '1px solid #2563eb', borderRadius: '6px',
-                    color: '#ffffff', fontSize: '14px', fontWeight: 500, padding: '8px 16px', cursor: 'pointer',
+                    color: '#ffffff', fontSize: '13px', fontWeight: 500, padding: '7px 14px', cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#1d4ed8'; }}
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#2563eb'; }}
                   onClick={() => {
-                    localStorage.setItem('selected_school_id', school.id);
-                    localStorage.setItem('selected_school_name', school.name);
-                    localStorage.setItem('selected_branch_id', branch.id);
-                    localStorage.setItem('selected_branch_name', branch.name);
+                    storage.setSelectedBranch({
+                      schoolId: school.id,
+                      schoolCode: school.code,
+                      schoolName: school.name,
+                      branchId: branch.id,
+                      branchCode: branch.code,
+                      branchName: branch.name,
+                    });
                     navigate('/overview');
                   }}
                 >
