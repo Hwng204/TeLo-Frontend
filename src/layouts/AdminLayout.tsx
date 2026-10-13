@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from '../components/pcb';
-import { api } from '../services/api';
-import { useAsync } from '../hooks/useAsync';
+import { useAdminYearSelection } from '../hooks/useAdminYearSelection';
+import { AdminAcademicYearContext } from '../contexts/AdminAcademicYearContext';
+import { AdminAcademicYearSelect } from '../components/common/AdminAcademicYearSelect';
 import { formatActiveAcademicYear } from '../utils/academicYear';
 import { storage } from '../utils/storage';
 import { BranchSelectModal } from '../components/common/BranchSelectModal';
@@ -77,11 +78,8 @@ export const AdminLayout = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [user] = useState(() => storage.getUser<{ fullName: string; role: string }>());
-  const activeAcademicYear = useAsync(() => api.academicYear.current().catch(e => {
-    if (e.response?.status === 404) return { data: null };
-    throw e;
-  }), [pathname]);
-  const reloadActiveAcademicYear = activeAcademicYear.reload;
+  const academicYears = useAdminYearSelection();
+  const reloadActiveAcademicYear = academicYears.reload;
   const [showBranchModal, setShowBranchModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -152,11 +150,11 @@ export const AdminLayout = () => {
   };
 
   const initials = getUserInitials(user?.fullName);
-  const activeAcademicYearLabel = activeAcademicYear.loading
+  const activeAcademicYearLabel = academicYears.loading
     ? 'Đang tải năm học...'
-    : activeAcademicYear.error
+    : academicYears.error
       ? 'Không tải được năm học'
-      : formatActiveAcademicYear(activeAcademicYear.data?.data?.name);
+      : formatActiveAcademicYear(academicYears.activeYear?.name);
 
   const renderNavGroup = (item: MenuItem, depth = 0) => {
     const isExpanded = expandedGroups[item.id];
@@ -221,6 +219,7 @@ export const AdminLayout = () => {
   };
 
   return (
+    <AdminAcademicYearContext.Provider value={{ year: academicYears.year, ready: academicYears.ready, error: academicYears.error }}>
     <div className={`sep-app sep-shell${collapsed ? ' sep-shell--collapsed' : ''}`}>
       {/* Sidebar */}
       <aside className="sep-rail sep-rail--wide" aria-label="Điều hướng chính">
@@ -260,11 +259,9 @@ export const AdminLayout = () => {
         `}</style>
 
         <header className="sep-topbar" style={{ justifyContent: 'space-between', backgroundColor: '#ffffff' }}>
-          <div aria-live="polite" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569', fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap' }}>
-            <Icon name="calendar_month" size={18} />
-            {activeAcademicYearLabel}
-            {Boolean(activeAcademicYear.error) && <button type="button" onClick={reloadActiveAcademicYear}>Thử lại</button>}
-          </div>
+          <AdminAcademicYearSelect years={academicYears.data ?? []} year={academicYears.year}
+            loading={academicYears.loading} error={academicYears.error}
+            onChange={academicYears.selectYear} onRetry={reloadActiveAcademicYear} />
 
           <div className="sep-user" ref={userMenuRef} style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setShowUserMenu(!showUserMenu)}>
             <div className="sep-user__avatar">
@@ -328,5 +325,6 @@ export const AdminLayout = () => {
         />
       )}
     </div>
+    </AdminAcademicYearContext.Provider>
   );
 };

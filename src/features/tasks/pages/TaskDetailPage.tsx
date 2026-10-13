@@ -120,8 +120,8 @@ export const TaskDetailPage = () => {
   const view = task.taskType === 'MATRIX'
     ? matrixView(task, isPerformer, navigate, edit)
     : task.taskType === 'EXAM'
-      ? examView(task, edit)
-      : questionView(task, isCreator, edit, askDelete, busy);
+      ? examView(task, navigate, edit)
+      : questionView(task, isCreator, isPerformer, navigate, edit, askDelete, busy);
 
   return (
     <>
@@ -252,7 +252,7 @@ const matrixView = (task: TaskDetail, isPerformer: boolean, navigate: (path: str
 };
 
 /** NV02-ET (Tổ trưởng làm), NV02-EP (PHT giao). Soạn từng đề và nộp bộ đề thuộc chức năng bộ đề của dev khác. */
-const examView = (task: TaskDetail, edit: EditButton): View => {
+const examView = (task: TaskDetail, navigate: ReturnType<typeof useNavigate>, edit: EditButton): View => {
   return {
     title: 'Chi tiết nhiệm vụ tạo đề thi',
     rows: [
@@ -274,13 +274,14 @@ const examView = (task: TaskDetail, edit: EditButton): View => {
       <section className="sep-section">
         <h2 className="sep-section-title">Các đề cần tạo</h2>
         <SubTable
-          heads={['Đề', 'Trạng thái', 'Cập nhật']}
+          heads={['Đề', 'Trạng thái', 'Cập nhật', 'Hành động']}
           rows={(task.exam?.papers ?? []).map((paper) => ({
             key: paper.name,
             cells: [
               paper.name,
               <span className="sep-status">{paper.statusLabel}</span>,
               paper.updatedAt ? formatDate(paper.updatedAt) : '—',
+              paper.id && <PcbButton variant="ghost" size="sm" onClick={() => navigate(`/matrix-tasks/${task.id}/papers/${paper.id}/questions`)}><Icon name="visibility" size={18} />Xem và chọn câu hỏi</PcbButton>,
             ],
           }))}
         />
@@ -294,6 +295,8 @@ const examView = (task: TaskDetail, edit: EditButton): View => {
 const questionView = (
   task: TaskDetail,
   isCreator: boolean,
+  isPerformer: boolean,
+  navigate: ReturnType<typeof useNavigate>,
   edit: EditButton,
   askDelete: () => void,
   busy: boolean,
@@ -329,7 +332,9 @@ const questionView = (
         ))}
       </section>
     ),
-    actions: isCreator && (
+    actions: <>
+      {(isPerformer || (isCreator && task.status !== 'ASSIGNED')) && <PcbButton onClick={() => navigate(`/matrix-tasks/${task.id}/questions`)}><Icon name={isPerformer && task.status !== 'COMPLETED' && task.status !== 'PENDING_REVIEW' ? 'edit_square' : 'visibility'} />{isPerformer && task.status !== 'COMPLETED' && task.status !== 'PENDING_REVIEW' ? 'Biên soạn câu hỏi' : task.status === 'PENDING_REVIEW' && isCreator ? 'Kiểm duyệt gói câu hỏi' : 'Xem gói câu hỏi'}</PcbButton>}
+      {isCreator && (
       <>
         {task.canEdit && (
           <PcbButton variant="danger" disabled={busy} onClick={askDelete}>
@@ -338,6 +343,7 @@ const questionView = (
         )}
         {edit()}
       </>
-    ),
+      )}
+    </>,
   };
 };

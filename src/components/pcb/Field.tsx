@@ -52,6 +52,8 @@ export const Field = ({ label, hideLabel, error, invalid, hint, leading, fieldCl
 );
 
 type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
+  /** Optional compact value for the trigger; the menu keeps each full option label. */
+  selectedLabel?: ReactNode;
   label?: ReactNode;
   hideLabel?: boolean;
   error?: string;
@@ -74,6 +76,7 @@ const selectOptions = (children: ReactNode): Option[] =>
   });
 
 export const SelectField = ({
+  selectedLabel,
   label,
   hideLabel,
   error,
@@ -189,7 +192,7 @@ export const SelectField = ({
             {selectedValue === '' && placeholder ? (
               <span className="pcb-select-placeholder">{placeholder}</span>
             ) : (
-              selected?.label
+              selectedLabel ?? selected?.label
             )}
           </button>
 

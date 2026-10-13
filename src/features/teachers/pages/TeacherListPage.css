@@ -1,0 +1,5 @@
+.teacher-directory .pcb-table { min-width:720px; }
+.teacher-directory-name { font-weight:600; color:var(--pcb-color-text-primary); }
+.teacher-employment { display:inline-flex; padding:4px 8px; border-radius:6px; font-size:12px; white-space:nowrap; background:var(--pcb-color-bg-row-hover); color:var(--pcb-color-text-secondary); }
+.teacher-employment--working { color:#137449; background:#eaf7ef; }
+.teacher-employment--on_leave { color:#8a5b12; background:#fff5dc; }

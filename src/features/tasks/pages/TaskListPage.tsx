@@ -11,6 +11,7 @@ import { api } from '../../../services/api';
 import type { TaskListItem, TaskListQuery, TaskType } from '../../../types';
 import { getRoles, isPht, isTeacher, isTeamLead } from '../../../utils/jwt';
 import { toProblem } from '../../../utils/problem';
+import { questionApi } from '../../questions/questionApi';
 import '../../matrix/matrix.css';
 import '../tasks.css';
 
@@ -61,6 +62,7 @@ export const TaskListPage = () => {
   };
   const list = useAsync(() => api.task.list(query), [query.page, query.pageSize, query.keyword, query.taskType, query.status]);
   const items = list.data?.items ?? [];
+  const overdue = useAsync(() => teamLead ? questionApi.overdue() : Promise.resolve(0), [teamLead, list.data]);
   const totalCount = list.data?.totalCount ?? 0;
   const filtered = Boolean(keyword || taskType || status);
   // Trạng thái rỗng có nút xóa lọc riêng: thanh công cụ không hiện thêm nút thứ hai.
@@ -112,6 +114,7 @@ export const TaskListPage = () => {
   return (
     <>
       <PageHeader title="Nhiệm vụ" />
+      {teamLead && (overdue.data ?? 0) > 0 && <div className="sep-page"><div className="sep-alert sep-alert--warn"><Icon name="schedule" size={18} /> {overdue.data} nhiệm vụ câu hỏi quá hạn <PcbButton variant="ghost" size="sm" onClick={() => { setTaskType('QUESTION'); setStatus('OVERDUE'); setPage(1); }}>Xem nhiệm vụ</PcbButton></div></div>}
 
       <div className="sep-page">
         <div className="sep-toolbar">

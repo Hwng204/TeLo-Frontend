@@ -1,4 +1,5 @@
 import { Field, Icon, PcbIconButton, SelectField } from '../../../components/pcb';
+import type { ReactNode } from 'react';
 import type { CognitiveLevel, GridRow, LessonOption } from '../../../types';
 import {
   LEVELS,
@@ -32,13 +33,14 @@ type Props = {
   /** Tổng điểm ma trận, cần để suy ra điểm ô/điểm mỗi câu từ tỷ lệ % của từng dòng. */
   matrixTotalScore: number;
   readOnly?: boolean;
+  renderAvailability?: (lessonId: number, level: CognitiveLevel) => ReactNode;
   errors?: Record<string, string>;
   onChange?: (rows: GridRow[]) => void;
 };
 
 const quantity = (questions: number, percentage: number) => `${questions} câu · ${formatScore(percentage)}%`;
 
-export const MatrixGrid = ({ rows, lessons, matrixTotalScore, readOnly, errors = {}, onChange }: Props) => {
+export const MatrixGrid = ({ rows, lessons, matrixTotalScore, readOnly, renderAvailability, errors = {}, onChange }: Props) => {
   const total = gridTotal(rows);
 
   const update = (next: GridRow[]) => onChange?.(next);
@@ -156,6 +158,7 @@ export const MatrixGrid = ({ rows, lessons, matrixTotalScore, readOnly, errors =
                         <div className="sep-muted">
                           {formatScore(score)} điểm · {formatPerQuestion(score, Number(cell.questionCount))} điểm/câu
                         </div>
+                        {renderAvailability?.(row.lessonId, level)}
                       </td>
                     );
                   }
