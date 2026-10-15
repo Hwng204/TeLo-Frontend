@@ -1,4 +1,4 @@
-import { validateIdentity, validateRole, toggleSelection, identityConflict, canAssignRole, identityError, identityPageWithinRange, validateCreateUser, validatePassword } from './identity.ts';
+import { validateIdentity, validateRole, validateModule, toggleSelection, identityConflict, canAssignRole, identityError, identityPageWithinRange, validateCreateUser, validatePassword } from './identity.ts';
 import type { IdentityUser, RoleItem } from '../types/identity.ts';
 const assert = {
   ok(value: unknown) {
@@ -25,9 +25,14 @@ assert.ok(validateRole({
   schoolBranchId: 2
 }).scope);
 assert.deepEqual(validateRole({ ...valid, schoolId: null, schoolBranchId: null }), {});
-assert.ok(validateRole({ ...valid, schoolId: 0, schoolBranchId: null }).schoolId);
-assert.ok(validateRole({ ...valid, schoolId: 10, schoolBranchId: 20 }).schoolBranchId);
-assert.deepEqual(validateRole({ ...valid, schoolId: 10, schoolBranchId: null }), {});
+assert.ok(validateRole({ ...valid, schoolId: 0, schoolBranchId: null }).scope);
+assert.ok(validateRole({ ...valid, schoolId: 10, schoolBranchId: 20 }).scope);
+assert.ok(validateRole({ ...valid, schoolId: 10, schoolBranchId: null }).scope);
+assert.ok(validateRole({ ...valid, code: 'A'.repeat(51), schoolId: null, schoolBranchId: null }).code);
+assert.deepEqual(validateRole({ ...valid, code: 'A'.repeat(50), schoolId: null, schoolBranchId: null }), {});
+assert.deepEqual(validateModule({ name: 'Ngân hàng câu hỏi', description: null }), {});
+assert.ok(validateModule({ name: ' ', description: null }).name);
+assert.ok(validateModule({ name: 'Module', description: 'x'.repeat(501) }).description);
 assert.deepEqual(toggleSelection([1, 50], 2), [1, 50, 2]);
 assert.deepEqual(toggleSelection([1, 50, 2], 50), [1, 2]);
 assert.ok(identityConflict({ isAxiosError: true, response: { status: 409, data: { error: { code: 'STALE_VERSION' } } } }));
@@ -58,8 +63,9 @@ const user: IdentityUser = {
   version: 1
 };
 assert.ok(canAssignRole(role, user));
-assert.ok(!canAssignRole({ ...role, schoolId: 11 }, user));
-assert.ok(!canAssignRole({ ...role, schoolBranchId: 21 }, user));
+assert.ok(canAssignRole({ ...role, schoolId: 11 }, user));
+assert.ok(canAssignRole({ ...role, schoolBranchId: 21 }, user));
+assert.ok(!canAssignRole(role, { ...user, status: 'INACTIVE' }));
 assert.ok(!canAssignRole({ ...role, status: 'INACTIVE' }, user));
 assert.ok(canAssignRole({
   ...role,

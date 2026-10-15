@@ -59,7 +59,7 @@ export interface TaskPaper {
   examSetId: number | null;
   questionCount: number;
   name: string;
-  status: 'NOT_CREATED' | 'DRAFT';
+  status: 'NOT_CREATED' | 'DRAFT' | 'IN_REVIEW' | 'REVIEWED' | 'APPROVED';
   statusLabel: string;
   updatedAt: string | null;
 }
@@ -71,6 +71,7 @@ export interface TaskExamInfo {
   gradeLevelName: string;
   academicYearName: string;
   papers: TaskPaper[];
+  reviewPackageId?: number | null;
 }
 
 export interface TaskLesson {

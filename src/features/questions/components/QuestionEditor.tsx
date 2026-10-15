@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Field, Icon, PcbButton, SelectField } from '../../../components/pcb';
+import { RequiredLabel, Field, Icon, PcbButton, SelectField } from '../../../components/pcb';
 import type { QuestionItem, QuestionTarget, SaveQuestion } from '../types';
 import { keys, levels } from '../types';
 
@@ -15,11 +15,11 @@ export const QuestionEditor = ({ question, targets, initialDetailId, version, bu
   return <section className="question-editor" aria-label="Biên soạn câu hỏi">
     <h2 className="sep-section-title">{question ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi'}</h2>
     <SelectField label="Bài học · Mức nhận thức *" value={detailId} onChange={e => { setDetailId(Number(e.target.value)); changed(); }}>
-      {targets.map(t => <option key={t.detailId} value={t.detailId}>{t.gradeName} · {t.chapterCode}/{t.lessonCode} · {t.lessonTitle} · {levels[t.cognitiveLevel]} ({t.validCount}/{t.requiredCount})</option>)}
+      {targets.map(t => <option key={t.detailId} value={t.detailId}>{t.gradeName} · {t.chapterCode && t.lessonCode ? `${t.chapterCode}/${t.lessonCode}` : t.chapterTitle} · {t.lessonTitle} · {levels[t.cognitiveLevel]} ({t.validCount}/{t.requiredCount})</option>)}
     </SelectField>
-    <label className="pcb-label" htmlFor="question-content">Nội dung câu hỏi *</label>
-    <textarea id="question-content" className="sep-textarea" rows={4} maxLength={10000} value={content} onChange={e => { setContent(e.target.value); changed(); }} />
-    <fieldset className="question-answer-fields"><legend className="pcb-label">Lựa chọn và đáp án đúng *</legend>
+    <label className="pcb-label" htmlFor="question-content"><RequiredLabel required>Nội dung câu hỏi</RequiredLabel></label>
+    <textarea id="question-content" aria-required="true" className="sep-textarea" rows={4} maxLength={10000} value={content} onChange={e => { setContent(e.target.value); changed(); }} />
+    <fieldset className="question-answer-fields"><legend className="pcb-label"><RequiredLabel required>Lựa chọn và đáp án đúng</RequiredLabel></legend>
       <p className="sep-muted question-answer-help">Điền ít nhất 2 lựa chọn trong A–D. Ô không dùng để trống. Chọn một lựa chọn đã điền làm đáp án đúng.</p>
       {keys.map((key, index) => <div key={key} className="question-answer-row">
         <label className="question-correct-pick" title={`Chọn ${key} là đáp án đúng`}>

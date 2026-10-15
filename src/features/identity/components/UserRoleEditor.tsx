@@ -81,7 +81,7 @@ function UserRoleForm({ data, onSaved, onClose, busy, run }: {
               <strong>
                 {role.name}
               </strong>
-              <small>{role.code} · {roleScopeLabel(role)}</small>
+              <small>{role.code} · {roleScopeLabel()}</small>
               {!eligible && !checked && <small>Không phù hợp với trạng thái hoặc phạm vi người dùng.</small>}
             </span>
           </label>

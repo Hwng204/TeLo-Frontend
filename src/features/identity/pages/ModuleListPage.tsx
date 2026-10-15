@@ -52,9 +52,10 @@ export function ModuleListPage() {
       <PageHeader title="Quản lý module" inline />
       <PcbButton disabled={busy} onClick={() => setEditor('new')}><Icon name="add" />Thêm module</PcbButton>
     </div>
+    <p className="sep-muted">Module là một phân hệ của ứng dụng, ví dụ Thi hoặc Quản lý học tập. Các chức năng trong phân hệ được liên kết bằng mục điều hướng.</p>
     <section className="identity-panel identity-module-panel" aria-label="Danh sách module" aria-busy={result.loading}>
       <div className="identity-module-toolbar">
-      <IdentitySearch label="Tìm module" hideLabel placeholder="Tìm theo mã hoặc tên module…" value={search} onChange={value => {
+      <IdentitySearch label="Tìm module" hideLabel placeholder="Tìm theo tên module…" value={search} onChange={value => {
         setSearch(value);
         setPage(1);
       }} />
@@ -94,7 +95,7 @@ export function ModuleListPage() {
             <th scope="col">Thao tác</th>
           </tr></thead>
           <tbody>{result.data.items.map(item => <tr key={item.id}>
-            <td><strong className="identity-module-name">{item.name}</strong><code className="identity-module-code">{item.code}</code></td>
+            <td><strong className="identity-module-name">{item.name}</strong></td>
             <td><p className="identity-module-description" title={item.description || undefined}>{item.description || '—'}</p></td>
             <td><span className="identity-module-links"><Icon name="account_tree" size={18} />{item.navbarCount}</span></td>
             <td><IdentityStatusBadge status={item.status} /></td>

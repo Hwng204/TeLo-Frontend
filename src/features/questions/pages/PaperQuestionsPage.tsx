@@ -27,8 +27,8 @@ const PaperWorkspace = ({ taskId, paperId }: { taskId: number; paperId: number }
   const [notice, setNotice] = useState<Notice | null>(null);
   const [busy, runExclusive] = useBusy();
   const back = () => navigate(`/matrix-tasks/${taskId}`);
-  const run = (fn: () => Promise<PaperQuestions>) => void runExclusive(async () => {
-    try { setSaved(await fn()); setPicking(null); setRemoving(null); }
+  const run = (fn: () => Promise<PaperQuestions>, message: string) => void runExclusive(async () => {
+    try { setSaved(await fn()); setPicking(null); setRemoving(null); setNotice({ kind: 'success', messages: [message] }); }
     catch (error) { setPicking(null); setRemoving(null); setNotice({ kind: 'error', messages: [toProblem(error).message] }); }
   });
   if (!data) return <><PageHeader title="Chọn câu hỏi cho đề" onBack={back} /><div className="sep-page"><p role="status">{loaded.loading ? 'Đang tải…' : toProblem(loaded.error).message}</p>{!loaded.loading && <PcbButton onClick={loaded.reload}>Thử lại</PcbButton>}</div></>;
@@ -42,8 +42,8 @@ const PaperWorkspace = ({ taskId, paperId }: { taskId: number; paperId: number }
     </section>; })}
     <div className="sep-actions"><PcbButton onClick={back}>Hoàn tất chọn câu hỏi</PcbButton></div>
   </div>
-  {picking !== null && <QuestionPicker matrixId={data.matrixId} detailId={picking} selectedIds={data.questions.map(q => q.question.id)} onClose={() => { if (!busy) setPicking(null); }} onSelect={questions => run(() => questionApi.addToPaper(taskId, paperId, data.version, picking, questions.map(q => q.id)))} />}
-  <ConfirmDialog isOpen={removing !== null} title="Bỏ câu hỏi khỏi đề" message="Bỏ câu hỏi này khỏi đề đang biên soạn?" type="info" isLoading={busy} confirmText="Bỏ khỏi đề" onCancel={() => setRemoving(null)} onConfirm={() => { if (removing !== null) run(() => questionApi.removeFromPaper(taskId, paperId, removing, data.version)); }} />
+  {picking !== null && <QuestionPicker matrixId={data.matrixId} detailId={picking} selectedIds={data.questions.map(q => q.question.id)} onClose={() => { if (!busy) setPicking(null); }} onSelect={questions => run(() => questionApi.addToPaper(taskId, paperId, data.version, picking, questions.map(q => q.id)), 'Đã thêm câu hỏi vào đề.')} />}
+  <ConfirmDialog isOpen={removing !== null} title="Bỏ câu hỏi khỏi đề" message="Bỏ câu hỏi này khỏi đề đang biên soạn?" type="info" isLoading={busy} confirmText="Bỏ khỏi đề" onCancel={() => setRemoving(null)} onConfirm={() => { if (removing !== null) run(() => questionApi.removeFromPaper(taskId, paperId, removing, data.version), 'Đã bỏ câu hỏi khỏi đề.'); }} />
   <NoticeDialog notice={notice} onClose={() => setNotice(null)} />
   </>;
 };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useBlocker, useNavigate, useParams } from 'react-router-dom';
-import { Icon, PcbButton } from '../../../components/pcb';
+import { RequiredLabel, Icon, PcbButton } from '../../../components/pcb';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { NoticeDialog, type Notice } from '../../../components/common/NoticeDialog';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
@@ -66,7 +66,7 @@ const PackageWorkspace = ({ id }: { id: number }) => {
     setTargetId(next && remaining ? remaining.detailId : request.detailId);
     setSelected(next && remaining ? null : current?.id ?? result.questions[result.questions.length - 1].id);
     return result;
-  });
+  }, current ? 'Đã cập nhật câu hỏi.' : 'Đã lưu câu hỏi.');
   const submit = () => {
     if (dirty) { setNotice({ kind: 'error', messages: ['Lưu câu đang chỉnh sửa trước khi gửi gói.'] }); return; }
     setPending({ title: 'Gửi gói câu hỏi', message: `Gửi toàn bộ ${data.questions.length} câu cho ${data.reviewerName} kiểm duyệt?`, label: 'Gửi gói', run: () => action(() => questionApi.submit(id, data.version), 'Đã gửi gói câu hỏi.') });
@@ -100,7 +100,7 @@ const PackageWorkspace = ({ id }: { id: number }) => {
     </div>
     <NoticeDialog notice={notice} onClose={() => setNotice(null)} />
     <ConfirmDialog isOpen={pending !== null || blocker.state === 'blocked'} title={pending?.title ?? 'Thay đổi chưa lưu'} message={pending?.message ?? 'Câu hỏi đang chỉnh sửa chưa được lưu.'} confirmText={pending?.label ?? 'Bỏ thay đổi'} type="info" isLoading={busy} onCancel={() => { setPending(null); if (blocker.state === 'blocked') blocker.reset(); }} onConfirm={() => { if (pending) pending.run(); else if (blocker.state === 'blocked') { setDirty(false); blocker.proceed(); } }} />
-    <FormDialog open={rejecting} title="Yêu cầu chỉnh sửa" onClose={() => { if (!busy) setRejecting(false); }}><label className="pcb-label" htmlFor="package-comment">Nhận xét *</label><textarea id="package-comment" className="sep-textarea" rows={4} maxLength={1000} value={comment} onChange={e => setComment(e.target.value)} /><div className="sep-actions"><PcbButton variant="ghost" disabled={busy} onClick={() => setRejecting(false)}>Hủy</PcbButton><PcbButton variant="danger" disabled={busy || !comment.trim()} onClick={() => action(async () => { const result = await questionApi.review(id, data.version, false, comment, Object.entries(notes).filter(([, v]) => v.trim()).map(([key, value]) => ({ questionId: Number(key), comment: value.trim() }))); setRejecting(false); return result; }, 'Đã yêu cầu chỉnh sửa gói.')}>Yêu cầu chỉnh sửa</PcbButton></div></FormDialog>
+    <FormDialog busy={busy} open={rejecting} title="Yêu cầu chỉnh sửa" onClose={() => { if (!busy) setRejecting(false); }}><label className="pcb-label" htmlFor="package-comment"><RequiredLabel required>Nhận xét</RequiredLabel></label><textarea id="package-comment" aria-required="true" className="sep-textarea" rows={4} maxLength={1000} value={comment} onChange={e => setComment(e.target.value)} /><div className="sep-actions"><PcbButton variant="ghost" disabled={busy} onClick={() => setRejecting(false)}>Hủy</PcbButton><PcbButton variant="danger" disabled={busy || !comment.trim()} onClick={() => action(async () => { const result = await questionApi.review(id, data.version, false, comment, Object.entries(notes).filter(([, v]) => v.trim()).map(([key, value]) => ({ questionId: Number(key), comment: value.trim() }))); setRejecting(false); return result; }, 'Đã yêu cầu chỉnh sửa gói.')}>Yêu cầu chỉnh sửa</PcbButton></div></FormDialog>
     <FormDialog open={history !== undefined} title={history ? `Lần nộp ${history.number}` : 'Lịch sử nộp'} onClose={() => setHistoryId(null)}>{history?.questions.map((q, i) => <section className="question-history-item" key={q.id}><strong>Câu {i + 1}</strong><QuestionPreview question={q} />{history.notes.filter(n => n.questionId === q.id).map(n => <p key={n.questionId}>{n.comment}</p>)}</section>)}</FormDialog>
     {importing && <QuestionExcelImportDialog taskId={id} version={data.version} onClose={() => setImporting(false)} onImported={result => { setSaved(result); setImporting(false); setSelected(null); setRevision(x => x + 1); setNotice({ kind: 'success', messages: ['Đã nhập câu hỏi từ Excel.'] }); }} />}
   </>;

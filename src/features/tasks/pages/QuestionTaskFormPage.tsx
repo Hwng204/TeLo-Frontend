@@ -7,6 +7,7 @@ import { api } from '../../../services/api';
 import type { TaskDetail } from '../../../types';
 import { localDateString } from '../../../utils/formatters';
 import { toProblem } from '../../../utils/problem';
+import { displayToast } from '../../../utils/toast';
 import { LessonCardEditor } from '../components/LessonCard';
 import { focusFirstError } from '../focusFirstError';
 import { lessonsProblem, questionCount, type LessonDraft } from '../lessonDraft';
@@ -81,14 +82,17 @@ export const QuestionTaskForm = ({ task }: { task?: TaskDetail }) => {
       try {
         if (task) {
           await api.task.updateQuestion(task.id, body);
+          displayToast('success', 'Thành công', 'Đã cập nhật nhiệm vụ biên soạn câu hỏi.');
           navigate(`/matrix-tasks/${task.id}`);
         } else {
           await api.task.createQuestion(body);
+          displayToast('success', 'Thành công', 'Đã giao nhiệm vụ biên soạn câu hỏi.');
           navigate('/matrix-tasks');
         }
       } catch (error) {
         const parsed = toProblem(error);
         setProblem(parsed.message);
+        displayToast('error', 'Lỗi', parsed.message, 5);
         if (parsed.fieldErrors) {
           setErrors((existing) => ({ ...existing, ...parsed.fieldErrors }));
           focusFirstError();

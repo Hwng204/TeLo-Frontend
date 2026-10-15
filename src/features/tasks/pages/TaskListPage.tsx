@@ -11,6 +11,7 @@ import { api } from '../../../services/api';
 import type { TaskListItem, TaskListQuery, TaskType } from '../../../types';
 import { getRoles, isPht, isTeacher, isTeamLead } from '../../../utils/jwt';
 import { toProblem } from '../../../utils/problem';
+import { displayToast } from '../../../utils/toast';
 import { questionApi } from '../../questions/questionApi';
 import '../../matrix/matrix.css';
 import '../tasks.css';
@@ -36,7 +37,7 @@ const DELETE_STARTED = 'Nhiệm vụ đã được thực hiện, không thể x
 export const TaskListPage = () => {
   const navigate = useNavigate();
   const teamLead = isTeamLead();
-  // PHT chọn loại (ma trận hoặc đề thi); Tổ trưởng giao câu hỏi; giáo viên không giao việc.
+  // PHT giao ma trận hoặc sinh đề rồi giao review; Tổ trưởng giao câu hỏi.
   const addPath = teamLead ? '/matrix-tasks/new/question' : getRoles().includes('PHT') ? '/matrix-tasks/new' : null;
   // PHT tự kiểm duyệt việc mình giao; giáo viên chính là người thực hiện: cột đó chỉ lặp lại một tên.
   const showReviewer = teamLead || !isPht();
@@ -48,7 +49,6 @@ export const TaskListPage = () => {
   const [status, setStatus] = useState<TaskListQuery['status'] | ''>('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [notice, setNotice] = useState<{ message: string; kind: 'error' | 'success' } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<TaskListItem | null>(null);
   const [busy, runExclusive] = useBusy();
   const debouncedKeyword = useDebounce(keyword, 300);
@@ -83,9 +83,8 @@ export const TaskListPage = () => {
 
   // GB-55: chỉ xoá được khi người thực hiện chưa bắt đầu; backend kiểm tra lại lúc xoá (409).
   const askDelete = (task: TaskListItem) => {
-    setNotice(null);
     if (!task.canDelete) {
-      setNotice({ message: DELETE_STARTED, kind: 'error' });
+      displayToast('error', 'Lỗi', DELETE_STARTED, 5);
       return;
     }
     setPendingDelete(task);
@@ -97,12 +96,12 @@ export const TaskListPage = () => {
     void runExclusive(async () => {
       try {
         const response = await api.task.remove(task.id);
-        setNotice({ message: response.message ?? `Đã xóa nhiệm vụ "${task.name}".`, kind: 'success' });
+        displayToast('success', 'Thành công', response.message ?? `Đã xóa nhiệm vụ "${task.name}".`);
         // Xoá dòng cuối cùng của trang cuối thì lùi một trang.
         if (items.length === 1 && page > 1) setPage(page - 1);
         else list.reload();
       } catch (error) {
-        setNotice({ message: toProblem(error).message, kind: 'error' });
+        displayToast('error', 'Lỗi', toProblem(error).message, 5);
         list.reload();
       }
       setPendingDelete(null);
@@ -168,12 +167,6 @@ export const TaskListPage = () => {
             </div>
           )}
         </div>
-
-        {notice && (
-          <div className={notice.kind === 'error' ? 'sep-alert' : 'sep-alert sep-alert--success'} role="alert">
-            {notice.message}
-          </div>
-        )}
 
         {list.error != null ? (
           <div className="sep-alert" role="alert">

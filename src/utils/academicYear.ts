@@ -27,8 +27,8 @@ export const validateAcademicYear = (year: Pick<CreateAcademicYearRequest, 'name
     const last = Number(match[2]);
     if (last !== first + 1) errors.name = 'Năm kết thúc phải ngay sau năm bắt đầu.';
     if (first < 2000 || first > 2100) errors.name = 'Năm bắt đầu phải từ 2000 đến 2100.';
-    if (Number(year.startDate.slice(0, 4)) !== first) errors.startDate = `Ngày bắt đầu phải thuộc năm ${first}.`;
-    if (Number(year.endDate.slice(0, 4)) !== last) errors.endDate = `Ngày kết thúc phải thuộc năm ${last}.`;
+    if (Number((year.startDate ?? '').slice(0, 4)) !== first) errors.startDate = `Ngày bắt đầu phải thuộc năm ${first}.`;
+    if (Number((year.endDate ?? '').slice(0, 4)) !== last) errors.endDate = `Ngày kết thúc phải thuộc năm ${last}.`;
   }
   const start = dateValue(year.startDate);
   const end = dateValue(year.endDate);
@@ -83,3 +83,14 @@ export const initialAcademicTerms = (startDate: string, endDate: string): Config
   { order: 1, name: 'Học kỳ I', startDate, endDate: `${endDate.slice(0, 4)}-01-15` },
   { order: 2, name: 'Học kỳ II', startDate: `${endDate.slice(0, 4)}-01-16`, endDate },
 ];
+
+// DB v2: year-only workflow; retained date helpers serve legacy consumers only.
+export const validateAcademicYearName = (value: { name: string }): CalendarErrors => {
+  const name = value.name.trim();
+  const match = /^([0-9]{4})-([0-9]{4})$/.exec(name);
+  if (!name) return { name: 'Tên năm học là bắt buộc.' };
+  if (!match) return { name: 'Tên năm học phải có định dạng YYYY-YYYY.' };
+  if (Number(match[2]) !== Number(match[1]) + 1) return { name: 'Năm kết thúc phải ngay sau năm bắt đầu.' };
+  if (Number(match[1]) < 2000 || Number(match[1]) > 2100) return { name: 'Năm bắt đầu phải từ 2000 đến 2100.' };
+  return {};
+};
