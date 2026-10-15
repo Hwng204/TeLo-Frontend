@@ -62,7 +62,8 @@
 .sep-dialog.cur-dialog { border-radius: 16px; }
 .cur-dialog .sep-dialog__body { padding: 24px; }
 .cur-dialog .sep-dialog__head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.cur-dialog .sep-dialog__title { font: 700 20px/28px 'Inter', sans-serif; color: var(--pcb-color-text-primary); }
+.cur-dialog .sep-dialog__title { font: 600 20px/28px 'Inter', sans-serif; color: var(--pcb-color-text-primary); }
+.cur-import__errors strong { font-weight: 600; }
 .cur-dialog .sep-dialog__close { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: var(--pcb-color-bg-subtle); color: var(--pcb-color-text-secondary); cursor: pointer; }
 .cur-dialog .sep-dialog__close:hover { background: var(--pcb-color-bg-hover); }
 .cur-dialog .sep-actions .pcb-btn--secondary { border-color: var(--pcb-color-border-default); color: var(--pcb-color-text-primary); }

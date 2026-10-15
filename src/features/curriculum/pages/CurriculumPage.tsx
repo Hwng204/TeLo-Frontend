@@ -200,10 +200,6 @@ export const CurriculumPage = () => {
             </div>
             {canManage && (
               <div className="sep-toolbar__actions">
-                <PcbButton variant="ghost" onClick={() => void downloadTemplate()}>
-                  <Icon name="download" size={20} />
-                  Tải file mẫu
-                </PcbButton>
                 <PcbButton variant="secondary" onClick={() => setEditing({ kind: 'import' })}>
                   <Icon name="upload_file" size={20} />
                   Nhập từ Excel

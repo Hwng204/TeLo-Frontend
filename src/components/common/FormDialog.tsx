@@ -21,7 +21,7 @@ export const FormDialog = ({ open, title, onClose, children, closeButton = false
       const trigger = document.activeElement;
       dialog.showModal();
       // showModal focuses the first focusable element, which is the X when closeButton is on: start at the first field.
-      if (closeButton) dialog.querySelector<HTMLElement>('input:not(:disabled), select:not(:disabled), textarea:not(:disabled)')?.focus();
+      if (closeButton) dialog.querySelector<HTMLElement>('input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [role="combobox"]:not(:disabled)')?.focus();
       return () => {
         if (dialog.open) dialog.close();
         if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus();
