@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { curriculumFieldLabel } from '../components/fieldLabel';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { RowActionButton } from '../../../components/common/RowAction';
 import { TableState } from '../../../components/common/TableState';
 import { Field, Icon, PcbButton, SelectField } from '../../../components/pcb';
-import { useAsync, useNotice } from '../../../hooks';
+import { useAsync, useBusy } from '../../../hooks';
 import { api } from '../../../services/api';
-import type { Chapter, Lesson } from '../../../types';
+import type { ApiResponse, Chapter, CurriculumDeleteResult, Lesson } from '../../../types';
 import { filterChapters, isFiltered, type CurriculumFilter } from '../../../utils/curriculumFilter';
 import { saveBlob } from '../../../utils/download';
 import { toProblem } from '../../../utils/problem';
@@ -23,6 +24,11 @@ type Editing =
 
 const EMPTY_FILTER: CurriculumFilter = { keyword: '' };
 
+/** Hộp xác nhận xoá/lưu trữ đang mở. */
+type Confirming = { kind: 'chương' | 'bài'; title: string; message: ReactNode; confirmText: string; run: () => Promise<ApiResponse<CurriculumDeleteResult>> };
+/** Thông báo kết quả một nút (cùng kiểu hộp xác nhận). */
+type Notice = { ok: boolean; message: string };
+
 /**
  * Chương & bài học của phân hiệu. PHT xem và quản lý (thêm/sửa/xoá/nhập Excel); Tổ trưởng và Giáo viên chỉ xem.
  * Quyền quản lý lấy từ backend (`canManage`), không suy ra từ token.
@@ -32,7 +38,9 @@ export const CurriculumPage = () => {
   const [filter, setFilter] = useState<CurriculumFilter>(EMPTY_FILTER);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [editing, setEditing] = useState<Editing>(null);
-  const popup = useNotice();
+  const [confirming, setConfirming] = useState<Confirming | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const [removing, runExclusive] = useBusy();
 
   const curriculum = data.data;
   const canManage = curriculum?.canManage ?? false;
@@ -53,7 +61,7 @@ export const CurriculumPage = () => {
 
   const saved = (message: string) => {
     setEditing(null);
-    popup.success(message);
+    setNotice({ ok: true, message });
     data.reload();
   };
 
@@ -62,45 +70,77 @@ export const CurriculumPage = () => {
       const { blob, filename } = await api.curriculum.downloadTemplate();
       saveBlob(blob, filename);
     } catch {
-      popup.error('Không tải được file mẫu. Vui lòng thử lại.');
+      setNotice({ ok: false, message: 'Không tải được file mẫu. Vui lòng thử lại.' });
     }
   };
 
-  const remove = async (run: () => Promise<unknown>, success: string) => {
-    try {
-      await run();
-      popup.success(success);
-    } catch (error) {
-      popup.error(toProblem(error).message);
-    }
-    data.reload();
-  };
+  const remove = ({ run, kind }: Confirming) =>
+    void runExclusive(async () => {
+      try {
+        const response = await run();
+        setNotice({
+          ok: true,
+          message:
+            response.message || (response.data?.archived ? `Đã lưu trữ ${kind} học.` : `Xoá ${kind} học thành công.`),
+        });
+      } catch (error) {
+        setNotice({ ok: false, message: toProblem(error).message });
+      }
+      setConfirming(null);
+      data.reload();
+    });
 
   const deleteChapter = (chapter: Chapter) => {
-    if (chapter.inUse) {
-      popup.error('Chương học đã được sử dụng trong câu hỏi, đề thi, ma trận hoặc nhiệm vụ nên không thể xoá.');
-      return;
-    }
-    popup.confirm(
-      `Chương "${chapter.title}" chưa được sử dụng. Bạn có chắc muốn xoá chương này cùng toàn bộ ${chapter.lessons.length} bài học bên trong?`,
-      () => void remove(() => api.curriculum.deleteChapter(chapter.id), 'Xoá chương học thành công.'),
-      'Xoá',
+    const label = (
+      <>
+        Chương {chapter.number}: "<strong>{chapter.title}</strong>"
+      </>
     );
+    setConfirming({
+      kind: 'chương',
+      title: chapter.inUse ? 'Lưu trữ chương?' : 'Xóa chương?',
+      confirmText: chapter.inUse ? 'Lưu trữ chương' : 'Xóa chương',
+      message: chapter.inUse ? (
+        <>
+          <p>{label} đang được dùng trong ma trận hoặc nhiệm vụ nên không thể xóa hẳn.</p>
+          <p>Chương sẽ được ẩn khỏi danh sách và không dùng cho ma trận mới; ma trận, nhiệm vụ cũ vẫn giữ nguyên.</p>
+        </>
+      ) : (
+        <>
+          <p>
+            {label} cùng {chapter.lessons.length} bài học sẽ bị xóa khỏi hệ thống.
+          </p>
+          <p>Hành động này sẽ không thể hoàn tác.</p>
+        </>
+      ),
+      run: () => api.curriculum.deleteChapter(chapter.id),
+    });
   };
 
   const deleteLesson = (lesson: Lesson) => {
-    if (lesson.inUse) {
-      popup.error('Bài học đã được sử dụng trong câu hỏi, đề thi, ma trận hoặc nhiệm vụ nên không thể xoá.');
-      return;
-    }
-    popup.confirm(
-      `Bài học "${lesson.title}" chưa được sử dụng. Bạn có chắc muốn xoá bài học này?`,
-      () => void remove(() => api.curriculum.deleteLesson(lesson.id), 'Xoá bài học thành công.'),
-      'Xoá',
+    const label = (
+      <>
+        Bài {lesson.number}: "<strong>{lesson.title}</strong>"
+      </>
     );
+    setConfirming({
+      kind: 'bài',
+      title: lesson.inUse ? 'Lưu trữ bài học?' : 'Xóa bài học?',
+      confirmText: lesson.inUse ? 'Lưu trữ bài học' : 'Xóa bài học',
+      message: lesson.inUse ? (
+        <>
+          <p>{label} đang được dùng trong ma trận hoặc nhiệm vụ nên không thể xóa hẳn.</p>
+          <p>Bài học sẽ được ẩn khỏi danh sách và không dùng cho ma trận mới; ma trận, nhiệm vụ cũ vẫn giữ nguyên.</p>
+        </>
+      ) : (
+        <>
+          <p>{label} sẽ bị xóa khỏi hệ thống.</p>
+          <p>Hành động này sẽ không thể hoàn tác.</p>
+        </>
+      ),
+      run: () => api.curriculum.deleteLesson(lesson.id),
+    });
   };
-
-  const columns = canManage ? 7 : 6;
 
   return (
     <>
@@ -115,7 +155,7 @@ export const CurriculumPage = () => {
                 hideLabel
                 leading="search"
                 placeholder="Tìm chương, bài học"
-                title="Tìm chương hoặc bài học theo mã hoặc tên"
+                title="Tìm chương hoặc bài học theo số (ví dụ: chương 2, bài 3) hoặc tên"
                 value={filter.keyword}
                 fieldClassName="sep-toolbar__search"
                 onChange={(event) => setFilter({ ...filter, keyword: event.target.value })}
@@ -137,15 +177,15 @@ export const CurriculumPage = () => {
                 ))}
               </SelectField>
               <SelectField
-                label="Lĩnh vực"
+                label="Môn học"
                 hideLabel
-                placeholder="Lĩnh vực"
+                placeholder="Môn học"
                 value={filter.fieldId ?? ''}
                 onChange={(event) =>
                   setFilter({ ...filter, fieldId: event.target.value ? Number(event.target.value) : undefined })
                 }
               >
-                <option value="">Tất cả lĩnh vực</option>
+                <option value="">Tất cả môn học</option>
                 {fields.map((field) => (
                   <option key={field.id} value={field.id}>
                     {fieldLabels.get(field.id)}
@@ -160,10 +200,6 @@ export const CurriculumPage = () => {
             </div>
             {canManage && (
               <div className="sep-toolbar__actions">
-                <PcbButton variant="ghost" onClick={() => void downloadTemplate()}>
-                  <Icon name="download" size={20} />
-                  Tải file mẫu
-                </PcbButton>
                 <PcbButton variant="secondary" onClick={() => setEditing({ kind: 'import' })}>
                   <Icon name="upload_file" size={20} />
                   Nhập từ Excel
@@ -195,118 +231,100 @@ export const CurriculumPage = () => {
         )}
 
         {!loadProblem && (
-          <div className="pcb-table-wrap">
-            <table className="pcb-table cur-table">
-              <thead>
-                <tr>
-                  <th className="cur-col-toggle" aria-label="Mở rộng" />
-                  <th className="cur-col-code">Mã chương</th>
-                  <th>Tên chương</th>
-                  <th>Khối lớp</th>
-                  <th>Lĩnh vực</th>
-                  <th className="cur-col-count">Số bài</th>
-                  {canManage && <th className="sep-col-actions">Hành động</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map(({ chapter, lessons, matchedByLesson }) => {
-                  const open = expanded.has(chapter.id) || matchedByLesson;
-                  const panelId = `chapter-${chapter.id}-lessons`;
-                  return [
-                    <tr key={chapter.id} className={open ? 'cur-chapter cur-chapter--open' : 'cur-chapter'}>
-                      <td className="cur-col-toggle">
-                        <button
-                          type="button"
-                          className="pcb-iconbtn pcb-iconbtn--sm"
-                          aria-expanded={open}
-                          aria-controls={panelId}
-                          aria-label={`${open ? 'Thu gọn' : 'Mở rộng'} chương ${chapter.title}`}
-                          disabled={matchedByLesson}
-                          onClick={() => toggle(chapter.id)}
-                        >
-                          <Icon name={open ? 'expand_more' : 'chevron_right'} size={20} />
-                        </button>
-                      </td>
-                      <td className="cur-col-code sep-nowrap">{chapter.code}</td>
-                      <td>
-                        <button type="button" className="cur-title-toggle" onClick={() => toggle(chapter.id)}>
-                          {chapter.title}
-                        </button>
-                      </td>
-                      <td className="sep-nowrap">{chapter.gradeLevelName}</td>
-                      <td>{fieldLabels.get(chapter.fieldId) ?? chapter.fieldName}</td>
-                      <td className="cur-col-count">{chapter.lessons.length}</td>
+          <div>
+            <div className="cur-list">
+              {visible.map(({ chapter, lessons, matchedByLesson }) => {
+                const open = expanded.has(chapter.id) || matchedByLesson;
+                const panelId = `chapter-${chapter.id}-lessons`;
+                const name = `Chương ${chapter.number}: ${chapter.title}`;
+                return (
+                  <section key={chapter.id} className={open ? 'cur-chapter cur-chapter--open' : 'cur-chapter'}>
+                    <div className="cur-chapter__head">
+                      <button
+                        type="button"
+                        className="pcb-iconbtn pcb-iconbtn--sm cur-chapter__chevron"
+                        aria-expanded={open}
+                        aria-controls={panelId}
+                        aria-label={`${open ? 'Thu gọn' : 'Mở rộng'} ${name}`}
+                        disabled={matchedByLesson}
+                        onClick={() => toggle(chapter.id)}
+                      >
+                        <Icon name={open ? 'expand_more' : 'chevron_right'} size={20} />
+                      </button>
+                      <button type="button" className="cur-title-toggle" onClick={() => toggle(chapter.id)}>
+                        {name}
+                      </button>
+                      <span className="cur-chapter__meta">
+                        {chapter.gradeLevelName} · {fieldLabels.get(chapter.fieldId) ?? chapter.fieldName} ·{' '}
+                        {chapter.lessons.length} bài
+                      </span>
                       {canManage && (
-                        <td className="sep-col-actions">
-                          <div className="sep-row-actions">
-                            <RowActionButton
-                              icon="edit"
-                              label={`Sửa chương ${chapter.title}`}
-                              onClick={() => setEditing({ kind: 'chapter', chapter })}
-                            />
-                            <RowActionButton
-                              icon="delete"
-                              label={`Xoá chương ${chapter.title}`}
-                              onClick={() => deleteChapter(chapter)}
-                            />
-                          </div>
-                        </td>
+                        <span className="sep-row-actions cur-actions">
+                          <RowActionButton
+                            icon="edit"
+                            label={`Sửa ${name}`}
+                            onClick={() => setEditing({ kind: 'chapter', chapter })}
+                          />
+                          <RowActionButton icon="delete" label={`Xoá ${name}`} onClick={() => deleteChapter(chapter)} />
+                        </span>
                       )}
-                    </tr>,
-                    open && (
-                      <tr key={`${chapter.id}-lessons`} className="cur-lessons-row">
-                        <td colSpan={columns} id={panelId}>
-                          {lessons.length === 0 ? (
-                            <p className="cur-lessons-empty">Hiện chưa có bài học nào trong chương học này.</p>
-                          ) : (
-                            <ul className="cur-lessons" aria-label={`Bài học của chương ${chapter.title}`}>
-                              {lessons.map((lesson) => (
+                    </div>
+                    {open && (
+                      <div className="cur-chapter__body" id={panelId}>
+                        {lessons.length === 0 ? (
+                          <p className="cur-lessons-empty">Hiện chưa có bài học nào trong chương học này.</p>
+                        ) : (
+                          <ul className="cur-lessons" aria-label={`Bài học của ${name}`}>
+                            {lessons.map((lesson) => {
+                              const lessonName = `Bài ${lesson.number}: ${lesson.title}`;
+                              return (
                                 <li key={lesson.id} className="cur-lesson">
-                                  <span className="cur-lesson__code">Bài {lesson.code}</span>
-                                  <span className="cur-lesson__title">{lesson.title}</span>
+                                  <span className="cur-lesson__title">{lessonName}</span>
                                   {canManage && lesson.inUse && <span className="cur-lesson__tag">Đã dùng</span>}
                                   {canManage && (
-                                    <span className="sep-row-actions cur-lesson__actions">
+                                    <span className="sep-row-actions cur-actions">
                                       <RowActionButton
                                         icon="edit"
-                                        label={`Sửa bài ${lesson.title}`}
+                                        label={`Sửa ${lessonName}`}
                                         onClick={() => setEditing({ kind: 'lesson', chapter, lesson })}
                                       />
                                       <RowActionButton
                                         icon="delete"
-                                        label={`Xoá bài ${lesson.title}`}
+                                        label={`Xoá ${lessonName}`}
                                         onClick={() => deleteLesson(lesson)}
                                       />
                                     </span>
                                   )}
                                 </li>
-                              ))}
-                            </ul>
-                          )}
-                          {canManage && !matchedByLesson && (
-                            <PcbButton
-                              variant="ghost"
-                              size="sm"
-                              className="cur-add-lesson"
+                              );
+                            })}
+                          </ul>
+                        )}
+                        {canManage && !matchedByLesson && (
+                          <div className="cur-add-lesson">
+                            <button
+                              type="button"
+                              className="cur-add-lesson__btn"
+                              aria-label={`Thêm bài học vào chương ${chapter.number}`}
+                              title={`Thêm bài học vào chương ${chapter.number}`}
                               onClick={() => setEditing({ kind: 'lesson', chapter, lesson: null })}
                             >
                               <Icon name="add" size={18} />
-                              Thêm bài học
-                            </PcbButton>
-                          )}
-                        </td>
-                      </tr>
-                    ),
-                  ];
-                })}
-              </tbody>
-            </table>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </section>
+                );
+              })}
+            </div>
 
             <TableState
               loading={data.loading}
               failed={false}
               empty={visible.length === 0}
-              columns={columns}
+              columns={3}
               title={
                 chapters.length === 0
                   ? 'Hiện chưa có chương học nào trong hệ thống.'
@@ -334,6 +352,7 @@ export const CurriculumPage = () => {
         chapter={editing?.kind === 'chapter' ? editing.chapter : null}
         grades={curriculum?.grades ?? []}
         fields={fields}
+        chapters={chapters}
         onClose={() => setEditing(null)}
         onSaved={saved}
       />
@@ -356,7 +375,29 @@ export const CurriculumPage = () => {
           saved(`Đã nhập ${result.newChapterCount} chương mới và ${result.lessonCount} bài học.`)
         }
       />
-      {popup.dialog}
+      <ConfirmDialog
+        isOpen={confirming != null}
+        className="sep-delete-confirm"
+        type="danger"
+        title={confirming?.title ?? ''}
+        message={confirming?.message}
+        confirmText={confirming?.confirmText}
+        cancelText="Đóng"
+        isLoading={removing}
+        onCancel={() => setConfirming(null)}
+        onConfirm={() => confirming && remove(confirming)}
+      />
+      <ConfirmDialog
+        isOpen={notice != null}
+        className="sep-delete-confirm"
+        type={notice?.ok ? 'info' : 'danger'}
+        title={notice?.ok ? 'Thành công' : 'Không thực hiện được'}
+        message={<p>{notice?.message}</p>}
+        confirmText="Đóng"
+        hideCancel
+        onCancel={() => setNotice(null)}
+        onConfirm={() => setNotice(null)}
+      />
     </>
   );
 };

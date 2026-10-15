@@ -48,7 +48,7 @@
   /* index.css khai báo `light dark`; ở chế độ tối của hệ điều hành, textarea và icon lịch
      sẽ tự đổi sang nền tối trong khi token của SEP chỉ có bản sáng. */
   color-scheme: light;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--sans);
   font-size: 14px;
   line-height: 22px;
   letter-spacing: 0;
@@ -59,6 +59,10 @@
 .sep-app h2 {
   font-family: inherit;
   margin: 0;
+}
+/* Native controls do not inherit font; zero specificity so every class rule still wins. ConfirmDialog is portaled outside .sep-app. */
+:where(.sep-app, .confirm-overlay) :where(button, input, select, textarea) {
+  font-family: inherit;
 }
 
 /* Những bề mặt do trình duyệt vẽ (bôi đen, con trỏ nhập, thanh cuộn) mặc định không theo bảng màu nào.

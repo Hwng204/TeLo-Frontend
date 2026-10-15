@@ -18,7 +18,7 @@ type Props = {
  * Có dòng lỗi thì không lưu gì; sửa tệp rồi chọn lại.
  */
 export const ImportDialog = (props: Props) => (
-  <FormDialog open={props.open} title="Nhập chương & bài từ Excel" onClose={props.onClose}>
+  <FormDialog open={props.open} title="Nhập chương & bài từ Excel" onClose={props.onClose} closeButton className="cur-dialog">
     <ImportForm key={String(props.open)} {...props} />
   </FormDialog>
 );
@@ -57,8 +57,9 @@ const ImportForm = ({ onClose, onDownloadTemplate, onImported }: Props) => {
   return (
     <div className="cur-import">
       <p className="pcb-hint">
-        Dùng tệp mẫu: mỗi dòng là một bài học, thông tin chương lặp lại ở các dòng cùng chương. Hệ thống kiểm tra toàn bộ
-        tệp trước, chưa lưu gì cho tới khi bạn bấm "Xác nhận nhập".
+        Dùng tệp mẫu: chọn Khối lớp và Môn học ở đầu sheet; mỗi dòng là một bài học, dòng tiếp theo của cùng chương có thể
+        để trống Số chương và Tên chương. Hệ thống kiểm tra toàn bộ tệp trước, chưa lưu gì cho tới khi bạn bấm "Xác nhận
+        nhập".
       </p>
       <div className="cur-import__pick">
         <PcbButton variant="ghost" size="sm" onClick={onDownloadTemplate}>
@@ -128,8 +129,8 @@ const ImportForm = ({ onClose, onDownloadTemplate, onImported }: Props) => {
       )}
 
       <div className="sep-actions">
-        <PcbButton variant="ghost" onClick={onClose}>
-          Huỷ
+        <PcbButton variant="secondary" onClick={onClose}>
+          Đóng
         </PcbButton>
         <PcbButton disabled={busy || !preview?.canImport} onClick={confirm}>
           {busy && preview?.canImport ? 'Đang nhập…' : 'Xác nhận nhập'}

@@ -80,7 +80,7 @@ export const LessonCardEditor = ({ index, draft, curriculum, disabled, invalid, 
           <option value="">Chọn chương</option>
           {gradeChapters.map((chapter) => (
             <option key={chapter.id} value={chapter.id}>
-              {chapterLabel(chapter.code, chapter.title)}
+              {chapterLabel(String(chapter.number), chapter.title)}
             </option>
           ))}
         </SelectField>
@@ -94,7 +94,7 @@ export const LessonCardEditor = ({ index, draft, curriculum, disabled, invalid, 
           <option value="">Chọn bài học</option>
           {lessons.map((lesson) => (
             <option key={lesson.id} value={lesson.id}>
-              {lessonLabel(lesson.code, lesson.title)}
+              {lessonLabel(String(lesson.number), lesson.title)}
             </option>
           ))}
         </SelectField>

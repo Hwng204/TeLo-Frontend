@@ -4,19 +4,19 @@
  * ponytail: console.assert because this project has no test runner.
  */
 import type { Chapter } from '../types';
-import { filterChapters } from './curriculumFilter';
+import { filterChapters, isValidNumber } from './curriculumFilter';
 
-const lesson = (id: number, code: string, title: string) => ({ id, chapterId: 1, code, title, sortOrder: id, inUse: false });
+const lesson = (id: number, number: number, title: string) => ({ id, chapterId: 1, number, title, inUse: false });
 
 const chapters: Chapter[] = [
   {
     id: 1, gradeLevelId: 5, gradeLevelName: 'Lớp 5', fieldId: 1, fieldName: 'Số và phép tính',
-    code: '1', title: 'Ôn tập và bổ sung', sortOrder: 1, inUse: false,
-    lessons: [lesson(1, '1', 'Ôn tập số tự nhiên'), lesson(2, '7', 'Hỗn số')],
+    number: 1, title: 'Ôn tập và bổ sung', inUse: false,
+    lessons: [lesson(1, 1, 'Ôn tập số tự nhiên'), lesson(2, 7, 'Hỗn số')],
   },
   {
     id: 2, gradeLevelId: 5, gradeLevelName: 'Lớp 5', fieldId: 2, fieldName: 'Hình học và đo lường',
-    code: '3', title: 'Một số đơn vị đo diện tích', sortOrder: 2, inUse: false, lessons: [],
+    number: 3, title: 'Một số đơn vị đo diện tích', inUse: false, lessons: [],
   },
 ];
 
@@ -39,5 +39,22 @@ export const curriculumFilterSelfCheck = () => {
   console.assert(
     filterChapters(chapters, { keyword: '', fieldId: 2 }).map((item) => item.chapter.id).join() === '2',
     'curriculumFilter 5: lọc theo lĩnh vực',
+  );
+
+  const byChapterNumber = filterChapters(chapters, { keyword: 'chương 3' });
+  console.assert(
+    byChapterNumber.length === 1 && byChapterNumber[0].chapter.id === 2 && !byChapterNumber[0].matchedByLesson,
+    'curriculumFilter 6: tìm theo "Chương {số}"',
+  );
+
+  const byLessonNumber = filterChapters(chapters, { keyword: 'BÀI 7' });
+  console.assert(
+    byLessonNumber.length === 1 && byLessonNumber[0].matchedByLesson && byLessonNumber[0].lessons[0].id === 2,
+    'curriculumFilter 7: tìm theo "Bài {số}" thì chỉ giữ bài khớp',
+  );
+
+  console.assert(
+    ['1', '999', ' 12 '].every(isValidNumber) && !['', '0', '1000', '1.5', '-1', 'abc'].some(isValidNumber),
+    'curriculumFilter 8: số chương/bài là số nguyên 1–999',
   );
 };

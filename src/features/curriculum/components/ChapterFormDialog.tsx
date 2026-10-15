@@ -3,6 +3,7 @@ import { Field, PcbButton, SelectField } from '../../../components/pcb';
 import { useBusy } from '../../../hooks';
 import { api } from '../../../services/api';
 import type { Chapter, CurriculumField, CurriculumOption } from '../../../types';
+import { isValidNumber } from '../../../utils/curriculumFilter';
 import { toProblem } from '../../../utils/problem';
 import { FormDialog } from '../../../components/common/FormDialog';
 import { curriculumFieldLabel } from './fieldLabel';
@@ -13,58 +14,85 @@ type Props = {
   chapter: Chapter | null;
   grades: CurriculumOption[];
   fields: CurriculumField[];
+  /** Chương đang có, để gợi ý Số chương kế tiếp trong cùng khối lớp + môn học. */
+  chapters: Chapter[];
   onClose: () => void;
   onSaved: (message: string) => void;
 };
 
-type Values = { gradeLevelId: string; fieldId: string; code: string; title: string };
+type Values = { gradeLevelId: string; fieldId: string; number: string; title: string };
 
 const LABELS: Record<keyof Values, string> = {
   gradeLevelId: 'Khối lớp',
-  fieldId: 'Lĩnh vực',
-  code: 'Mã chương',
+  fieldId: 'Môn học',
+  number: 'Số chương',
   title: 'Tên chương',
 };
 
 const initial = (chapter: Chapter | null): Values => ({
   gradeLevelId: chapter ? String(chapter.gradeLevelId) : '',
   fieldId: chapter ? String(chapter.fieldId) : '',
-  code: chapter?.code ?? '',
+  number: chapter ? String(chapter.number) : '',
   title: chapter?.title ?? '',
 });
 
-/** Thêm/sửa chương (MSG02 bắt buộc nhập, MSG06 trùng mã/tên, MSG18 khoá khối & lĩnh vực khi đã dùng). */
+/** Số chương gợi ý: lớn nhất trong cùng khối lớp + môn học, cộng 1; chưa chọn đủ thì để trống. */
+const nextNumber = (chapters: Chapter[], gradeLevelId: string, fieldId: string) =>
+  gradeLevelId && fieldId
+    ? String(
+        Math.max(
+          0,
+          ...chapters
+            .filter((item) => item.gradeLevelId === Number(gradeLevelId) && item.fieldId === Number(fieldId))
+            .map((item) => item.number),
+        ) + 1,
+      )
+    : '';
+
+/** Thêm/sửa chương (MSG02 bắt buộc nhập, MSG06 trùng số/tên, MSG18 khoá khối & môn học khi đã dùng). */
 export const ChapterFormDialog = (props: Props) => (
-  <FormDialog open={props.open} title={props.chapter ? 'Sửa chương' : 'Thêm chương'} onClose={props.onClose}>
+  <FormDialog open={props.open} title={props.chapter ? 'Sửa chương' : 'Thêm chương'} onClose={props.onClose} closeButton className="cur-dialog">
     {/* key: mở lại dialog luôn bắt đầu từ dữ liệu mới, không giữ lỗi của lần trước. */}
     <ChapterForm key={`${props.chapter?.id ?? 'new'}-${props.open}`} {...props} />
   </FormDialog>
 );
 
-const ChapterForm = ({ chapter, grades, fields, onClose, onSaved }: Props) => {
+const ChapterForm = ({ chapter, grades, fields, chapters, onClose, onSaved }: Props) => {
   const [values, setValues] = useState<Values>(() => initial(chapter));
   const [errors, setErrors] = useState<Partial<Record<keyof Values, string>>>({});
   const [formError, setFormError] = useState('');
   const [busy, runExclusive] = useBusy();
-  // Chương đã được ma trận/nhiệm vụ dùng thì không đổi khối và lĩnh vực được.
+  // Người dùng đã tự sửa Số chương thì thôi gợi ý lại khi đổi khối lớp/môn học.
+  const [numberEdited, setNumberEdited] = useState(chapter != null);
+  // Chương đã được ma trận/nhiệm vụ dùng thì không đổi khối và môn học được.
   const scopeLocked = Boolean(chapter?.inUse);
 
   const set = (key: keyof Values, value: string) => {
-    setValues((current) => ({ ...current, [key]: value }));
+    setValues((current) => {
+      const next = { ...current, [key]: value };
+      if (!numberEdited && (key === 'gradeLevelId' || key === 'fieldId')) {
+        next.number = nextNumber(chapters, next.gradeLevelId, next.fieldId);
+      }
+      return next;
+    });
     setErrors((current) => ({ ...current, [key]: undefined }));
   };
 
   const submit = () => {
-    const missing = (Object.keys(LABELS) as (keyof Values)[]).filter((key) => !values[key].trim());
-    if (missing.length > 0) {
-      setErrors(Object.fromEntries(missing.map((key) => [key, `Trường ${LABELS[key]} là bắt buộc.`])));
+    const missing = (Object.keys(LABELS) as (keyof Values)[]).filter((key) => key !== 'number' && !values[key].trim());
+    const next: Partial<Record<keyof Values, string>> = Object.fromEntries(
+      missing.map((key) => [key, `Trường ${LABELS[key]} là bắt buộc.`]),
+    );
+    if (!isValidNumber(values.number)) next.number = 'Số chương phải là số nguyên từ 1 đến 999.';
+    if (Object.keys(next).length > 0) {
+      setErrors(next);
       return;
     }
     void runExclusive(async () => {
       const body = {
         gradeLevelId: Number(values.gradeLevelId),
         fieldId: Number(values.fieldId),
-        code: values.code,
+        number: Number(values.number),
         title: values.title,
       };
       try {
@@ -114,7 +142,7 @@ const ChapterForm = ({ chapter, grades, fields, onClose, onSaved }: Props) => {
           disabled={scopeLocked}
           onChange={(event) => set('fieldId', event.target.value)}
         >
-          <option value="">Chọn lĩnh vực</option>
+          <option value="">Chọn môn học</option>
           {fields.map((field) => (
             <option key={field.id} value={field.id}>
               {curriculumFieldLabel(field, fields)}
@@ -122,12 +150,19 @@ const ChapterForm = ({ chapter, grades, fields, onClose, onSaved }: Props) => {
           ))}
         </SelectField>
         <Field
-          label={`${LABELS.code} *`}
-          value={values.code}
-          maxLength={32}
-          error={errors.code}
+          label={`${LABELS.number} *`}
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={999}
+          step={1}
+          value={values.number}
+          error={errors.number}
           placeholder="Ví dụ: 1"
-          onChange={(event) => set('code', event.target.value)}
+          onChange={(event) => {
+            setNumberEdited(true);
+            set('number', event.target.value);
+          }}
         />
         <Field
           label={`${LABELS.title} *`}
@@ -140,7 +175,7 @@ const ChapterForm = ({ chapter, grades, fields, onClose, onSaved }: Props) => {
       </div>
       {scopeLocked && (
         <p className="pcb-hint cur-dialog-note">
-          Chương đã được sử dụng trong ma trận hoặc nhiệm vụ nên không đổi được khối lớp và lĩnh vực.
+          Chương đã được sử dụng trong ma trận hoặc nhiệm vụ nên không đổi được khối lớp và môn học.
         </p>
       )}
       {formError && (
@@ -149,8 +184,8 @@ const ChapterForm = ({ chapter, grades, fields, onClose, onSaved }: Props) => {
         </div>
       )}
       <div className="sep-actions">
-        <PcbButton variant="ghost" onClick={onClose}>
-          Huỷ
+        <PcbButton variant="secondary" onClick={onClose}>
+          Đóng
         </PcbButton>
         <PcbButton type="submit" disabled={busy}>
           {busy ? 'Đang lưu…' : chapter ? 'Lưu thay đổi' : 'Thêm chương'}

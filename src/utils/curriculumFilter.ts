@@ -21,20 +21,23 @@ const matches = (keyword: string, ...values: string[]) => values.some((value) =>
 
 /**
  * Lọc danh sách chương ở client: một phân hiệu chỉ có vài chục chương nên tải một lần rồi lọc tại chỗ.
- * Chương khớp theo mã/tên thì giữ đủ bài; chương chỉ khớp ở bài thì chỉ giữ những bài khớp.
+ * Chương khớp theo nhãn "Chương {số}"/tên thì giữ đủ bài; chương chỉ khớp ở bài thì chỉ giữ những bài khớp.
  */
 export const filterChapters = (chapters: Chapter[], filter: CurriculumFilter): VisibleChapter[] => {
   const keyword = fold(filter.keyword);
   return chapters.flatMap((chapter): VisibleChapter[] => {
     if (filter.gradeLevelId !== undefined && chapter.gradeLevelId !== filter.gradeLevelId) return [];
     if (filter.fieldId !== undefined && chapter.fieldId !== filter.fieldId) return [];
-    if (!keyword || matches(keyword, chapter.code, chapter.title)) {
+    if (!keyword || matches(keyword, `Chương ${chapter.number}`, chapter.title)) {
       return [{ chapter, lessons: chapter.lessons, matchedByLesson: false }];
     }
-    const lessons = chapter.lessons.filter((lesson) => matches(keyword, lesson.code, lesson.title));
+    const lessons = chapter.lessons.filter((lesson) => matches(keyword, `Bài ${lesson.number}`, lesson.title));
     return lessons.length > 0 ? [{ chapter, lessons, matchedByLesson: true }] : [];
   });
 };
 
 export const isFiltered = (filter: CurriculumFilter) =>
   fold(filter.keyword).length > 0 || filter.gradeLevelId !== undefined || filter.fieldId !== undefined;
+
+/** Số chương/số bài hợp lệ: số nguyên 1–999 (backend vẫn kiểm tra lại). */
+export const isValidNumber = (value: string) => /^\d{1,3}$/.test(value.trim()) && Number(value) >= 1;

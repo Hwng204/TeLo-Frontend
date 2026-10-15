@@ -86,6 +86,7 @@ import type {
   ExamPage,
   Chapter,
   Curriculum,
+  CurriculumDeleteResult,
   CurriculumImportPreview,
   CurriculumImportResult,
   Lesson,
@@ -327,12 +328,12 @@ export const api = {
       unwrap(post<ApiResponse<Chapter>>('/curriculum/chapters', body)),
     updateChapter: (id: number, body: SaveChapterRequest) =>
       unwrap(put<ApiResponse<Chapter>>(`/curriculum/chapters/${id}`, body)),
-    deleteChapter: (id: number) => del<unknown>(`/curriculum/chapters/${id}`),
+    deleteChapter: (id: number) => del<ApiResponse<CurriculumDeleteResult>>(`/curriculum/chapters/${id}`),
     createLesson: (chapterId: number, body: SaveLessonRequest) =>
       unwrap(post<ApiResponse<Lesson>>(`/curriculum/chapters/${chapterId}/lessons`, body)),
     updateLesson: (id: number, body: SaveLessonRequest) =>
       unwrap(put<ApiResponse<Lesson>>(`/curriculum/lessons/${id}`, body)),
-    deleteLesson: (id: number) => del<unknown>(`/curriculum/lessons/${id}`),
+    deleteLesson: (id: number) => del<ApiResponse<CurriculumDeleteResult>>(`/curriculum/lessons/${id}`),
     downloadTemplate: async (): Promise<{ blob: Blob; filename: string }> => {
       const response = await apiClient.get<Blob>('/curriculum/import/template.xlsx', { responseType: 'blob' });
       return { blob: response.data, filename: filenameFrom(response.headers['content-disposition'], 'mau-nhap-chuong-bai.xlsx') };
