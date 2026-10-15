@@ -1,6 +1,5 @@
 import { type ReactNode, useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
-import { createPortal } from 'react-dom';
 import './ConfirmDialog.css';
 
 interface ConfirmDialogProps {
@@ -35,60 +34,36 @@ export const ConfirmDialog = ({
     className,
     hideCancel = false
 }: ConfirmDialogProps) => {
-    const dialogRef = useRef<HTMLDivElement>(null);
+    const dialogRef = useRef<HTMLDialogElement>(null);
     const cancelRef = useRef<HTMLButtonElement>(null);
     const titleId = useId();
+    const messageId = useId();
 
     // Mở: đặt con trỏ vào nút Hủy (lựa chọn an toàn). Đóng: trả con trỏ về nút đã mở hộp thoại.
     useEffect(() => {
-        if (!isOpen) return;
+        const dialog = dialogRef.current;
+        if (!isOpen || !dialog) return;
         const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-        (cancelRef.current ?? dialogRef.current?.querySelector<HTMLButtonElement>('.confirm-btn--confirm'))?.focus();
-        return () => opener?.focus();
-    }, [isOpen]);
-
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && !isLoading) onCancel();
-            // Giữ Tab vòng trong hộp thoại, không lọt ra trang phía sau.
-            if (e.key === 'Tab' && dialogRef.current) {
-                const items = Array.from(dialogRef.current.querySelectorAll<HTMLElement>('button:not(:disabled), [href], input:not(:disabled), [tabindex]:not([tabindex="-1"])'));
-                const first = items[0];
-                const last = items[items.length - 1];
-                const inside = dialogRef.current.contains(document.activeElement);
-                if (!first) e.preventDefault();
-                else if (e.shiftKey && (!inside || document.activeElement === first)) {
-                    e.preventDefault();
-                    last.focus();
-                } else if (!e.shiftKey && (!inside || document.activeElement === last)) {
-                    e.preventDefault();
-                    first.focus();
-                }
-            }
-        };
-
-        if (isOpen) {
-            document.addEventListener('keydown', handleKeyDown);
-            document.body.style.overflow = 'hidden';
-        }
-
+        if (!dialog.open) dialog.showModal();
+        (cancelRef.current ?? dialog.querySelector<HTMLButtonElement>('.confirm-btn--confirm'))?.focus();
         return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-            document.body.style.overflow = 'unset';
+            if (dialog.open) dialog.close();
+            if (opener?.isConnected) opener.focus();
         };
-    }, [isOpen, onCancel, isLoading]);
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
-    return createPortal(
-        <div className="confirm-overlay" onClick={isLoading ? undefined : onCancel}>
-            <div 
-                className={`confirm-dialog confirm-dialog--${type}${className ? ` ${className}` : ''}`}
+    return (
+            <dialog
+                className={`sep-dialog confirm-dialog confirm-dialog--${type}${className ? ` ${className}` : ''}`}
                 ref={dialogRef}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={titleId}
-                onClick={e => e.stopPropagation()}
+                aria-describedby={messageId}
+                aria-busy={isLoading}
+                onCancel={event => { event.preventDefault(); if (!isLoading) onCancel(); }}
             >
                 <div className="confirm-header">
                     <h3 id={titleId}>{title}</h3>
@@ -102,7 +77,7 @@ export const ConfirmDialog = ({
                         <X size={20} />
                     </button>
                 </div>
-                <div className="confirm-body">
+                <div id={messageId} className="confirm-body">
                     {message}
                 </div>
                 <div className="confirm-footer">
@@ -124,9 +99,7 @@ export const ConfirmDialog = ({
                         {isLoading ? loadingText : confirmText}
                     </button>
                 </div>
-            </div>
-        </div>,
-        document.body
+            </dialog>
     );
 };
 

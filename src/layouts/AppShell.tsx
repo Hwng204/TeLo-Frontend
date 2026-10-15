@@ -14,9 +14,8 @@ const PHT_NAV: NavEntry[] = [
   { icon: 'menu_book', label: 'Chương & bài học', to: '/curriculum', activeFor: ['/curriculum'] },
   { icon: 'table_chart', label: 'Ma trận đề', to: '/matrices', activeFor: ['/matrices'] },
   { icon: 'assignment', label: 'Nhiệm vụ', to: '/matrix-tasks', activeFor: ['/matrix-tasks'] },
-  { icon: 'fact_check', label: 'Duyệt bộ đề' },
-  { icon: 'database', label: 'Ngân hàng câu hỏi' },
-  { icon: 'inventory_2', label: 'Kho đề' },
+  { icon: 'database', label: 'Ngân hàng câu hỏi', to: '/question-bank', activeFor: ['/question-bank'] },
+  { icon: 'inventory_2', label: 'Kho đề', to: '/exam-packages', activeFor: ['/exam-packages'] },
   { icon: 'calendar_month', label: 'Quản lý kỳ thi', to: '/exams', activeFor: ['/exams'] },
   { icon: 'event', label: 'Tổ chức thi' },
   { icon: 'mail', label: 'Email & thông báo', to: '/emails', activeFor: ['/emails'] },
@@ -27,16 +26,16 @@ const TEACHER_NAV: NavEntry[] = [
   { icon: 'school', label: 'Học sinh', to: '/students', activeFor: ['/students'] },
   { icon: 'menu_book', label: 'Chương & bài học', to: '/curriculum', activeFor: ['/curriculum'] },
   { icon: 'assignment', label: 'Nhiệm vụ', to: '/matrix-tasks', activeFor: ['/matrix-tasks'] },
+  { icon: 'database', label: 'Ngân hàng câu hỏi', to: '/question-bank', activeFor: ['/question-bank'] },
+  { icon: 'inventory_2', label: 'Kho đề', to: '/exam-packages', activeFor: ['/exam-packages'] },
 ];
 
 const TL_NAV: NavEntry[] = [
   { icon: 'menu_book', label: 'Chương & bài học', to: '/curriculum', activeFor: ['/curriculum'] },
   // Tổ trưởng xem ma trận của mình qua nhiệm vụ, nên màn ma trận vẫn thuộc mục này.
   { icon: 'assignment', label: 'Nhiệm vụ', to: '/matrix-tasks', activeFor: ['/matrix-tasks', '/matrices'] },
-  { icon: 'assignment_ind', label: 'Phân công biên soạn' },
-  { icon: 'database', label: 'Ngân hàng câu hỏi' },
-  { icon: 'fact_check', label: 'Tạo và rà soát đề' },
-  { icon: 'inventory_2', label: 'Kho đề' },
+  { icon: 'database', label: 'Ngân hàng câu hỏi', to: '/question-bank', activeFor: ['/question-bank'] },
+  { icon: 'inventory_2', label: 'Kho đề', to: '/exam-packages', activeFor: ['/exam-packages'] },
 ];
 
 const COLLAPSED_KEY = 'sep-rail-collapsed';

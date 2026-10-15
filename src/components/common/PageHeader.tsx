@@ -63,12 +63,12 @@ export const PageHeader = ({ title, onBack, badge, inline, actions }: Props) => 
 
   const username = getUsername();
   const role = roleLabel();
-  
+
   const activeAcademicYear = useAsync(() => api.academicYear.current().catch(e => {
     if (e?.response?.status === 404) return { data: null };
     throw e;
   }), []);
-  
+
   const activeAcademicYearLabel = activeAcademicYear.loading
     ? 'Đang tải năm học...'
     : activeAcademicYear.error

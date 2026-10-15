@@ -12,6 +12,7 @@ import type { StudentListItem, StudentStatus } from '../../../types';
 import { formatDay, statusOf, STUDENT_STATUS } from '../../../utils/directory';
 import { isTeacher } from '../../../utils/jwt';
 import { toProblem } from '../../../utils/problem';
+import { useAdminAcademicYear } from '../../../contexts/AdminAcademicYearContext';
 
 const STATUS_TABS: { value: StudentStatus | ''; label: string; title?: string }[] = [
   { value: '', label: 'Tất cả' },
@@ -23,9 +24,17 @@ const STATUS_TABS: { value: StudentStatus | ''; label: string; title?: string }[
 
 /** SC-HS01. Nhà trường chỉ xem (giáo viên: học sinh lớp mình chủ nhiệm); admin xem + thêm/sửa/xoá. */
 export const StudentListPage = () => {
+  const context = useAdminAcademicYear();
+  return <StudentDirectory key={context?.year?.id ?? 'default'} />;
+};
+
+const StudentDirectory = () => {
   const navigate = useNavigate();
   const scope = useDirectoryScope();
   const teacher = !scope.admin && isTeacher();
+  const yearContext = useAdminAcademicYear();
+  const academicYearId = scope.admin && yearContext?.year ? Number(yearContext.year.id) : undefined;
+  const ready = scope.ready && (!scope.admin || Boolean(yearContext?.ready && academicYearId));
 
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState<StudentStatus | ''>('');
@@ -38,10 +47,10 @@ export const StudentListPage = () => {
   const [busy, runExclusive] = useBusy();
   const debouncedKeyword = useDebounce(keyword, 300);
 
-  // Lọc Khối / Lớp / Cơ sở áp theo lớp hiện tại (năm học đang hoạt động), nên chỉ cần lớp của năm đó.
+  // Class options and student rows must use the same year.
   const reference = useAsync(
-    async () => (scope.ready ? api.directory.referenceData(undefined, scope.schoolId) : null),
-    [scope.ready, scope.schoolId],
+    async () => (ready ? api.directory.referenceData(academicYearId, scope.schoolId) : null),
+    [ready, scope.schoolId, academicYearId],
   );
   const classes = reference.data?.classes ?? [];
   const branches = reference.data?.schoolBranches ?? [];
@@ -54,10 +63,11 @@ export const StudentListPage = () => {
     gradeLevelId,
     classId,
     schoolBranchId,
+    academicYearId,
   };
   const list = useAsync(
-    async () => (scope.ready ? api.directory.students(query, scope.schoolId) : null),
-    [scope.ready, scope.schoolId, ...Object.values(query)],
+    async () => (ready ? api.directory.students(query, scope.schoolId) : null),
+    [ready, scope.schoolId, ...Object.values(query)],
   );
   const items = list.data?.items ?? [];
   const totalCount = list.data?.totalCount ?? 0;
@@ -92,7 +102,7 @@ export const StudentListPage = () => {
     }, 'Xoá học sinh');
   };
 
-  const error = list.error ?? reference.error ?? scope.schoolsError;
+  const error = list.error ?? reference.error ?? scope.schoolsError ?? yearContext?.error;
   const pickedBranch = branches.find((branch) => branch.id === schoolBranchId);
   const title = scope.admin ? 'Quản lý học sinh' : teacher ? 'Học sinh lớp chủ nhiệm' : 'Hồ sơ học sinh';
 
@@ -232,7 +242,7 @@ export const StudentListPage = () => {
           </table>
 
           <TableState
-            loading={list.loading || !scope.ready}
+            loading={list.loading || !scope.ready || Boolean(yearContext && !yearContext.ready && !yearContext.error)}
             failed={error != null}
             empty={items.length === 0}
             columns={11}

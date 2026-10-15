@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Field, PcbButton, SelectField } from '../../../components/pcb';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { useAsync, useBusy } from '../../../hooks';
@@ -7,6 +7,7 @@ import { api } from '../../../services/api';
 import type { TaskDetail } from '../../../types';
 import { localDateString } from '../../../utils/formatters';
 import { toProblem } from '../../../utils/problem';
+import { displayToast } from '../../../utils/toast';
 import { focusFirstError } from '../focusFirstError';
 import '../../matrix/matrix.css';
 import '../tasks.css';
@@ -14,8 +15,8 @@ import '../tasks.css';
 const MAX_PAPERS = 20;
 const PAPER_COUNT_ERROR = `Số đề cần tạo từ 1 đến ${MAX_PAPERS}.`;
 
-/** NV03-E giao nhiệm vụ tạo đề thi; có `task` là NV04-E sửa nhiệm vụ. */
-export const ExamTaskForm = ({ task }: { task?: TaskDetail }) => {
+/** Chỉ sửa nhiệm vụ biên soạn cũ; đề mới được PHT tạo tự động trong Kho đề. */
+export const ExamTaskForm = ({ task }: { task: TaskDetail }) => {
   const navigate = useNavigate();
   const today = localDateString();
   // GB-56: Tổ trưởng đã bắt đầu soạn đề thì không đổi ma trận, người làm và số đề.
@@ -69,16 +70,13 @@ export const ExamTaskForm = ({ task }: { task?: TaskDetail }) => {
         paperCount: count,
       };
       try {
-        if (task) {
-          await api.task.updateExam(task.id, body);
-          navigate(`/matrix-tasks/${task.id}`);
-        } else {
-          await api.task.createExam(body);
-          navigate('/matrix-tasks');
-        }
+        await api.task.updateExam(task.id, body);
+        displayToast('success', 'Thành công', 'Đã cập nhật nhiệm vụ.');
+        navigate(`/matrix-tasks/${task.id}`);
       } catch (error) {
         const parsed = toProblem(error);
         setProblem(parsed.message);
+        displayToast('error', 'Lỗi', parsed.message, 5);
         if (parsed.fieldErrors) {
           setErrors((existing) => ({ ...existing, ...parsed.fieldErrors }));
           focusFirstError();
@@ -180,4 +178,4 @@ export const ExamTaskForm = ({ task }: { task?: TaskDetail }) => {
   );
 };
 
-export const ExamTaskFormPage = () => <ExamTaskForm />;
+export const ExamTaskFormPage = () => <Navigate to="/exam-packages/new" replace />;

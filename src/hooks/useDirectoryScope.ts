@@ -24,7 +24,7 @@ export const useDirectoryScope = () => {
 
   const fromUrlBranch = Number(params.get('schoolBranchId')) || undefined;
   const storedBranchId = Number(selected.branchId) || undefined;
-  const branchId = admin ? (fromUrlBranch ?? storedBranchId) : undefined;
+  const branchId = admin ? (fromUrlBranch ?? (schoolId === storedSchoolId ? storedBranchId : undefined)) : undefined;
 
   const schoolCode = selected.schoolCode || '';
   const branchCode = selected.branchCode || '';
@@ -36,6 +36,7 @@ export const useDirectoryScope = () => {
       (current) => {
         const next = new URLSearchParams(current);
         next.set('schoolId', String(id));
+        next.delete('schoolBranchId');
         return next;
       },
       { replace: true },

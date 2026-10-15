@@ -11,6 +11,7 @@ import type { TaskDetail } from '../../../types';
 import { formatDate, personLabel } from '../../../utils/formatters';
 import { getUserId, isPht } from '../../../utils/jwt';
 import { toProblem } from '../../../utils/problem';
+import { displayToast } from '../../../utils/toast';
 import { LessonCardView } from '../components/LessonCard';
 import '../../matrix/matrix.css';
 import '../tasks.css';
@@ -100,17 +101,19 @@ export const TaskDetailPage = () => {
   // GB-55: chỉ xoá được khi người thực hiện chưa bắt đầu; backend kiểm tra lại lúc xoá.
   const askDelete = () => {
     setProblem(null);
-    if (!task.canDelete) setProblem('Nhiệm vụ đã được thực hiện, không thể xóa.');
+    if (!task.canDelete) displayToast('error', 'Lỗi', 'Nhiệm vụ đã được thực hiện, không thể xóa.', 5);
     else setConfirming(true);
   };
   const confirmDelete = () =>
     void runExclusive(async () => {
       try {
         await api.task.remove(task.id);
+        displayToast('success', 'Thành công', 'Đã xóa nhiệm vụ.');
         navigate('/matrix-tasks', { replace: true });
       } catch (error) {
         const parsed = toProblem(error);
         setProblem(parsed.message);
+        displayToast('error', 'Lỗi', parsed.message, 5);
         setConfirming(false);
         if (parsed.status === 404) navigate('/matrix-tasks', { replace: true });
         else detail.reload();
@@ -120,8 +123,8 @@ export const TaskDetailPage = () => {
   const view = task.taskType === 'MATRIX'
     ? matrixView(task, isPerformer, navigate, edit)
     : task.taskType === 'EXAM'
-      ? examView(task, edit)
-      : questionView(task, isCreator, edit, askDelete, busy);
+      ? examView(task, navigate, edit)
+      : questionView(task, isCreator, isPerformer, navigate, edit, askDelete, busy);
 
   return (
     <>
@@ -251,10 +254,10 @@ const matrixView = (task: TaskDetail, isPerformer: boolean, navigate: (path: str
   };
 };
 
-/** NV02-ET (Tổ trưởng làm), NV02-EP (PHT giao). Soạn từng đề và nộp bộ đề thuộc chức năng bộ đề của dev khác. */
-const examView = (task: TaskDetail, edit: EditButton): View => {
+/** Task biên soạn cũ và task review đều dẫn vào bản đề được quản lý. */
+const examView = (task: TaskDetail, navigate: ReturnType<typeof useNavigate>, edit: EditButton): View => {
   return {
-    title: 'Chi tiết nhiệm vụ tạo đề thi',
+    title: task.exam?.reviewPackageId ? 'Chi tiết nhiệm vụ review đề thi' : 'Chi tiết nhiệm vụ biên soạn đề cũ',
     rows: [
       [{ label: 'Nội dung nhiệm vụ', value: task.name }],
       [
@@ -266,21 +269,23 @@ const examView = (task: TaskDetail, edit: EditButton): View => {
       ],
       [
         { label: 'Người giao', value: personLabel(task.createdBy) },
-        { label: 'Người thực hiện', value: personLabel(task.performer) },
+        { label: task.exam?.reviewPackageId ? 'Người chỉnh sửa và review' : 'Người thực hiện', value: personLabel(task.performer) },
         { label: 'Hạn hoàn thành', value: <Due value={task.dueAt} overdue={task.isOverdue} /> },
       ],
     ],
     section: (
       <section className="sep-section">
-        <h2 className="sep-section-title">Các đề cần tạo</h2>
+        <h2 className="sep-section-title">{task.exam?.reviewPackageId ? 'Đề được giao review' : 'Đề của nhiệm vụ cũ'}</h2>
+        {!task.exam?.reviewPackageId && <p className="sep-muted">Đây là nhiệm vụ theo luồng biên soạn cũ. Với đề mới, PHT chọn ma trận để hệ thống sinh đề trong Kho đề rồi giao giáo viên hoặc tổ trưởng review.</p>}
         <SubTable
-          heads={['Đề', 'Trạng thái', 'Cập nhật']}
+          heads={['Đề', 'Trạng thái', 'Cập nhật', 'Hành động']}
           rows={(task.exam?.papers ?? []).map((paper) => ({
             key: paper.name,
             cells: [
               paper.name,
               <span className="sep-status">{paper.statusLabel}</span>,
               paper.updatedAt ? formatDate(paper.updatedAt) : '—',
+              <>{paper.examSetId && <PcbButton variant="ghost" size="sm" onClick={() => navigate(`/exam-packages/${paper.examSetId}`)}><Icon name="visibility" size={18} />{task.exam?.reviewPackageId ? 'Mở đề review' : 'Quản lý đề'}</PcbButton>}{!task.exam?.reviewPackageId && paper.id && paper.status === 'DRAFT' && <PcbButton variant="ghost" size="sm" onClick={() => navigate(`/matrix-tasks/${task.id}/papers/${paper.id}/questions`)}>Chọn câu hỏi</PcbButton>}{!paper.examSetId && paper.id && <PcbButton variant="ghost" size="sm" onClick={() => navigate(`/matrix-tasks/${task.id}/papers/${paper.id}/questions`)}>Chọn câu hỏi</PcbButton>}</>,
             ],
           }))}
         />
@@ -294,6 +299,8 @@ const examView = (task: TaskDetail, edit: EditButton): View => {
 const questionView = (
   task: TaskDetail,
   isCreator: boolean,
+  isPerformer: boolean,
+  navigate: ReturnType<typeof useNavigate>,
   edit: EditButton,
   askDelete: () => void,
   busy: boolean,
@@ -329,7 +336,9 @@ const questionView = (
         ))}
       </section>
     ),
-    actions: isCreator && (
+    actions: <>
+      {(isPerformer || (isCreator && task.status !== 'ASSIGNED')) && <PcbButton onClick={() => navigate(`/matrix-tasks/${task.id}/questions`)}><Icon name={isPerformer && task.status !== 'COMPLETED' && task.status !== 'PENDING_REVIEW' ? 'edit_square' : 'visibility'} />{isPerformer && task.status !== 'COMPLETED' && task.status !== 'PENDING_REVIEW' ? 'Biên soạn câu hỏi' : task.status === 'PENDING_REVIEW' && isCreator ? 'Kiểm duyệt gói câu hỏi' : 'Xem gói câu hỏi'}</PcbButton>}
+      {isCreator && (
       <>
         {task.canEdit && (
           <PcbButton variant="danger" disabled={busy} onClick={askDelete}>
@@ -338,6 +347,7 @@ const questionView = (
         )}
         {edit()}
       </>
-    ),
+      )}
+    </>,
   };
 };

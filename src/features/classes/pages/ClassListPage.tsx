@@ -12,6 +12,7 @@ import type { ClassListItem, ClassStatus } from '../../../types';
 import { CLASS_STATUS, statusOf } from '../../../utils/directory';
 import { isTeacher } from '../../../utils/jwt';
 import { toProblem } from '../../../utils/problem';
+import { useAdminAcademicYear } from '../../../contexts/AdminAcademicYearContext';
 
 const STATUS_TABS: { value: ClassStatus | ''; label: string }[] = [
   { value: '', label: 'Tất cả' },
@@ -21,13 +22,21 @@ const STATUS_TABS: { value: ClassStatus | ''; label: string }[] = [
 
 /** SC-CL01. Nhà trường chỉ xem (giáo viên: chỉ lớp mình chủ nhiệm); admin xem + thêm/sửa/xoá theo trường đã chọn. */
 export const ClassListPage = () => {
-  const navigate = useNavigate();
+  const context = useAdminAcademicYear();
   const scope = useDirectoryScope();
+  return <ClassDirectory key={`${context?.year?.id ?? 'default'}:${scope.schoolId ?? 'self'}:${scope.branchId ?? 'all'}`} scope={scope} />;
+};
+
+const ClassDirectory = ({ scope }: { scope: ReturnType<typeof useDirectoryScope> }) => {
+  const navigate = useNavigate();
   const teacher = !scope.admin && isTeacher();
 
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState<ClassStatus | ''>('');
-  const [academicYearId, setAcademicYearId] = useState<number>();
+  const yearContext = useAdminAcademicYear();
+  const [localYearId, setAcademicYearId] = useState<number>();
+  const academicYearId = scope.admin ? (yearContext?.year ? Number(yearContext.year.id) : undefined) : localYearId;
+  const ready = scope.ready && (!scope.admin || Boolean(yearContext?.ready && academicYearId));
   const [schoolBranchId, setSchoolBranchId] = useState<number | undefined>(() => scope.branchId);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -36,8 +45,8 @@ export const ClassListPage = () => {
   const debouncedKeyword = useDebounce(keyword, 300);
 
   const reference = useAsync(
-    async () => (scope.ready ? api.directory.referenceData(undefined, scope.schoolId) : null),
-    [scope.ready, scope.schoolId],
+    async () => (ready ? api.directory.referenceData(academicYearId, scope.schoolId) : null),
+    [ready, scope.schoolId, academicYearId],
   );
   const years = reference.data?.academicYears ?? [];
   const branches = reference.data?.schoolBranches ?? [];
@@ -48,15 +57,15 @@ export const ClassListPage = () => {
     search: debouncedKeyword.trim() || undefined,
     status: status || undefined,
     academicYearId,
-    schoolBranchId: schoolBranchId ?? scope.branchId,
+    schoolBranchId,
   };
   const list = useAsync(
-    async () => (scope.ready ? api.directory.classes(query, scope.schoolId) : null),
-    [scope.ready, scope.schoolId, ...Object.values(query)],
+    async () => (ready ? api.directory.classes(query, scope.schoolId) : null),
+    [ready, scope.schoolId, ...Object.values(query)],
   );
   const items = list.data?.items ?? [];
   const totalCount = list.data?.totalCount ?? 0;
-  const filtered = Boolean(keyword || status || academicYearId || schoolBranchId);
+  const filtered = Boolean(keyword || status || (!scope.admin && academicYearId) || schoolBranchId !== scope.branchId);
 
   // Mọi thay đổi bộ lọc đều quay về trang 1, nếu không sẽ thấy trang trống.
   const onFilter = <T,>(setter: (value: T) => void) => (value: T) => {
@@ -87,8 +96,8 @@ export const ClassListPage = () => {
     }, 'Xoá lớp');
   };
 
-  const error = list.error ?? reference.error ?? scope.schoolsError;
-  const columns = 8;
+  const error = list.error ?? reference.error ?? scope.schoolsError ?? yearContext?.error;
+  const columns = 9;
   const title = scope.admin ? 'Quản lý lớp học' : teacher ? 'Lớp chủ nhiệm' : 'Lớp học';
 
   return (
@@ -142,7 +151,7 @@ export const ClassListPage = () => {
               fieldClassName="sep-toolbar__search"
               onChange={(event) => onFilter(setKeyword)(event.target.value)}
             />
-            <SelectField
+            {!scope.admin && <SelectField
               label="Năm học"
               hideLabel
               placeholder="Năm học hiện tại"
@@ -155,7 +164,7 @@ export const ClassListPage = () => {
                   {year.name}
                 </option>
               ))}
-            </SelectField>
+            </SelectField>}
             <SelectField
               label="Trạng thái"
               hideLabel
@@ -241,7 +250,7 @@ export const ClassListPage = () => {
           </table>
 
           <TableState
-            loading={list.loading || !scope.ready}
+            loading={list.loading || !scope.ready || Boolean(yearContext && !yearContext.ready && !yearContext.error)}
             failed={error != null}
             empty={items.length === 0}
             columns={columns}

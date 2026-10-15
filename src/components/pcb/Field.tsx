@@ -3,11 +3,15 @@ import { Children, isValidElement, useCallback, useEffect, useId, useRef, useSta
 import { createPortal } from 'react-dom';
 import './pcb.css';
 import { Icon } from './Icon';
+import { RequiredLabel } from './RequiredLabel';
+
+const isRequired = (label: ReactNode, required?: boolean) => required || typeof label === 'string' && /\*\s*$/.test(label);
 
 type ShellProps = {
   label?: ReactNode;
   /** Giữ nhãn cho trình đọc màn hình nhưng không hiện ra (ô lọc trên thanh công cụ). */
   hideLabel?: boolean;
+  required?: boolean;
   error?: string;
   /** Chỉ viền đỏ, không chữ: lỗi được báo bằng popup ở nơi khác. */
   invalid?: boolean;
@@ -20,11 +24,11 @@ type ShellProps = {
   children: (id: string) => ReactNode;
 };
 
-const Shell = ({ label, hideLabel, error, invalid, hint, leading, trailing, select, className, children }: ShellProps) => {
+const Shell = ({ label, hideLabel, required, error, invalid, hint, leading, trailing, select, className, children }: ShellProps) => {
   const id = useId();
   return (
     <div className={`pcb-field${className ? ` ${className}` : ''}`}>
-      {label && <label className={hideLabel ? 'pcb-label pcb-label--hidden' : 'pcb-label'} htmlFor={id}>{label}</label>}
+      {label && <label className={hideLabel ? 'pcb-label pcb-label--hidden' : 'pcb-label'} htmlFor={id}><RequiredLabel required={required}>{label}</RequiredLabel></label>}
       <div className={`pcb-control${error || invalid ? ' pcb-control--error' : ''}`}>
         {leading && <Icon name={leading} size={18} />}
         {children(id)}
@@ -49,12 +53,14 @@ type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
 };
 
 export const Field = ({ label, hideLabel, error, invalid, hint, leading, trailing, fieldClassName, ...input }: FieldProps) => (
-  <Shell label={label} hideLabel={hideLabel} error={error} invalid={invalid} hint={hint} leading={leading} trailing={trailing} className={fieldClassName}>
-    {(id) => <input id={id} {...input} />}
+  <Shell label={label} hideLabel={hideLabel} required={input.required} error={error} invalid={invalid} hint={hint} leading={leading} trailing={trailing} className={fieldClassName}>
+    {(id) => <input id={id} aria-required={isRequired(label, input.required) || undefined} {...input} />}
   </Shell>
 );
 
 type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
+  /** Optional compact value for the trigger; the menu keeps each full option label. */
+  selectedLabel?: ReactNode;
   label?: ReactNode;
   hideLabel?: boolean;
   error?: string;
@@ -77,6 +83,7 @@ const selectOptions = (children: ReactNode): Option[] =>
   });
 
 export const SelectField = ({
+  selectedLabel,
   label,
   hideLabel,
   error,
@@ -154,7 +161,7 @@ export const SelectField = ({
   };
 
   return (
-    <Shell label={label} hideLabel={hideLabel} error={error} invalid={invalid} hint={hint} className={fieldClassName} select>
+    <Shell label={label} hideLabel={hideLabel} required={select.required} error={error} invalid={invalid} hint={hint} className={fieldClassName} select>
       {(id) => (
         <>
           <button
@@ -170,6 +177,7 @@ export const SelectField = ({
             aria-expanded={open}
             aria-haspopup="listbox"
             aria-invalid={Boolean(error || invalid) || undefined}
+            aria-required={isRequired(label, select.required) || undefined}
             aria-label={select['aria-label'] ?? (typeof label === 'string' ? label : undefined)}
             onFocus={onFocus as unknown as React.FocusEventHandler<HTMLButtonElement>}
             onBlur={onBlur as unknown as React.FocusEventHandler<HTMLButtonElement>}
@@ -192,7 +200,7 @@ export const SelectField = ({
             {selectedValue === '' && placeholder ? (
               <span className="pcb-select-placeholder">{placeholder}</span>
             ) : (
-              selected?.label
+              selectedLabel ?? selected?.label
             )}
           </button>
 

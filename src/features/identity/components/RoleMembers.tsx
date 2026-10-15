@@ -141,7 +141,7 @@ export function RoleMembers({ role, onChanged, refreshing }: {
       {role.name}
     </h2>
     <p className="sep-muted">
-      {roleScopeLabel(role)}
+      {roleScopeLabel()}
     </p>
     <div className="identity-toolbar">
       <IdentitySearch
