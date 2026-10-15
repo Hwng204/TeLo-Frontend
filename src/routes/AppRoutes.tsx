@@ -22,6 +22,10 @@ import { QuestionTaskFormPage } from '../features/tasks/pages/QuestionTaskFormPa
 import { QuestionPackagePage } from '../features/questions/pages/QuestionPackagePage';
 import { QuestionBankPage } from '../features/questions/pages/QuestionBankPage';
 import { PaperQuestionsPage } from '../features/questions/pages/PaperQuestionsPage';
+import { ExamPackageListPage } from '../features/examPackages/pages/ExamPackageListPage';
+import { ExamPackageCreatePage } from '../features/examPackages/pages/ExamPackageCreatePage';
+import { ExamPackageDetailPage } from '../features/examPackages/pages/ExamPackageDetailPage';
+import { ExamPackagePreviewPage } from '../features/examPackages/pages/ExamPackagePreviewPage';
 import { TaskDetailPage } from '../features/tasks/pages/TaskDetailPage';
 import { TaskEditPage } from '../features/tasks/pages/TaskEditPage';
 import { CurriculumPage } from '../features/curriculum/pages/CurriculumPage';
@@ -94,10 +98,11 @@ const router = createBrowserRouter(createRoutesFromElements(
             <Route path="/exams/update/:id" element={<ExamFormPage mode="edit" />} />
           </Route>
           <Route element={<RequireRole allow={VICE_PRINCIPAL} fallback="/matrix-tasks" />}>
-            {/* PHT giao ma trận và đề thi; Tổ trưởng giao câu hỏi (route riêng bên dưới). */}
+            {/* PHT sinh đề trước, rồi giao giáo viên/tổ trưởng review từ chi tiết đề. */}
             <Route path="/matrix-tasks/new" element={<TaskTypePage />} />
             <Route path="/matrix-tasks/new/matrix" element={<MatrixTaskFormPage />} />
             <Route path="/matrix-tasks/new/exam" element={<ExamTaskFormPage />} />
+            <Route path="/exam-packages/new" element={<ExamPackageCreatePage />} />
           </Route>
           <Route element={<RequireRole allow={VICE_PRINCIPAL} fallback="/exams" />}>
             <Route path="/exam-rooms" element={<ExamRoomListPage />} />
@@ -115,6 +120,9 @@ const router = createBrowserRouter(createRoutesFromElements(
 
           {/* Nhiệm vụ: PHT, Tổ trưởng, Giáo viên; mỗi người chỉ thấy việc mình giao, làm hoặc kiểm duyệt. */}
           <Route element={<RequireRole allow={[...BOTH, ...TEACHER]} />}>
+            <Route path="/exam-packages" element={<ExamPackageListPage />} />
+            <Route path="/exam-packages/:id" element={<ExamPackageDetailPage />} />
+            <Route path="/exam-packages/:id/preview" element={<ExamPackagePreviewPage />} />
             <Route path="/matrix-tasks" element={<TaskListPage />} />
             <Route path="/matrix-tasks/:id" element={<TaskDetailPage />} />
             <Route path="/matrix-tasks/:id/questions" element={<QuestionPackagePage />} />

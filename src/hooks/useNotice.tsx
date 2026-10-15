@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NoticeDialog, type Notice } from '../components/common/NoticeDialog';
 
-/** `error/success/confirm` mở popup, `dialog` là phần tử cần đặt trong JSX của màn. */
+/** Kết quả/lỗi dùng toast; xác nhận dùng dialog. Đặt `dialog` trong JSX của màn. */
 export const useNotice = () => {
   const [notice, setNotice] = useState<Notice | null>(null);
   const close = () => setNotice(null);

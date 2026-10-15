@@ -1,5 +1,5 @@
 export type QuestionItem = { id: number; detailId: number; content: string; options: string[]; correctOption: string | null; explanation: string | null; isComplete: boolean };
-export type QuestionTarget = { detailId: number; lessonId: number; gradeName: string; chapterCode: string; lessonCode: string; lessonTitle: string; cognitiveLevel: string; requiredCount: number; written: number; validCount: number };
+export type QuestionTarget = { detailId: number; lessonId: number; gradeName: string; chapterCode: string; chapterTitle?: string | null; lessonCode: string; lessonTitle: string; cognitiveLevel: string; requiredCount: number; written: number; validCount: number };
 export type ReviewNote = { questionId: number; comment: string };
 export type QuestionSubmission = { id: number; number: number; submittedAt: string; status: string; comment: string | null; reviewedAt: string | null; notes: ReviewNote[]; questions: QuestionItem[] };
 export type QuestionPackage = { taskId: number; name: string; status: string; version: number; dueAt: string | null; authorName: string; reviewerName: string; canEdit: boolean; canSubmit: boolean; canReview: boolean; targets: QuestionTarget[]; questions: QuestionItem[]; submissions: QuestionSubmission[] };
@@ -8,7 +8,7 @@ export type BankQuestion = { question: QuestionItem; bankType: string; lessonId:
 export type BankQuery = { page?: number; pageSize?: number; bankType?: string; keyword?: string; subjectId?: number; gradeLevelId?: number; chapterId?: number; lessonId?: number; cognitiveLevel?: string; matrixId?: number; matrixDetailId?: number };
 export type FilterOption = { id: number; name: string; parentId: number | null };
 export type BankOptions = { subjects: FilterOption[]; grades: FilterOption[]; chapters: FilterOption[]; lessons: FilterOption[] };
-export type Availability = { detailId: number; lessonId: number; cognitiveLevel: string; requiredCount: number; availableCount: number };
+export type Availability = { detailId: number; lessonId: number; cognitiveLevel: string; requiredCount: number; availableCount: number; lessonTitle?: string | null };
 export const levels: Record<string, string> = { NHAN_BIET: 'Nhận biết', THONG_HIEU: 'Thông hiểu', VAN_DUNG: 'Vận dụng' };
 export const statuses: Record<string, string> = { ASSIGNED: 'Đã giao', IN_PROGRESS: 'Đang thực hiện', PENDING_REVIEW: 'Chờ kiểm duyệt', NEEDS_REVISION: 'Cần chỉnh sửa', COMPLETED: 'Hoàn thành', APPROVED: 'Đã chốt', REJECTED: 'Yêu cầu chỉnh sửa' };
 export const keys = ['A', 'B', 'C', 'D'];

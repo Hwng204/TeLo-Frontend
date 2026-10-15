@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { Icon, PcbButton, SelectField } from '../../../components/pcb';
 import { RowActionButton } from '../../../components/common/RowAction';
@@ -7,49 +7,17 @@ import { useBusy } from '../../../hooks/useBusy';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { api } from '../../../services/api';
 import type { RoleItem } from '../../../types';
-import { emptyScope, identityError, roleScopeLabel } from '../../../utils/identity';
-import { storage } from '../../../utils/storage';
+import { identityError, roleScopeLabel } from '../../../utils/identity';
 import { IdentityEditor } from '../components/IdentityEditor';
 import { IdentityPager, IdentitySearch, IdentityState, IdentityStatusBadge } from '../components/IdentityUi';
 import { RoleMembers } from '../components/RoleMembers';
 import { useIdentityNotice } from '../components/useIdentityNotice';
 import './identity.css';
+import { requiredRolesApi } from '../requiredRolesApi';
 
 export function RoleListPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-  const [scope, setScope] = useState(() => {
-    const s = storage.getSelectedBranch();
-    if (s.schoolId || s.branchId) {
-      return {
-        schoolId: s.schoolId ? Number(s.schoolId) : null,
-        schoolName: s.schoolName || null,
-        schoolBranchId: s.branchId ? Number(s.branchId) : null,
-        schoolBranchName: s.branchName || null,
-      };
-    }
-    return emptyScope;
-  });
-
-  useEffect(() => {
-    const handleBranchChange = () => {
-      const s = storage.getSelectedBranch();
-      if (s.schoolId || s.branchId) {
-        setScope({
-          schoolId: s.schoolId ? Number(s.schoolId) : null,
-          schoolName: s.schoolName || null,
-          schoolBranchId: s.branchId ? Number(s.branchId) : null,
-          schoolBranchName: s.branchName || null,
-        });
-      } else {
-        setScope(emptyScope);
-      }
-      setPage(1);
-    };
-    window.addEventListener('branch_changed', handleBranchChange);
-    return () => window.removeEventListener('branch_changed', handleBranchChange);
-  }, []);
-
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [selected, setSelected] = useState<RoleItem | null>(null);
@@ -59,17 +27,17 @@ export function RoleListPage() {
   const result = useAsync(() => api.roles.list({
     search: debounced,
     status: status || undefined,
-    schoolId: scope.schoolId ?? undefined,
-    schoolBranchId: scope.schoolBranchId ?? undefined,
     page,
     pageSize
-  }), [debounced, status, scope, page, pageSize]);
+  }), [debounced, status, page, pageSize]);
   const detail = useAsync(() => selectedId ? api.roles.get(selectedId) : Promise.resolve(null), [selectedId]);
   const refresh = () => {
     result.reload();
     detail.reload();
   };
   const notice = useIdentityNotice();
+  const requiredRoles = useAsync(requiredRolesApi.list, []);
+  const missingRoles = requiredRoles.data?.filter(role => !role.exists) ?? [];
   const [busy, run] = useBusy();
   const mutate = (item: RoleItem, remove = false) => notice.confirm(remove ? `Bạn có chắc muốn xóa vai trò “${item.name}”? Vai trò này chưa phát sinh sử dụng. Thao tác xóa không thể hoàn tác.` : `${item.status === 'ACTIVE' ? 'Ngừng' : 'Bắt đầu'} áp dụng vai trò “${item.name}”? Phiên đăng nhập của người dùng liên quan sẽ cần đăng nhập lại.`, () => void run(async () => {
     try {
@@ -88,6 +56,13 @@ export function RoleListPage() {
   }), remove ? 'Xóa vai trò' : item.status === 'ACTIVE' ? 'Ngừng áp dụng' : 'Kích hoạt', remove);
   return <div className="sep-page identity-page identity-role-page">
     <PageHeader title="Quản lý vai trò" inline />
+    {missingRoles.length > 0 && <div className="sep-alert sep-alert--info" role="status">
+      Chưa có đủ vai trò bắt buộc: {missingRoles.map(role => role.name).join(', ')}.
+      <PcbButton variant="secondary" disabled={busy} onClick={() => notice.confirm('Bổ sung các vai trò hệ thống còn thiếu? Vai trò và người dùng hiện có được giữ nguyên.', () => void run(async () => {
+        try { await requiredRolesApi.restore(); requiredRoles.reload(); refresh(); notice.success('Đã bổ sung các vai trò bắt buộc.'); }
+        catch (error) { notice.error(identityError(error)); }
+      }), 'Bổ sung vai trò')}>Bổ sung vai trò bắt buộc</PcbButton>
+    </div>}
     <div className="identity-toolbar">
       <IdentitySearch value={search} onChange={value => {
         setSearch(value);
@@ -137,7 +112,7 @@ export function RoleListPage() {
                   <div className="sep-subline">{item.userCount} người dùng{item.isSystem ? ' · Hệ thống' : ''}</div>
                 </td>
                 <td>
-                  {roleScopeLabel(item)}
+                  {roleScopeLabel()}
                 </td>
                 <td>
                   <IdentityStatusBadge status={item.status} />
@@ -197,7 +172,6 @@ export function RoleListPage() {
     {editor && <IdentityEditor
       kind="role"
       item={editor === 'new' ? undefined : editor}
-      initialScope={scope}
       onClose={() => setEditor(null)}
       onConflict={refresh}
       onSaved={() => {

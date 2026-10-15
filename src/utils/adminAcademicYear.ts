@@ -1,4 +1,4 @@
-type WorkingYear = { id: string; status: string; startDate: string };
+type WorkingYear = { id: string; status: string; startDate?: string; name?: string };
 
 export function normalizeWorkingYears<T extends Omit<WorkingYear, 'id'> & { id: string | number }>(years: T[]): (Omit<T, 'id'> & { id: string })[] {
   return years.map(year => ({ ...year, id: String(year.id) }));
@@ -7,7 +7,7 @@ export function normalizeWorkingYears<T extends Omit<WorkingYear, 'id'> & { id: 
 export function resolveWorkingYear<T extends WorkingYear>(years: T[], preferredId?: string | null): T | undefined {
   return years.find(year => year.id === preferredId)
     ?? years.find(year => year.status === 'ACTIVE')
-    ?? [...years].sort((a, b) => b.startDate.localeCompare(a.startDate))[0];
+    ?? [...years].sort((a, b) => (b.name ?? b.startDate ?? '').localeCompare(a.name ?? a.startDate ?? ''))[0];
 }
 
 export const WORKING_YEAR_KEY = 'academic-year-context:admin';

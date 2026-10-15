@@ -3,12 +3,12 @@ import { Field, Icon, PcbButton } from '../../../components/pcb';
 import { useBusy } from '../../../hooks/useBusy';
 import { api } from '../../../services/api';
 import type { ModuleItem, RoleItem } from '../../../types';
-import { emptyScope, identityConflict, identityError, validateIdentity, validateRole } from '../../../utils/identity';
+import { identityConflict, identityError, validateModule, validateRole } from '../../../utils/identity';
 import { IdentityDialog } from './IdentityUi';
-import { ScopeFields, type ScopeValue } from './ScopeFields';
+import type { ScopeValue } from './ScopeFields';
 import { displayToast } from '../../../utils/toast';
 
-export function IdentityEditor({ kind, item, initialScope, onClose, onSaved, onConflict }: {
+export function IdentityEditor({ kind, item, onClose, onSaved, onConflict }: {
   kind: 'role' | 'module';
   item?: RoleItem | ModuleItem;
   initialScope?: ScopeValue;
@@ -16,12 +16,9 @@ export function IdentityEditor({ kind, item, initialScope, onClose, onSaved, onC
   onSaved: () => void;
   onConflict: () => void
 }) {
-  const role = item && 'isSystem' in item ? item : undefined;
-  const protectedScope = role?.isSystem || ['ADMIN', 'OPERATIONALADMIN'].includes(role?.code.toUpperCase() ?? '');
   const [code, setCode] = useState(item?.code ?? '');
   const [name, setName] = useState(item?.name ?? '');
   const [description, setDescription] = useState(item?.description ?? '');
-  const [scope, setScope] = useState<ScopeValue>(role ?? initialScope ?? emptyScope);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [stale, setStale] = useState(false);
   const [busy, run] = useBusy();
@@ -32,10 +29,10 @@ export function IdentityEditor({ kind, item, initialScope, onClose, onSaved, onC
       code: code.trim(),
       name: name.trim(),
       description: description.trim() || null,
-      schoolId: scope.schoolId,
-      schoolBranchId: scope.schoolBranchId
+      schoolId: null,
+      schoolBranchId: null
     };
-    const nextErrors = kind === 'role' ? validateRole(body, !!item) : validateIdentity(body);
+    const nextErrors = kind === 'role' ? validateRole(body) : validateModule(body);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
     void run(async () => {
@@ -78,48 +75,39 @@ export function IdentityEditor({ kind, item, initialScope, onClose, onSaved, onC
       {stale && <p className="sep-alert sep-alert--info">Đóng biểu mẫu và mở lại để lấy dữ liệu mới nhất trước khi tiếp tục.</p>}
       <fieldset disabled={busy || stale}>
         <div className="identity-form-grid">
-        <Field
-          label={<>Mã {label} <span className="identity-required" aria-hidden="true">*</span></>}
+        {kind === 'role' && <Field
+          label={`Mã ${label}`}
           required
           value={code}
-          maxLength={100}
+          maxLength={50}
           disabled={!!item}
           onChange={event => setCode(event.target.value)}
           error={errors.code}
           aria-invalid={!!errors.code}
-        />
+        />}
         <Field
-          label={<>Tên {label} <span className="identity-required" aria-hidden="true">*</span></>}
+          label={`Tên ${label}`}
           required
           value={name}
           maxLength={150}
+          placeholder={kind === 'module' ? 'Ví dụ: Thi, Quản lý học tập' : undefined}
           onChange={event => setName(event.target.value)}
           error={errors.name}
           aria-invalid={!!errors.name}
         />
         </div>
-        <label className="identity-description">Mô tả<textarea
+        {kind === 'module' && <label className="identity-description">Mô tả<textarea
           value={description}
           maxLength={500}
           rows={3}
           onChange={event => setDescription(event.target.value)}
           aria-invalid={!!errors.description}
-        /><small>{description.length}/500 ký tự</small></label>
+        /><small>{description.length}/500 ký tự</small></label>}
         {errors.description && <p role="alert" className="pcb-error">
           {errors.description}
         </p>}
-        {kind === 'role' && <>
-          <ScopeFields
-            value={scope}
-            onChange={setScope}
-            disabled={protectedScope}
-            schoolOnly={!role?.schoolBranchId}
-            required={!item}
-            allowAllSchools
-          />
-          {errors.schoolId && <p role="alert" className="pcb-error">{errors.schoolId}</p>}
-          {errors.schoolBranchId && <p role="alert" className="pcb-error">{errors.schoolBranchId}</p>}
-        </>}
+        {kind === 'role' && <p className="sep-muted">Vai trò áp dụng cho toàn hệ thống.</p>}
+        {kind === 'module' && <p className="sep-muted">Mô tả phạm vi của phân hệ. Ví dụ, module Thi bao gồm ma trận, ngân hàng câu hỏi, bộ đề và tổ chức kỳ thi.</p>}
         {errors.scope && <p role="alert" className="pcb-error">
           {errors.scope}
         </p>}

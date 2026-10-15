@@ -1,22 +1,50 @@
 export type ToastType = 'success' | 'info' | 'warning' | 'error';
 
-export const displayToast = (type: ToastType, title: string, mes: string, duration: number = 3) => {
-  const dialogs = document.querySelectorAll<HTMLDialogElement>('dialog[open]');
-  const activeDialog = dialogs.item(dialogs.length - 1);
+const activeToastDialog = () => Array.from(document.querySelectorAll<HTMLDialogElement>('dialog[open]')).at(-1) ?? null;
+const toastHost = (dialog: HTMLDialogElement | null) => dialog
+  ? dialog.querySelector<HTMLDivElement>(':scope > .toast-stack') ?? dialog.appendChild(Object.assign(document.createElement('div'), { className: 'toast-stack' }))
+  : document.querySelector<HTMLDivElement>('#toast');
+const showToastHost = (host: HTMLDivElement) => {
+  if ('showPopover' in host && host.isConnected) {
+    host.setAttribute('popover', 'manual');
+    if (host.matches(':popover-open')) host.hidePopover();
+    host.showPopover();
+  }
+};
+const clearToastHost = (host: HTMLDivElement) => {
+  if (host.childElementCount) return;
+  if ('hidePopover' in host && host.isConnected && host.matches(':popover-open')) host.hidePopover();
+  if (host.id !== 'toast') host.remove();
+};
+
+export const displayToast = (type: ToastType, title: string, mes: string | readonly string[], duration: number = 3) => {
+  let owner = activeToastDialog();
   // Đặt toast trong dialog để nút đóng vẫn tương tác được khi phần còn lại của trang bị inert.
-  const toastElement = activeDialog
-    ? activeDialog.querySelector<HTMLDivElement>(':scope > .toast-stack') ?? activeDialog.appendChild(Object.assign(document.createElement('div'), { className: 'toast-stack' }))
-    : document.getElementById('toast');
-  if (toastElement) {
+  const initialHost = toastHost(owner);
+  if (initialHost) {
+    let toastElement = initialHost;
     const toast = document.createElement('div');
 
     const removeToast = () => {
+      owner?.removeEventListener('close', moveToast);
       toast.remove();
-      if (!toastElement.childElementCount) {
-        if (toastElement.hasAttribute('popover')) toastElement.hidePopover();
-        if (activeDialog) toastElement.remove();
-      }
+      clearToastHost(toastElement);
     };
+    // Giữ thông báo sau khi lưu/đóng form; nếu còn dialog cha thì toast vẫn tương tác được.
+    const moveToast = () => {
+      if (owner?.open) return;
+      owner?.removeEventListener('close', moveToast);
+      const previousHost = toastElement;
+      owner = activeToastDialog();
+      const nextHost = toastHost(owner);
+      if (!nextHost) { removeToast(); return; }
+      nextHost.appendChild(toast);
+      toastElement = nextHost;
+      owner?.addEventListener('close', moveToast);
+      clearToastHost(previousHost);
+      showToastHost(nextHost);
+    };
+    owner?.addEventListener('close', moveToast);
     const autoRemove = setTimeout(removeToast, duration * 1000 + 1000);
 
     toast.onclick = function (e: MouseEvent) {
@@ -56,7 +84,18 @@ export const displayToast = (type: ToastType, title: string, mes: string, durati
     `;
     // Nội dung có thể đến từ tên vai trò hoặc lỗi API; luôn hiển thị dưới dạng văn bản.
     toast.querySelector('.toast_title')!.textContent = title;
-    toast.querySelector('.toast_msg')!.textContent = mes;
+    const messages = typeof mes === 'string' ? [mes] : mes;
+    const messageElement = toast.querySelector('.toast_msg')!;
+    if (messages.length > 1) {
+      const list = document.createElement('ul');
+      list.className = 'toast_msg toast_msg--list';
+      for (const message of messages) {
+        const item = document.createElement('li');
+        item.textContent = message;
+        list.appendChild(item);
+      }
+      messageElement.replaceWith(list);
+    } else messageElement.textContent = messages[0] ?? '';
     
     const progressRunning = toast.querySelector('.progress-running') as HTMLElement;
     if (progressRunning) {
@@ -65,10 +104,6 @@ export const displayToast = (type: ToastType, title: string, mes: string, durati
     
     toastElement.appendChild(toast);
     // Dialog dùng top layer. Đưa toast lên cùng lớp để lỗi lưu vẫn nhìn thấy khi biểu mẫu mở.
-    if ('showPopover' in toastElement) {
-      toastElement.setAttribute('popover', 'manual');
-      toastElement.hidePopover();
-      toastElement.showPopover();
-    }
+    showToastHost(toastElement);
   }
 };

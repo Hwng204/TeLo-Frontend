@@ -14,8 +14,8 @@ export interface AcademicYearListItem {
   id: string;
   code: string;
   name: string;
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   status: 'DRAFT' | 'ACTIVE' | 'CLOSED';
   version: number;
   semesterCount: number;
@@ -25,8 +25,8 @@ export interface AcademicYearDetail {
   id: string;
   code: string;
   name: string;
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   status: 'DRAFT' | 'ACTIVE' | 'CLOSED';
   version: number;
   semesters: SemesterItem[];
@@ -42,15 +42,15 @@ export interface AcademicYearPage {
 
 export interface CreateAcademicYearRequest {
   name: string;
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   terms?: ConfigureTermItem[];
 }
 
 export interface UpdateAcademicYearRequest {
   name: string;
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   version?: number;
   terms?: ConfigureTermItem[];
 }

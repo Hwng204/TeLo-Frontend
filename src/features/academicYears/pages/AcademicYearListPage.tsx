@@ -18,7 +18,6 @@ import { displayToast } from '../../../utils/toast';
 import { AcademicYearActionDialog, type YearAction } from '../components/AcademicYearActionDialog';
 import './AcademicYearPages.css';
 
-const formatDate = (value: string) => value ? value.slice(0, 10).split('-').reverse().join('/') : '—';
 
 export const AcademicYearListPage = () => {
   const [search, setSearch] = useState('');
@@ -73,16 +72,15 @@ export const AcademicYearListPage = () => {
       <div className="academic-feedback">
         {!!result.error && <div className="sep-alert" role="alert">{toProblem(result.error).message}<PcbButton variant="secondary" onClick={result.reload}>Thử lại</PcbButton></div>}
         <TableState loading={result.loading && !directory?.items.length} failed={!!result.error} empty={!directory?.items.length}
-          columns={6} title={hasFilters ? 'Không tìm thấy năm học' : 'Chưa có năm học'}
+          columns={3} title={hasFilters ? 'Không tìm thấy năm học' : 'Chưa có năm học'}
           action={hasFilters ? <PcbButton variant="secondary" onClick={clearFilters}>Bỏ bộ lọc</PcbButton> : editable ? <Link className="pcb-btn pcb-btn--primary" to="/academic-years/new"><Icon name="add" />Thêm năm học</Link> : undefined} />
       </div>
       {!!directory?.items.length && <div className="pcb-table-wrap" tabIndex={0} role="region" aria-label="Bảng năm học">
         <table className="pcb-table academic-table">
           <caption className="academic-sr-only">Danh sách năm học và trạng thái áp dụng</caption>
-          <thead><tr><th scope="col">Năm học</th><th scope="col">Ngày bắt đầu</th><th scope="col">Ngày kết thúc</th><th scope="col">Học kỳ</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead>
+          <thead><tr><th scope="col">Năm học</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead>
           <tbody>{directory.items.map(year => <tr key={year.id}>
             <td><strong>{year.name}</strong></td>
-            <td>{formatDate(year.startDate)}</td><td>{formatDate(year.endDate)}</td><td>{year.semesterCount}/2</td>
             <td><span className={'academic-status academic-status--' + year.status.toLowerCase()}>{YEAR_STATUS[year.status]}</span></td>
             <td><div className="sep-row-actions">
               <RowAction to={'/academic-years/' + year.id} icon={year.status === 'CLOSED' || !editable ? 'visibility' : 'edit'} label={(year.status === 'CLOSED' || !editable ? 'Xem ' : 'Cấu hình ') + 'năm học ' + year.name} />

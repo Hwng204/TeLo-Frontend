@@ -31,4 +31,12 @@ check(resolveWorkingYear(normalized, '14')?.status === 'DRAFT', 'Can select an u
 check(resolveWorkingYear(normalized, '11')?.status === 'CLOSED', 'Can select a closed year');
 check(resolveWorkingYear(normalizeWorkingYears(apiYears), '11')?.id === '11', 'Saved selection survives a fresh API response');
 check(apiYears[0].id === 8, 'Normalization preserves the original API response');
+const yearOnly = [
+  { id: '1', name: '2028-2029', status: 'CLOSED' },
+  { id: '2', name: '2029-2030', status: 'ACTIVE' },
+  { id: '3', name: '2030-2031', status: 'DRAFT' },
+];
+check(resolveWorkingYear(yearOnly)?.id === '2', 'Year-only catalog keeps the active year');
+check(resolveWorkingYear(yearOnly, '1')?.id === '1', 'Historical selection does not require dates');
+check(resolveWorkingYear(yearOnly.filter(year => year.status !== 'ACTIVE'))?.id === '3', 'Sorts a year-only catalog by name');
 console.log(`Admin academic year: ${checks} checks passed`);
