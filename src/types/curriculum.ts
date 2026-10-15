@@ -14,10 +14,9 @@ export interface CurriculumField {
 export interface Lesson {
   id: number;
   chapterId: number;
-  code: string;
+  number: number;
   title: string;
-  sortOrder: number;
-  /** Đã có ma trận/nhiệm vụ dùng: không xoá được. */
+  /** Đã có ma trận/nhiệm vụ dùng: xoá thì chỉ lưu trữ, không xoá hẳn. */
   inUse: boolean;
 }
 
@@ -27,10 +26,9 @@ export interface Chapter {
   gradeLevelName: string;
   fieldId: number;
   fieldName: string;
-  code: string;
+  number: number;
   title: string;
-  sortOrder: number;
-  /** Có bài đã được dùng: không xoá được, không đổi được khối lớp/lĩnh vực. */
+  /** Có bài đã được dùng: xoá thì chỉ lưu trữ, không đổi được khối lớp/lĩnh vực. */
   inUse: boolean;
   lessons: Lesson[];
 }
@@ -46,13 +44,18 @@ export interface Curriculum {
 export interface SaveChapterRequest {
   gradeLevelId: number;
   fieldId: number;
-  code: string;
+  number: number;
   title: string;
 }
 
 export interface SaveLessonRequest {
-  code: string;
+  number: number;
   title: string;
+}
+
+/** Xoá chương/bài: chưa dùng thì xoá hẳn, đang dùng thì chỉ lưu trữ (ẩn khỏi danh sách và ma trận mới). */
+export interface CurriculumDeleteResult {
+  archived: boolean;
 }
 
 export interface CurriculumImportError {

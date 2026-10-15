@@ -1,35 +1,38 @@
-/* Màn Chương & bài học: bảng chương, mỗi chương mở rộng ra danh sách bài ngay bên dưới. */
+/* Màn Chương & bài học: danh sách thẻ chương, mỗi thẻ mở rộng ra danh sách bài bên trong. */
 /* Ba nút thao tác chiếm gần nửa hàng: dưới 1200px đưa nút lên hàng riêng để ô lọc không bị bóp dọc. */
 @media (max-width: 1200px) {
   .cur-toolbar { flex-direction: column-reverse; align-items: stretch; }
   .cur-toolbar .sep-toolbar__actions { justify-content: flex-end; flex-wrap: wrap; }
 }
-/* Cột hẹp quá thì tên chương/lĩnh vực vỡ 3-4 dòng: giữ bề rộng tối thiểu, khung bảng tự cuộn ngang. */
-.pcb-table.cur-table { min-width: 760px; }
-.cur-table .cur-col-toggle { width: 48px; padding-right: 0; }
-.cur-table .cur-col-code { width: 1%; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.cur-table .cur-col-count { width: 1%; text-align: right; white-space: nowrap; }
-.cur-table td.cur-col-toggle { padding-top: 8px; padding-bottom: 8px; }
-.cur-table .cur-col-toggle .pcb-iconbtn:disabled { opacity: 1; cursor: default; }
+/* Danh sách chương dạng thẻ: bấm chevron hoặc tên chương để mở danh sách bài ngay trong thẻ. */
+.cur-list { display: flex; flex-direction: column; gap: 12px; }
+.cur-chapter { border: 1px solid var(--pcb-color-border-default); border-radius: 8px; background: var(--pcb-color-bg-surface); }
+.cur-chapter__head { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 8px 12px 8px 8px; border-radius: 8px; }
+.cur-chapter--open .cur-chapter__head { border-radius: 8px 8px 0 0; background: var(--pcb-color-bg-subtle); }
+.cur-chapter--open .cur-chapter__head .pcb-iconbtn:not(:hover) { background: transparent; }
+/* Bị ép mở vì khớp tìm kiếm ở bài: vẫn hiện chevron nhưng không bấm được. */
+.cur-chapter__chevron:disabled { opacity: 1; cursor: default; }
+.cur-chapter__meta { flex-shrink: 0; font: 400 13px/20px 'Inter', sans-serif; color: var(--pcb-color-text-secondary); white-space: nowrap; }
+.cur-actions { flex-shrink: 0; margin: 0; }
 
 /* Tên chương cũng mở/thu gọn được: vùng bấm rộng hơn cái chevron 34px. */
-.cur-title-toggle { padding: 0; border: 0; background: none; font: 500 15px/22px 'Inter', sans-serif; color: var(--pcb-color-text-primary); text-align: left; cursor: pointer; }
+.cur-title-toggle { flex: 1; min-width: 0; padding: 0; border: 0; background: none; font: 500 15px/22px 'Inter', sans-serif; color: var(--pcb-color-text-primary); text-align: left; cursor: pointer; }
 .cur-title-toggle:hover { color: var(--pcb-color-text-brand); }
 .cur-title-toggle:focus-visible { outline: 2px solid var(--pcb-color-border-focus); outline-offset: 2px; border-radius: 4px; }
 
-.cur-chapter--open td { background: var(--pcb-color-bg-subtle); }
-.pcb-table tbody tr.cur-lessons-row:hover { background: transparent; }
-.cur-lessons-row > td { padding: 4px 16px 12px 64px; border-top: 0; background: var(--pcb-color-bg-subtle); }
-
-.cur-lessons { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
-.cur-lesson { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 4px 0; border-top: 1px solid var(--pcb-color-border-default); }
-.cur-lesson:first-child { border-top: 0; }
-.cur-lesson__code { flex-shrink: 0; min-width: 64px; font: 500 14px/20px 'Inter', sans-serif; color: var(--pcb-color-text-secondary); font-variant-numeric: tabular-nums; }
-.cur-lesson__title { flex: 1; min-width: 0; font: 400 14px/20px 'Inter', sans-serif; color: var(--pcb-color-text-primary); }
+.cur-chapter__body { padding: 4px 16px 16px 48px; }
+.cur-lessons { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.cur-lesson { display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 4px 8px 4px 12px; border: 1px solid var(--pcb-color-border-default); border-radius: 6px; background: var(--pcb-color-bg-surface); }
+.cur-lesson__title { flex: 1; min-width: 0; font: 400 14px/20px 'Inter', sans-serif; color: var(--pcb-color-text-primary); overflow-wrap: anywhere; }
 .cur-lesson__tag { flex-shrink: 0; padding: 1px 8px; border-radius: 999px; background: var(--pcb-color-bg-active); font: 500 12px/18px 'Inter', sans-serif; color: var(--pcb-color-text-secondary); }
-.cur-lesson__actions { margin: 0; }
 .cur-lessons-empty { margin: 8px 0; font: 400 14px/20px 'Inter', sans-serif; color: var(--pcb-color-text-secondary); }
-.cur-add-lesson { margin-top: 4px; }
+
+/* Nút thêm bài: vòng tròn giữa một đường kẻ ngang. */
+.cur-add-lesson { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.cur-add-lesson::before, .cur-add-lesson::after { content: ''; flex: 1; border-top: 1px solid var(--pcb-color-border-default); }
+.cur-add-lesson__btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: var(--pcb-color-bg-accent); color: var(--pcb-color-text-on-accent); cursor: pointer; transition: background-color var(--sep-transition); }
+.cur-add-lesson__btn:hover { background: var(--pcb-color-bg-accent-hover); }
+.cur-add-lesson__btn:focus-visible { outline: 2px solid var(--pcb-color-border-focus); outline-offset: 2px; }
 
 .cur-load-error { justify-content: space-between; flex-wrap: wrap; }
 
@@ -44,13 +47,22 @@
 .cur-import__errors { display: flex; flex-direction: column; gap: 6px; max-height: 240px; margin: 0; padding: 12px 14px; overflow-y: auto; list-style: none; border: 1px solid var(--pcb-color-border-default); border-radius: 8px; background: var(--pcb-color-bg-surface); font: 400 13px/20px 'Inter', sans-serif; color: var(--pcb-color-text-primary); }
 
 @media (max-width: 720px) {
-  .cur-lessons-row > td { padding-left: 16px; }
-  .cur-lesson { flex-wrap: wrap; }
+  .cur-chapter__meta { display: none; }
+  .cur-chapter__body { padding-left: 16px; }
 }
 
-/* Form chương/bài: cột hẹp cho khối lớp / mã, cột rộng cho lĩnh vực / tên. */
+/* Form chương/bài: cột hẹp cho khối lớp / số, cột rộng cho môn học / tên. */
 .cur-form-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 16px 20px; }
 .cur-form .sep-actions { margin-top: 24px; }
 @media (max-width: 560px) {
   .cur-form-fields { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Hộp thoại form của màn chương & bài: cùng kiểu hộp xác nhận (tiêu đề trái + nút X tròn, nút phải). */
+.sep-dialog.cur-dialog { border-radius: 16px; }
+.cur-dialog .sep-dialog__body { padding: 24px; }
+.cur-dialog .sep-dialog__head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.cur-dialog .sep-dialog__title { font: 700 20px/28px 'Inter', sans-serif; color: var(--pcb-color-text-primary); }
+.cur-dialog .sep-dialog__close { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: var(--pcb-color-bg-subtle); color: var(--pcb-color-text-secondary); cursor: pointer; }
+.cur-dialog .sep-dialog__close:hover { background: var(--pcb-color-bg-hover); }
+.cur-dialog .sep-actions .pcb-btn--secondary { border-color: var(--pcb-color-border-default); color: var(--pcb-color-text-primary); }

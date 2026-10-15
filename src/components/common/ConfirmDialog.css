@@ -160,3 +160,5 @@
 .sep-delete-confirm .confirm-btn--cancel:hover:not(:disabled) { background: var(--pcb-color-bg-subtle); }
 .sep-delete-confirm .confirm-btn--danger { border: 1px solid var(--pcb-color-text-danger); background: var(--pcb-color-text-danger); color: var(--pcb-color-text-on-accent); }
 .sep-delete-confirm .confirm-btn--danger:hover:not(:disabled) { background: color-mix(in srgb, var(--pcb-color-text-danger) 88%, #000); }
+.sep-delete-confirm .confirm-btn--info { border: 1px solid var(--pcb-color-bg-accent); background: var(--pcb-color-bg-accent); color: var(--pcb-color-text-on-accent); }
+.sep-delete-confirm .confirm-btn--info:hover:not(:disabled) { border-color: var(--pcb-color-bg-accent-hover); background: var(--pcb-color-bg-accent-hover); }
