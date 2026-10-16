@@ -7,8 +7,6 @@ export interface CurriculumOption {
 export interface CurriculumField {
   id: number;
   name: string;
-  subjectId: number;
-  subjectName: string;
 }
 
 export interface Lesson {

@@ -1,6 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
-import { curriculumFieldLabel } from '../components/fieldLabel';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { RowActionButton } from '../../../components/common/RowAction';
 import { TableState } from '../../../components/common/TableState';
@@ -46,7 +45,6 @@ export const CurriculumPage = () => {
   const canManage = curriculum?.canManage ?? false;
   const chapters = useMemo(() => curriculum?.chapters ?? [], [curriculum]);
   const fields = useMemo(() => curriculum?.fields ?? [], [curriculum]);
-  const fieldLabels = useMemo(() => new Map(fields.map((field) => [field.id, curriculumFieldLabel(field, fields)])), [fields]);
   const visible = useMemo(() => filterChapters(chapters, filter), [chapters, filter]);
   const filtered = isFiltered(filter);
   const loadProblem = data.error != null ? toProblem(data.error) : null;
@@ -188,7 +186,7 @@ export const CurriculumPage = () => {
                 <option value="">Tất cả môn học</option>
                 {fields.map((field) => (
                   <option key={field.id} value={field.id}>
-                    {fieldLabels.get(field.id)}
+                    {field.name}
                   </option>
                 ))}
               </SelectField>
@@ -255,7 +253,7 @@ export const CurriculumPage = () => {
                         {name}
                       </button>
                       <span className="cur-chapter__meta">
-                        {chapter.gradeLevelName} · {fieldLabels.get(chapter.fieldId) ?? chapter.fieldName} ·{' '}
+                        {chapter.gradeLevelName} · {chapter.fieldName} ·{' '}
                         {chapter.lessons.length} bài
                       </span>
                       {canManage && (
@@ -359,7 +357,7 @@ export const CurriculumPage = () => {
       <LessonFormDialog
         open={editing?.kind === 'lesson'}
         chapter={editing?.kind === 'lesson' ? editing.chapter : null}
-        fieldName={editing?.kind === 'lesson' ? fieldLabels.get(editing.chapter.fieldId) : undefined}
+        fieldName={editing?.kind === 'lesson' ? editing.chapter.fieldName : undefined}
         lesson={editing?.kind === 'lesson' ? editing.lesson : null}
         onClose={() => setEditing(null)}
         onSaved={(message) => {

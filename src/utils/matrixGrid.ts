@@ -27,15 +27,6 @@ export const LEVEL_LABELS: Record<CognitiveLevel, string> = {
   VAN_DUNG: 'Vận dụng',
 };
 
-/**
- * Nhãn duy nhất của một bài: "Bài 9. Luyện tập chung — Chương 1. Ôn tập và bổ sung".
- * Tên bài trơn không đủ vì cùng một tên có thể xuất hiện ở nhiều chương.
- */
-export const lessonLabel = (lesson: LessonOption): string =>
-  lesson.chapterTitle
-    ? `Bài ${lesson.code}. ${lesson.title} — Chương ${lesson.chapterCode}. ${lesson.chapterTitle}`
-    : lesson.title;
-
 export const rowChapterId = (row: GridRow, lessons: LessonOption[]): number =>
   lessons.find((lesson) => lesson.id === row.lessonId)?.chapterId ?? row.chapterId ?? 0;
 
@@ -43,14 +34,14 @@ export const changeRowChapter = (row: GridRow, chapterId: number, lessons: Lesso
   rowChapterId(row, lessons) === chapterId ? row : { ...row, chapterId, lessonId: 0 };
 
 /** Trần tỷ lệ % mỗi ô — không có ô nào chiếm quá 100% một mình. */
-export const MAX_PERCENTAGE = 100;
+const MAX_PERCENTAGE = 100;
 /** Tổng % cả ma trận phải đúng bằng số này khi Nộp / Xác nhận / sửa bản Đã nộp (backend: InvalidTotalScore). */
 export const REQUIRED_TOTAL_PERCENTAGE = 100;
-export const MAX_NAME_LENGTH = 255;
+const MAX_NAME_LENGTH = 255;
 /** Khớp cột decimal(5,2) của backend: tối đa 2 chữ số thập phân. */
-export const PERCENTAGE_DECIMALS = 2;
+const PERCENTAGE_DECIMALS = 2;
 /** Tối đa 4 chữ số khi HIỂN THỊ điểm mỗi câu suy ra (giá trị chia có thể không tròn). */
-export const PER_QUESTION_DECIMALS = 4;
+const PER_QUESTION_DECIMALS = 4;
 
 const emptyCells = (): Record<CognitiveLevel, GridCell> => ({
   NHAN_BIET: { questionCount: '', percentage: '' },
@@ -95,7 +86,7 @@ export const hasValidCellValues = (cell: GridCell): boolean => {
 };
 
 /** % của một ô, hoặc 0 nếu chưa gõ/không hợp lệ — dùng khi cộng tổng. */
-export const cellPercentage = (cell: GridCell): number => parsePercentage(cell.percentage) ?? 0;
+const cellPercentage = (cell: GridCell): number => parsePercentage(cell.percentage) ?? 0;
 
 /** Cộng theo số nguyên phần trăm (× 100), nếu không 0.1 + 0.2 sẽ ra 0.30000000000000004. */
 const sumValues = (values: number[]) =>
@@ -216,7 +207,7 @@ export const validateGrid = (
   }
 
   if (!academicContextId) {
-    errors.academicContextId = 'Chọn đủ Chương trình, Môn học, Khối lớp và Năm học.';
+    errors.academicContextId = 'Chọn đủ Môn học và Khối lớp.';
   }
 
   const seenLessons = new Set<number>();
@@ -283,11 +274,16 @@ export const totalScoreHint = (rows: GridRow[]): string | null =>
     ? null
     : `Cần đúng ${REQUIRED_TOTAL_PERCENTAGE}% mới nộp hoặc xác nhận được; hiện là ${formatScore(gridTotal(rows).percentage)}%. Vẫn lưu nháp được.`;
 
+/** Trần của backend cho "Tổng điểm ma trận". */
+const MAX_TOTAL_SCORE = 999;
+
 /** Số nguyên dương hợp lệ cho ô "Tổng điểm ma trận", hoặc thông báo lỗi. */
 export const validateTotalScoreField = (totalScore: number): string | null =>
-  Number.isInteger(totalScore) && totalScore > 0
-    ? null
-    : 'Tổng điểm ma trận phải là số nguyên dương.';
+  !Number.isInteger(totalScore) || totalScore <= 0
+    ? 'Tổng điểm ma trận phải là số nguyên dương.'
+    : totalScore > MAX_TOTAL_SCORE
+      ? `Tổng điểm ma trận tối đa ${MAX_TOTAL_SCORE}.`
+      : null;
 
 /**
  * Lỗi hiển thị ngay khi đang gõ: chỉ các ô ĐÃ có giá trị và sai (ví dụ % vượt trần).

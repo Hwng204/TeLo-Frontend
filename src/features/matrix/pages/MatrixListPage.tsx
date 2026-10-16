@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Field, Icon, PcbButton } from '../../../components/pcb';
-import { useAsync, useDebounce } from '../../../hooks';
+import { useArrivalNotice, useAsync, useDebounce } from '../../../hooks';
 import { api } from '../../../services/api';
 import type { MatrixListQuery, MatrixStatus } from '../../../types';
 import { formatScore } from '../../../utils/matrixGrid';
 import { toProblem } from '../../../utils/problem';
-import { contextNames } from '../../../utils/academicContext';
 import { DimensionFilters, type DimensionFilterValue } from '../../../components/common/DimensionFilters';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { Pager } from '../../../components/common/Pager';
@@ -24,11 +23,13 @@ const STATUS_TABS: { value: MatrixStatus | ''; label: string; title?: string }[]
   { value: 'ARCHIVED', label: 'Đã lưu trữ' },
 ];
 
-const COLUMNS = 10;
+const COLUMNS = 8;
 
 /** Danh sách ma trận của PHT. */
 export const MatrixListPage = () => {
   const navigate = useNavigate();
+  // Chi tiết ma trận bị 404/403 khi thao tác thì đẩy về đây kèm lý do.
+  const arrival = useArrivalNotice();
 
   const [keyword, setKeyword] = useState('');
   const [selection, setSelection] = useState<DimensionFilterValue>({});
@@ -40,7 +41,6 @@ export const MatrixListPage = () => {
 
   const reference = useAsync(() => api.matrix.referenceData(), []);
   const contexts = reference.data?.academicContexts ?? [];
-  const semesters = reference.data?.semesters ?? [];
 
   const query: MatrixListQuery = {
     page,
@@ -57,8 +57,6 @@ export const MatrixListPage = () => {
       query.pageSize,
       query.keyword,
       query.status,
-      query.academicYearId,
-      query.semesterId,
       query.subjectId,
       query.gradeLevelId,
     ],
@@ -82,7 +80,6 @@ export const MatrixListPage = () => {
   };
 
   const error = list.error ?? reference.error;
-  const dash = <span className="sep-muted">—</span>;
 
   return (
     <>
@@ -105,7 +102,6 @@ export const MatrixListPage = () => {
             />
             <DimensionFilters
               contexts={contexts}
-              semesters={semesters}
               value={selection}
               onChange={onFilterChange(setSelection)}
             />
@@ -123,6 +119,7 @@ export const MatrixListPage = () => {
           </div>
         </div>
 
+        {arrival && <div className="sep-alert" role="alert">{arrival}</div>}
         {error != null && <div className="sep-alert" role="alert">{toProblem(error).message}</div>}
 
         <div className="pcb-table-wrap">
@@ -133,8 +130,6 @@ export const MatrixListPage = () => {
                 <th className="sep-col-name">Tên ma trận</th>
                 <th>Môn</th>
                 <th>Khối</th>
-                <th>Năm học</th>
-                <th>Học kỳ</th>
                 <th>Người lập</th>
                 <th>Quy mô</th>
                 <th>Trạng thái</th>
@@ -143,21 +138,12 @@ export const MatrixListPage = () => {
             </thead>
             <tbody>
               {items.map((matrix, index) => {
-                const context = contexts.find((item) => item.id === matrix.academicContextId);
-                const names = context ? contextNames(context) : null;
-                const semester = semesters.find((item) => item.id === matrix.semesterId);
                 return (
                   <tr key={matrix.id}>
                     <td className="sep-col-index">{(page - 1) * pageSize + index + 1}</td>
-                    <td>
-                      <Link className="sep-row-link" to={`/matrices/${matrix.id}`}>
-                        {matrix.name}
-                      </Link>
-                    </td>
-                    <td className="sep-nowrap">{matrix.subjectName ?? names?.subjectId ?? dash}</td>
-                    <td className="sep-nowrap">{matrix.gradeLevelName ?? names?.gradeLevelId ?? dash}</td>
-                    <td className="sep-nowrap">{matrix.academicYearName ?? names?.academicYearId ?? dash}</td>
-                    <td className="sep-nowrap">{matrix.semesterName ?? semester?.name ?? dash}</td>
+                    <td>{matrix.name}</td>
+                    <td className="sep-nowrap">{matrix.subjectName}</td>
+                    <td className="sep-nowrap">{matrix.gradeLevelName}</td>
                     <td className="sep-nowrap">
                       <PersonCell person={matrix.createdBy} />
                     </td>
@@ -186,13 +172,6 @@ export const MatrixListPage = () => {
             columns={COLUMNS}
             title="Không có ma trận nào khớp bộ lọc."
             hint={filtered ? 'Thử bỏ bớt điều kiện lọc hoặc đổi từ khoá tìm kiếm.' : 'Bấm "Tạo ma trận" để lập ma trận đầu tiên.'}
-            action={
-              filtered && (
-                <PcbButton variant="secondary" size="sm" onClick={reset}>
-                  Xóa bộ lọc
-                </PcbButton>
-              )
-            }
           />
         </div>
 

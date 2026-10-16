@@ -6,7 +6,6 @@ import type { Chapter, CurriculumField, CurriculumOption } from '../../../types'
 import { isValidNumber } from '../../../utils/curriculumFilter';
 import { toProblem } from '../../../utils/problem';
 import { FormDialog } from '../../../components/common/FormDialog';
-import { curriculumFieldLabel } from './fieldLabel';
 
 type Props = {
   open: boolean;
@@ -145,7 +144,7 @@ const ChapterForm = ({ chapter, grades, fields, chapters, onClose, onSaved }: Pr
           <option value="">Chọn môn học</option>
           {fields.map((field) => (
             <option key={field.id} value={field.id}>
-              {curriculumFieldLabel(field, fields)}
+              {field.name}
             </option>
           ))}
         </SelectField>

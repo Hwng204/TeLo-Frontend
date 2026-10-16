@@ -31,7 +31,6 @@ export interface MatrixDetailRequest {
 export interface SaveMatrixRequest {
   name: string;
   academicContextId: number;
-  semesterId: number | null;
   taskId: number | null;
   /** Số nguyên dương do người lập tự đặt — không còn tính từ tổng chi tiết. */
   totalScore: number;
@@ -43,6 +42,12 @@ export interface MatrixDetail extends MatrixDetailRequest {
   questionType: string;
   /** Suy ra từ backend = matrix.totalScore * percentage / 100, để tránh lệch làm tròn. */
   cellScore: number;
+  // Tên bài/chương lúc đọc, kể cả khi đã lưu trữ (reference data chỉ có bài ACTIVE).
+  lessonTitle?: string | null;
+  lessonNumber?: number | null;
+  chapterId?: number | null;
+  chapterTitle?: string | null;
+  chapterNumber?: number | null;
 }
 
 /** Một người dùng hiển thị cạnh ma trận/nhiệm vụ. `roleLabel` là null nếu họ không có vai trò ma trận. */
@@ -59,7 +64,6 @@ export interface Matrix {
   statusLabel: string;
   taskId: number | null;
   academicContextId: number;
-  semesterId: number | null;
   details: MatrixDetail[];
   totalQuestions: number;
   totalScore: number;
@@ -69,9 +73,7 @@ export interface Matrix {
   rejectedByUserId: number | null;
   /** Null với ma trận cũ không có dữ liệu người lập. */
   createdBy: MatrixPerson | null;
-  createdAt: string | null;
   approvedBy: MatrixPerson | null;
-  approvedAt: string | null;
 }
 
 /** Hàng trong danh sách. KHÔNG có `allowedActions` — chỉ `Matrix` mới có. */
@@ -82,27 +84,18 @@ export interface MatrixListItem {
   statusLabel: string;
   taskId: number | null;
   academicContextId: number;
-  semesterId: number | null;
   totalQuestions: number;
   totalScore: number;
   createdBy: MatrixPerson | null;
-  createdAt: string | null;
   approvedBy: MatrixPerson | null;
-  approvedAt: string | null;
-  subjectName?: string | null;
-  gradeLevelName?: string | null;
-  academicYearName?: string | null;
-  semesterName?: string | null;
+  subjectName: string;
+  gradeLevelName: string;
 }
 
 export interface MatrixListQuery {
   page?: number;
   pageSize?: number;
   keyword?: string;
-  academicContextId?: number;
-  semesterId?: number;
-  // Lọc từng chiều độc lập, không cần chọn đủ ba chiều để ra academicContextId.
-  academicYearId?: number;
   subjectId?: number;
   gradeLevelId?: number;
   /** Không truyền thì backend ẩn các ma trận ARCHIVED. */
@@ -127,7 +120,6 @@ export interface MatrixTask {
   createdBy: MatrixPerson | null;
   assignedToUserId: number;
   academicContextId: number;
-  semesterId: number | null;
   dueAt: string | null;
   status: MatrixTaskStatus;
   statusLabel: string;
@@ -139,7 +131,6 @@ export interface MatrixTask {
 export interface CreateMatrixTaskRequest {
   assignedToUserId: number;
   academicContextId: number;
-  semesterId: number | null;
   dueAt: string | null;
   name: string;
   description: string | null;
@@ -149,23 +140,11 @@ export interface AcademicContextOption {
   id: number;
   /** Dạng "Môn - Khối - Năm - Trường / Chi nhánh". */
   label: string;
-  academicYearId: number;
   schoolBranchId: number;
   subjectId: number;
   gradeLevelId: number;
-  // Tên hiển thị từng chiều. Không bắt buộc vì backend cũ chưa trả về;
-  // xem contextNames() trong ContextSelects để biết nhánh dự phòng.
-  subjectName?: string;
-  gradeLevelName?: string;
-  academicYearName?: string;
-}
-
-export interface SemesterOption {
-  id: number;
-  academicYearId: number;
-  name: string;
-  startDate: string | null;
-  endDate: string | null;
+  subjectName: string;
+  gradeLevelName: string;
 }
 
 export interface LessonOption {
@@ -189,11 +168,9 @@ export interface TeamLeadOption {
 
 export interface MatrixReferenceData {
   academicContexts: AcademicContextOption[];
-  semesters: SemesterOption[];
   /** Rỗng trừ khi request truyền `academicContextId`. */
   lessons: LessonOption[];
   teamLeads: TeamLeadOption[];
-  cognitiveLevels: { code: CognitiveLevel; label: string }[] | null;
 }
 
 // --- Kiểu chỉ dùng cho giao diện lưới chi tiết ---
@@ -220,7 +197,6 @@ export interface GridRow {
 
 export interface MatrixImportContext {
   academicContextId: number;
-  semesterId: number | null;
   totalScore: number;
   name?: string;
 }
@@ -233,28 +209,4 @@ export interface MatrixImportPreview {
   filledLines: number;
   details: MatrixDetailRequest[];
   errors: { rowNumber: number | null; message: string }[];
-}
-
-// --- Helpers đọc/ghi .xlsx và kiểm tra định dạng cũ ---
-
-/** Một ô khi ghi file .xlsx; `bold` cho dòng tiêu đề. */
-export type XlsxCell = string | number | null | { value: string | number; bold?: boolean };
-
-export interface MatrixImportIssue {
-  /** Số dòng trong file Excel (đếm từ 1), null nếu lỗi của cả file. */
-  line: number | null;
-  message: string;
-  /** true: dòng không đưa vào bảng (không nhận ra bài học/mức). false: vẫn đưa vào, cần sửa số liệu. */
-  skipped: boolean;
-}
-
-export interface MatrixImportResult {
-  /** Mỗi dòng một bài học, đã gom ba mức nhận thức; dùng thẳng cho lưới soạn. */
-  rows: GridRow[];
-  /** "Tên ma trận" / "Tổng điểm" ghi trong file (có ở file mẫu và file Xuất Excel). */
-  name: string | null;
-  totalScore: number | null;
-  issues: MatrixImportIssue[];
-  /** Số dòng trong file có điền Số câu hoặc Tỷ lệ %. */
-  filledLines: number;
 }

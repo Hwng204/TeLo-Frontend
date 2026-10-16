@@ -34,10 +34,6 @@ export interface TaskScope {
   academicContextId: number;
   subjectName: string;
   gradeLevelName: string;
-  academicYearName: string;
-  semesterId: number | null;
-  semesterName: string | null;
-  academicYearId?: number | null;
   subjectId?: number | null;
   gradeLevelId?: number | null;
 }
