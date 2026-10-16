@@ -20,13 +20,13 @@ Quản lý ma trận đề thi (exam matrix) theo quy trình giao việc và duy
 
 ## Operating Context
 
-- Ma trận gắn với một ngữ cảnh học thuật (Chương trình, Môn học, Khối lớp, Năm học) và tuỳ chọn Học kỳ. Mỗi dòng là một bài học, chia theo 3 mức nhận thức (Nhận biết, Thông hiểu, Vận dụng), mỗi ô có số câu và tỷ lệ % điểm.
-- Trạng thái ma trận: Nháp, Đã nộp, Đã duyệt, Đã lưu trữ. Trạng thái nhiệm vụ: Đã giao, Đã nộp, Hoàn thành. Nhiệm vụ có hạn hoàn thành (tuỳ chọn).
+- Ma trận gắn với một phạm vi Môn học + Khối lớp (theo phân hiệu); không có năm học, học kỳ. Mỗi dòng là một bài học, chia theo 3 mức nhận thức (Nhận biết, Thông hiểu, Vận dụng), mỗi ô có số câu và tỷ lệ % điểm.
+- Trạng thái ma trận: Nháp, Đã nộp, Đã duyệt, Đã lưu trữ. Trạng thái nhiệm vụ: Đã giao, Đang thực hiện, Chờ kiểm duyệt, Cần chỉnh sửa, Hoàn thành. Nhiệm vụ có hạn hoàn thành (tuỳ chọn).
 - Backend quyết định quyền trên từng ma trận (`allowedActions`); giao diện chỉ hiện hành động mà backend cho phép.
 
 ## Capabilities and Constraints
 
-- Nhiệm vụ chưa có API sửa/xoá; danh sách ma trận chưa trả quyền của từng dòng. Thao tác nhanh trên danh sách chỉ là điều hướng luôn đúng (xem, lập/mở ma trận), không có sửa/xoá ở danh sách.
+- Nhiệm vụ đã có API sửa (`PUT /api/tasks/matrix/{id}`) và xoá (`DELETE /api/tasks/{id}`); danh sách ma trận chưa trả quyền của từng dòng. Thao tác nhanh trên danh sách chỉ là điều hướng luôn đúng (xem, lập/mở ma trận), không có sửa/xoá ở danh sách.
 - Tổ trưởng không vào được danh sách ma trận; họ đi qua danh sách nhiệm vụ.
 - Toàn bộ nội dung giao diện bằng tiếng Việt.
 

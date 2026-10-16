@@ -54,7 +54,7 @@ const MatrixEditor = () => {
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
   // Chưa bấm nút lần nào thì chỉ báo lỗi các ô đã có giá trị (đang gõ), không la ô còn trống.
   const [attempted, setAttempted] = useState(false);
-  // Đã thử Nộp/Xác nhận mà tổng chưa đủ 10: lúc đó mới tô đỏ ô Tổng điểm (lưu Nháp thì không bao giờ).
+  // Đã thử Nộp/Xác nhận mà tổng chưa đủ 100%: lúc đó mới tô đỏ ô Tổng điểm (lưu Nháp thì không bao giờ).
   const [totalRejected, setTotalRejected] = useState(false);
   const [busy, runExclusive] = useBusy();
   // Mất mạng thì khoá các nút lưu; nội dung đang soạn vẫn nằm trong bản nháp cục bộ.
@@ -484,7 +484,7 @@ const MatrixEditor = () => {
         {reviewing ? (
           <>
             {matrixId ? (
-              // Ma trận đang Đã nộp thì sửa xong vẫn phải đúng 10; ma trận Nháp thì lưu ở mọi tổng.
+              // Ma trận đang Đã nộp thì sửa xong vẫn phải đúng 100%; ma trận Nháp thì lưu ở mọi tổng.
               <PcbButton
                 disabled={saveBlocked || (submittedEdit && !totalOk)}
                 title={submittedEdit && !totalOk ? `Cần đúng ${REQUIRED_TOTAL_PERCENTAGE}% mới lưu được` : undefined}
