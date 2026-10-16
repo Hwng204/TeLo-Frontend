@@ -6,7 +6,6 @@ import { api } from '../../../services/api';
 import type { MatrixListQuery, MatrixStatus } from '../../../types';
 import { formatScore } from '../../../utils/matrixGrid';
 import { toProblem } from '../../../utils/problem';
-import { contextNames } from '../../../utils/academicContext';
 import { DimensionFilters, type DimensionFilterValue } from '../../../components/common/DimensionFilters';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { Pager } from '../../../components/common/Pager';
@@ -81,7 +80,6 @@ export const MatrixListPage = () => {
   };
 
   const error = list.error ?? reference.error;
-  const dash = <span className="sep-muted">—</span>;
 
   return (
     <>
@@ -140,14 +138,12 @@ export const MatrixListPage = () => {
             </thead>
             <tbody>
               {items.map((matrix, index) => {
-                const context = contexts.find((item) => item.id === matrix.academicContextId);
-                const names = context ? contextNames(context) : null;
                 return (
                   <tr key={matrix.id}>
                     <td className="sep-col-index">{(page - 1) * pageSize + index + 1}</td>
                     <td>{matrix.name}</td>
-                    <td className="sep-nowrap">{matrix.subjectName ?? names?.subjectId ?? dash}</td>
-                    <td className="sep-nowrap">{matrix.gradeLevelName ?? names?.gradeLevelId ?? dash}</td>
+                    <td className="sep-nowrap">{matrix.subjectName}</td>
+                    <td className="sep-nowrap">{matrix.gradeLevelName}</td>
                     <td className="sep-nowrap">
                       <PersonCell person={matrix.createdBy} />
                     </td>

@@ -9,10 +9,11 @@ import { applyContextChange, resolveContextId, type ContextSelection } from './a
 const context = (id: number, schoolBranchId: number): AcademicContextOption => ({
   id,
   label: `Toán - Lớp 5 - 2026-2027 - Trường / Chi nhánh ${schoolBranchId}`,
-  academicYearId: 4,
   schoolBranchId,
   subjectId: 2,
   gradeLevelId: 1,
+  subjectName: 'Toán',
+  gradeLevelName: 'Lớp 5',
 });
 
 export const academicContextSelfCheck = () => {
@@ -25,7 +26,6 @@ export const academicContextSelfCheck = () => {
   const complete: ContextSelection = {
     subjectId: 2,
     gradeLevelId: 1,
-    academicYearId: 4,
   };
   console.assert(
     resolveContextId(only, complete) === 10,
@@ -40,8 +40,8 @@ export const academicContextSelfCheck = () => {
 
   const picked = applyContextChange(only, {}, 'subjectId', 2);
   console.assert(
-    picked.gradeLevelId === 1 && picked.academicYearId === undefined,
-    'academicContext self-check 4: Năm học không được tự điền, phải chọn tay',
+    picked.gradeLevelId === 1,
+    'academicContext self-check 4: Khối lớp duy nhất tự điền',
   );
 
   console.assert(

@@ -9,7 +9,7 @@ import { saveBlob } from '../../../utils/download';
 import { canGoBack } from '../../../utils/history';
 import { formatScore, gridTotal, REQUIRED_TOTAL_PERCENTAGE, toGrid } from '../../../utils/matrixGrid';
 import { personLabel } from '../../../utils/formatters';
-import { isPht, isTeamLead } from '../../../utils/jwt';
+import { isTeamLead } from '../../../utils/jwt';
 import { toProblem } from '../../../utils/problem';
 import { InfoGrid, type InfoItem } from '../../../components/common/InfoGrid';
 import { MatrixGrid } from '../components/MatrixGrid';
@@ -81,16 +81,8 @@ export const MatrixDetailPage = () => {
 
   const can = (action: MatrixAction) => matrix?.allowedActions.includes(action) ?? false;
 
-  // Backend cấp `Submit` cho mọi PHT và `Delete` cho mọi PHT trong chi nhánh, còn ma trận
-  // không lưu người tạo. Hai chặn dưới đây chỉ là ràng buộc phía giao diện, chưa đủ chặt.
-  // ponytail: cần backend thêm createdByUserId + siết CanHardDelete/AllowedActions, xem báo cáo.
-  const asPht = isPht() && !isTeamLead();
   // Tổ trưởng không vào được /matrices, nên "về danh sách" của họ là danh sách nhiệm vụ.
   const listPath = isTeamLead() ? '/matrix-tasks' : '/matrices';
-  // PHT không "nộp cho chính mình": họ dùng Xác nhận. Nộp là việc của Tổ trưởng.
-  const canSubmit = can('Submit') && !asPht;
-  // Ma trận gắn nhiệm vụ là của Tổ trưởng; PHT chỉ xoá được ma trận PHT tự tạo (taskId = null).
-  const canDelete = can('Delete') && !(asPht && matrix?.taskId != null);
 
   const run = (
     action: () => Promise<unknown>,
@@ -245,7 +237,7 @@ export const MatrixDetailPage = () => {
             Tạo phiên bản mới
           </PcbButton>
         )}
-        {canDelete && (
+        {can('Delete') && (
           <PcbButton
             variant="danger"
             disabled={busy}
@@ -264,7 +256,7 @@ export const MatrixDetailPage = () => {
             Từ chối
           </PcbButton>
         )}
-        {canSubmit && (
+        {can('Submit') && (
           <PcbButton disabled={busy} onClick={() => run(() => api.matrix.submit(matrixId), 'Đã nộp ma trận.')}>
             Nộp Phó Hiệu trưởng
           </PcbButton>

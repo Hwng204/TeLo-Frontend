@@ -31,7 +31,6 @@ export interface MatrixDetailRequest {
 export interface SaveMatrixRequest {
   name: string;
   academicContextId: number;
-  semesterId: number | null;
   taskId: number | null;
   /** Số nguyên dương do người lập tự đặt — không còn tính từ tổng chi tiết. */
   totalScore: number;
@@ -44,7 +43,6 @@ export interface MatrixDetail extends MatrixDetailRequest {
   /** Suy ra từ backend = matrix.totalScore * percentage / 100, để tránh lệch làm tròn. */
   cellScore: number;
   // Tên bài/chương lúc đọc, kể cả khi đã lưu trữ (reference data chỉ có bài ACTIVE).
-  // Không bắt buộc vì backend cũ chưa trả về.
   lessonTitle?: string | null;
   lessonNumber?: number | null;
   chapterId?: number | null;
@@ -66,7 +64,6 @@ export interface Matrix {
   statusLabel: string;
   taskId: number | null;
   academicContextId: number;
-  semesterId: number | null;
   details: MatrixDetail[];
   totalQuestions: number;
   totalScore: number;
@@ -89,27 +86,20 @@ export interface MatrixListItem {
   statusLabel: string;
   taskId: number | null;
   academicContextId: number;
-  semesterId: number | null;
   totalQuestions: number;
   totalScore: number;
   createdBy: MatrixPerson | null;
   createdAt: string | null;
   approvedBy: MatrixPerson | null;
   approvedAt: string | null;
-  subjectName?: string | null;
-  gradeLevelName?: string | null;
-  academicYearName?: string | null;
-  semesterName?: string | null;
+  subjectName: string;
+  gradeLevelName: string;
 }
 
 export interface MatrixListQuery {
   page?: number;
   pageSize?: number;
   keyword?: string;
-  academicContextId?: number;
-  semesterId?: number;
-  // Lọc từng chiều độc lập, không cần chọn đủ ba chiều để ra academicContextId.
-  academicYearId?: number;
   subjectId?: number;
   gradeLevelId?: number;
   /** Không truyền thì backend ẩn các ma trận ARCHIVED. */
@@ -134,7 +124,6 @@ export interface MatrixTask {
   createdBy: MatrixPerson | null;
   assignedToUserId: number;
   academicContextId: number;
-  semesterId: number | null;
   dueAt: string | null;
   status: MatrixTaskStatus;
   statusLabel: string;
@@ -146,7 +135,6 @@ export interface MatrixTask {
 export interface CreateMatrixTaskRequest {
   assignedToUserId: number;
   academicContextId: number;
-  semesterId: number | null;
   dueAt: string | null;
   name: string;
   description: string | null;
@@ -156,23 +144,11 @@ export interface AcademicContextOption {
   id: number;
   /** Dạng "Môn - Khối - Năm - Trường / Chi nhánh". */
   label: string;
-  academicYearId: number;
   schoolBranchId: number;
   subjectId: number;
   gradeLevelId: number;
-  // Tên hiển thị từng chiều. Không bắt buộc vì backend cũ chưa trả về;
-  // xem contextNames() trong ContextSelects để biết nhánh dự phòng.
-  subjectName?: string;
-  gradeLevelName?: string;
-  academicYearName?: string;
-}
-
-export interface SemesterOption {
-  id: number;
-  academicYearId: number;
-  name: string;
-  startDate: string | null;
-  endDate: string | null;
+  subjectName: string;
+  gradeLevelName: string;
 }
 
 export interface LessonOption {
@@ -196,7 +172,6 @@ export interface TeamLeadOption {
 
 export interface MatrixReferenceData {
   academicContexts: AcademicContextOption[];
-  semesters: SemesterOption[];
   /** Rỗng trừ khi request truyền `academicContextId`. */
   lessons: LessonOption[];
   teamLeads: TeamLeadOption[];
@@ -227,7 +202,6 @@ export interface GridRow {
 
 export interface MatrixImportContext {
   academicContextId: number;
-  semesterId: number | null;
   totalScore: number;
   name?: string;
 }

@@ -13,7 +13,6 @@ import {
 const LABELS: Record<ContextDimension, string> = {
   subjectId: 'Môn học',
   gradeLevelId: 'Khối lớp',
-  academicYearId: 'Năm học',
 };
 
 type Props = {
@@ -30,13 +29,6 @@ type Props = {
   errors?: Partial<Record<ContextDimension, string>>;
   /** Thêm dấu * vào nhãn Môn học, Khối lớp. */
   required?: boolean;
-  /** Lớp thêm cho lưới `.sep-context`. */
-  className?: string;
-  /**
-   * Dạng ô lọc trên thanh công cụ: không có nhãn nhìn thấy, ô trống đọc là "Tất cả <chiều>",
-   * và các ô trả thẳng ra ngoài để xếp chung hàng với ô tìm kiếm.
-   */
-  toolbar?: boolean;
 };
 
 /** Ô chọn phạm vi ma trận: Môn học · Khối lớp (chi nhánh nếu có nhiều). Ma trận không có năm học, học kỳ. */
@@ -50,24 +42,19 @@ export const ContextSelects = ({
   error,
   errors,
   required,
-  className,
-  toolbar,
 }: Props) => {
-  const empty = (label: string) =>
-    toolbar ? `Tất cả ${label.toLowerCase()}` : typeof emptyLabel === 'function' ? emptyLabel(label) : emptyLabel;
+  const empty = (label: string) => (typeof emptyLabel === 'function' ? emptyLabel(label) : emptyLabel);
   const allBranches = contextBranchOptions(contexts, {});
   const branches = contextBranchOptions(contexts, value);
 
   const changeDimension = (dimension: ContextDimension, raw: string) =>
     onChange(applyContextChange(contexts, value, dimension, raw ? Number(raw) : undefined));
 
-  const fields = (
-    <>
+  return (
+    <div className="sep-context">
       {allBranches.length > 1 && (
         <SelectField
           label="Chi nhánh"
-          hideLabel={toolbar}
-          placeholder={toolbar ? 'Chi nhánh' : undefined}
           value={value.schoolBranchId ?? ''}
           disabled={disabled}
           title={disabled ? disabledHint : undefined}
@@ -88,9 +75,6 @@ export const ContextSelects = ({
         <SelectField
           key={dimension}
           label={required ? `${LABELS[dimension]} *` : LABELS[dimension]}
-          hideLabel={toolbar}
-          // Trên thanh lọc, ô chưa chọn chỉ ghi tên chiều (mờ) cho gọn một hàng; mở ra vẫn thấy "Tất cả …".
-          placeholder={toolbar ? LABELS[dimension] : undefined}
           value={value[dimension] ?? ''}
           disabled={disabled}
           title={disabled ? disabledHint : undefined}
@@ -108,9 +92,6 @@ export const ContextSelects = ({
 
       {/* `title` chỉ hiện khi rê chuột, dễ bị bỏ sót; khoá cả cụm thì phải nói rõ vì sao ngay trên trang. */}
       {disabled && disabledHint && <p className="pcb-hint sep-context__hint">{disabledHint}</p>}
-    </>
+    </div>
   );
-
-  if (toolbar) return fields;
-  return <div className={className ? `sep-context ${className}` : 'sep-context'}>{fields}</div>;
 };

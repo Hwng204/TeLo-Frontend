@@ -119,17 +119,7 @@ const MatrixEditor = () => {
   // Hai lời gọi tách rời: danh sách ngữ cảnh không phụ thuộc gì, còn danh sách bài học
   // chỉ có khi đã biết academicContextId — mà id đó lại suy ra từ danh sách ngữ cảnh.
   const task = useAsync(async () => (taskId ? api.matrixTask.get(taskId) : null), [taskId]);
-  const selectedContextId = matrix?.academicContextId ?? task.data?.academicContextId;
-  const reference = useAsync(async () => {
-    const active = await api.matrix.referenceData();
-    if (!selectedContextId || active.academicContexts.some(item => item.id === selectedContextId)) return active;
-    const current = await api.matrix.referenceData(selectedContextId);
-    return {
-      ...active,
-      academicContexts: [...active.academicContexts, ...current.academicContexts],
-      semesters: [...active.semesters, ...current.semesters.filter(item => !active.semesters.some(existing => existing.id === item.id))],
-    };
-  }, [selectedContextId]);
+  const reference = useAsync(() => api.matrix.referenceData(), []);
   const contexts = reference.data?.academicContexts ?? [];
 
   // Ma trận gắn nhiệm vụ: backend bỏ qua ngữ cảnh gửi lên và dùng ngữ cảnh của nhiệm vụ,
@@ -141,7 +131,6 @@ const MatrixEditor = () => {
     selectionFromContext(
       contexts,
       matrix?.academicContextId ?? task.data?.academicContextId ?? null,
-      matrix?.semesterId ?? task.data?.semesterId,
     );
   const academicContextId = resolveContextId(contexts, selection);
   const name = draftName ?? matrix?.name ?? '';
@@ -164,7 +153,6 @@ const MatrixEditor = () => {
   const buildRequest = (): SaveMatrixRequest => ({
     name: name.trim(),
     academicContextId: academicContextId!,
-    semesterId: selection.semesterId ?? null,
     // Backend trả TaskImmutable nếu đổi taskId khi sửa, nên giữ nguyên giá trị đã lưu.
     taskId: matrix ? matrix.taskId : taskId,
     totalScore,
@@ -469,7 +457,7 @@ const MatrixEditor = () => {
 
         {importOpen && !reviewing && academicContextId !== null && (
           <ExcelImportPanel
-            context={{ academicContextId, semesterId: selection.semesterId ?? null, name, totalScore }}
+            context={{ academicContextId, name, totalScore }}
             hasRows={rows.length > 0}
             onApply={applyImport}
             onClose={() => setImportOpen(false)}

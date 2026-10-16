@@ -8,11 +8,10 @@
  */
 import type { AcademicContextOption } from '../types';
 
-export type ContextDimension = 'subjectId' | 'gradeLevelId' | 'academicYearId';
+export type ContextDimension = 'subjectId' | 'gradeLevelId';
 
 export type ContextSelection = Partial<Record<ContextDimension, number>> & {
   schoolBranchId?: number;
-  semesterId?: number;
 };
 
 export const CONTEXT_DIMENSIONS: ContextDimension[] = [
@@ -20,21 +19,9 @@ export const CONTEXT_DIMENSIONS: ContextDimension[] = [
   'gradeLevelId',
 ];
 
-/**
- * Chỗ duy nhất lấy tên hiển thị của từng chiều.
- *
- * ponytail: nhánh `||` là dự phòng khi backend chưa trả các trường tên, tách tạm từ
- * `label` dạng "Môn - Khối - Năm - Trường / Chi nhánh". Xoá sau khi mọi môi trường
- * đã chạy bản backend có subjectName/gradeLevelName/academicYearName.
- */
-export const contextNames = (context: AcademicContextOption) => {
-  const parts = context.label.split(' - ');
-  return {
-    subjectId: context.subjectName || parts[0] || `Môn #${context.subjectId}`,
-    gradeLevelId: context.gradeLevelName || parts[1] || `Khối #${context.gradeLevelId}`,
-    academicYearId: context.academicYearName || parts[2] || `Năm #${context.academicYearId}`,
-  } satisfies Record<ContextDimension, string>;
-};
+/** Chỗ duy nhất lấy tên hiển thị của từng chiều. */
+export const contextNames = (context: AcademicContextOption): Record<ContextDimension, string> =>
+  ({ subjectId: context.subjectName, gradeLevelId: context.gradeLevelName });
 
 const candidates = (
   contexts: AcademicContextOption[],
@@ -98,17 +85,13 @@ export const resolveContextId = (
 export const selectionFromContext = (
   contexts: AcademicContextOption[],
   academicContextId: number | null,
-  semesterId?: number | null,
 ): ContextSelection => {
-  const base: ContextSelection = semesterId ? { semesterId } : {};
   const context = contexts.find((item) => item.id === academicContextId);
-  if (!context) return base;
+  if (!context) return {};
   return {
-    ...base,
     schoolBranchId: context.schoolBranchId,
     subjectId: context.subjectId,
     gradeLevelId: context.gradeLevelId,
-    academicYearId: context.academicYearId,
   };
 };
 
@@ -121,7 +104,7 @@ export const contextLabel = (contexts: AcademicContextOption[], id: number | nul
 
 /**
  * Đổi một chiều, rồi dọn các chiều khác đã trở nên vô nghĩa và tự điền chiều
- * chỉ còn đúng một lựa chọn. Năm học không tự điền: người dùng phải chọn tay.
+ * chỉ còn đúng một lựa chọn.
  */
 export const applyContextChange = (
   contexts: AcademicContextOption[],
@@ -137,7 +120,7 @@ export const applyContextChange = (
     if (next[other] !== undefined && !allowed.some((option) => option.id === next[other])) {
       next[other] = undefined;
     }
-    if (next[other] === undefined && allowed.length === 1 && other !== 'academicYearId') next[other] = allowed[0].id;
+    if (next[other] === undefined && allowed.length === 1) next[other] = allowed[0].id;
   }
   return next;
 };
@@ -153,7 +136,7 @@ export const applyBranchChange = (
     if (next[dimension] !== undefined && !allowed.some((option) => option.id === next[dimension])) {
       next[dimension] = undefined;
     }
-    if (next[dimension] === undefined && allowed.length === 1 && dimension !== 'academicYearId') next[dimension] = allowed[0].id;
+    if (next[dimension] === undefined && allowed.length === 1) next[dimension] = allowed[0].id;
   }
   return next;
 };

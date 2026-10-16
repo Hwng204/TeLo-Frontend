@@ -38,16 +38,13 @@ export const MatrixTaskForm = ({ task }: { task?: TaskDetail }) => {
   const current = contexts.find((context) => context.id === task?.scope?.academicContextId);
   const selection: ContextSelection = picked ?? (current
     ? {
-        academicYearId: current.academicYearId,
         subjectId: current.subjectId,
         gradeLevelId: current.gradeLevelId,
-        semesterId: task?.scope?.semesterId ?? undefined,
       }
     : {});
-  // Giữ phạm vi cũ khi chưa đổi lựa chọn, kể cả năm học đã đóng.
+  // Giữ phạm vi cũ khi chưa đổi lựa chọn.
   const keepScope = locked || Boolean(task && picked === null);
   const academicContextId = keepScope ? (task?.scope?.academicContextId ?? null) : resolveContextId(contexts, selection);
-  const semesterId = keepScope ? (task?.scope?.semesterId ?? null) : (selection.semesterId ?? null);
   const back = () => navigate(task ? `/matrix-tasks/${task.id}` : '/matrix-tasks');
 
   const submit = async () => {
@@ -73,7 +70,6 @@ export const MatrixTaskForm = ({ task }: { task?: TaskDetail }) => {
       const body = {
         assignedToUserId: Number(assignee),
         academicContextId: academicContextId!,
-        semesterId,
         // input type=date cho chuỗi yyyy-MM-dd; backend nhận DateTime nên gửi kèm giờ.
         dueAt: dueAt ? `${dueAt}T00:00:00` : null,
         name: name.trim(),
@@ -166,7 +162,7 @@ export const MatrixTaskForm = ({ task }: { task?: TaskDetail }) => {
             // Khoá phạm vi đã nói ở banner đầu trang, không lặp lại gợi ý dưới các ô.
             disabled={locked}
             errors={{ subjectId: errors.subjectId, gradeLevelId: errors.gradeLevelId }}
-            error={errors.academicContextId ?? errors.semesterId}
+            error={errors.academicContextId}
             onChange={setPicked}
           />
         </section>
