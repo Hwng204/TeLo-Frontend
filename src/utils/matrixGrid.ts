@@ -216,7 +216,7 @@ export const validateGrid = (
   }
 
   if (!academicContextId) {
-    errors.academicContextId = 'Chọn đủ Chương trình, Môn học, Khối lớp và Năm học.';
+    errors.academicContextId = 'Chọn đủ Môn học và Khối lớp.';
   }
 
   const seenLessons = new Set<number>();
@@ -283,11 +283,16 @@ export const totalScoreHint = (rows: GridRow[]): string | null =>
     ? null
     : `Cần đúng ${REQUIRED_TOTAL_PERCENTAGE}% mới nộp hoặc xác nhận được; hiện là ${formatScore(gridTotal(rows).percentage)}%. Vẫn lưu nháp được.`;
 
+/** Trần của backend cho "Tổng điểm ma trận". */
+const MAX_TOTAL_SCORE = 999;
+
 /** Số nguyên dương hợp lệ cho ô "Tổng điểm ma trận", hoặc thông báo lỗi. */
 export const validateTotalScoreField = (totalScore: number): string | null =>
-  Number.isInteger(totalScore) && totalScore > 0
-    ? null
-    : 'Tổng điểm ma trận phải là số nguyên dương.';
+  !Number.isInteger(totalScore) || totalScore <= 0
+    ? 'Tổng điểm ma trận phải là số nguyên dương.'
+    : totalScore > MAX_TOTAL_SCORE
+      ? `Tổng điểm ma trận tối đa ${MAX_TOTAL_SCORE}.`
+      : null;
 
 /**
  * Lỗi hiển thị ngay khi đang gõ: chỉ các ô ĐÃ có giá trị và sai (ví dụ % vượt trần).

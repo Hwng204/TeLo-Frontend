@@ -32,7 +32,6 @@ export const MatrixTaskForm = ({ task }: { task?: TaskDetail }) => {
 
   const reference = useAsync(() => api.matrix.referenceData(), []);
   const contexts = reference.data?.academicContexts ?? [];
-  const semesters = reference.data?.semesters ?? [];
   const teamLeads = reference.data?.teamLeads ?? [];
 
   // Phạm vi đang có của nhiệm vụ, điền sẵn khi danh sách ngữ cảnh về.
@@ -58,9 +57,8 @@ export const MatrixTaskForm = ({ task }: { task?: TaskDetail }) => {
     if (!academicContextId) {
       if (!selection.subjectId) found.subjectId = 'Chọn môn học.';
       if (!selection.gradeLevelId) found.gradeLevelId = 'Chọn khối lớp.';
-      if (!selection.academicYearId) found.academicYearId = 'Chọn năm học.';
-      // Đủ ba ô mà không ra ngữ cảnh nào: báo chung ở ô Năm học.
-      if (!found.subjectId && !found.gradeLevelId && !found.academicYearId) found.academicContextId = 'Chọn đủ Môn học, Khối lớp và Năm học.';
+      // Đủ hai ô mà không ra ngữ cảnh nào: báo chung ở ô Khối lớp.
+      if (!found.subjectId && !found.gradeLevelId) found.academicContextId = 'Chọn đủ Môn học và Khối lớp.';
     }
     if (dueAt && dueAt < today && dueAt !== task?.dueAt?.slice(0, 10)) found.dueAt = 'Hạn hoàn thành không được ở trong quá khứ.';
     setErrors(found);
@@ -158,18 +156,16 @@ export const MatrixTaskForm = ({ task }: { task?: TaskDetail }) => {
         <section className="sep-section">
           <h2 className="sep-section-title">Phạm vi ma trận</h2>
           {task?.scope && !current && picked === null && (
-            <p className="pcb-hint">{task.scope.subjectName} · {task.scope.gradeLevelName} · {task.scope.academicYearName}{task.scope.semesterName ? ` · ${task.scope.semesterName}` : ''}. Phạm vi hiện tại được giữ khi lưu.</p>
+            <p className="pcb-hint">{task.scope.subjectName} · {task.scope.gradeLevelName}. Phạm vi hiện tại được giữ khi lưu.</p>
           )}
           <ContextSelects
             contexts={contexts}
-            semesters={semesters}
             value={selection}
             emptyLabel={(label) => `Chọn ${label.toLowerCase()}`}
             required
-            className="sep-task-context"
             // Khoá phạm vi đã nói ở banner đầu trang, không lặp lại gợi ý dưới các ô.
             disabled={locked}
-            errors={{ subjectId: errors.subjectId, gradeLevelId: errors.gradeLevelId, academicYearId: errors.academicYearId }}
+            errors={{ subjectId: errors.subjectId, gradeLevelId: errors.gradeLevelId }}
             error={errors.academicContextId ?? errors.semesterId}
             onChange={setPicked}
           />

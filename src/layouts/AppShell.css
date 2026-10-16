@@ -82,7 +82,12 @@
 
 @media (max-width: 480px) {
   /* Tiêu đề dài ("Chi tiết nhiệm vụ biên soạn câu hỏi") cắt một dòng thì mất nghĩa: cho tối đa 2 dòng. */
-  .sep-topbar__title > span:first-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; }
+  .sep-topbar__title > span:first-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; flex-basis: 100%; }
+  /* Nhãn trạng thái không co được: xuống dòng dưới tiêu đề để tiêu đề còn chỗ đọc. */
+  .sep-topbar__title { flex-wrap: wrap; row-gap: 4px; font-size: 16px; line-height: 22px; }
   /* Ô năm học không xuống dòng, đẩy thanh trên rộng quá màn hình: điện thoại thì ẩn. */
   .sep-topbar__year { display: none; }
+  /* Nút trên thanh trên chỉ còn icon (đã có aria-label) để không tràn ngang. */
+  .sep-topbar__action-label { display: none; }
+  .sep-topbar .sep-topbar__action { min-width: 0; width: 40px; height: 40px; padding: 0; }
 }

@@ -48,12 +48,13 @@
 .sep-excel__errors { display: flex; flex-direction: column; gap: 6px; max-height: 240px; margin: 0; padding: 12px 14px; overflow-y: auto; list-style: none; border: 1px solid var(--pcb-color-border-default); border-radius: 8px; font: 400 13px/20px 'Inter', sans-serif; color: var(--pcb-color-text-primary); overflow-wrap: anywhere; }
 .sep-excel__export-file { display: flex; flex-direction: column; gap: 6px; padding: 12px; border: 1px solid var(--pcb-color-border-default); border-radius: 10px; background: var(--pcb-color-bg-subtle); overflow-wrap: anywhere; }
 
-/* Lưới 4 chiều ngữ cảnh + học kỳ trong biểu mẫu. */
-.sep-context { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px 24px; }
+/* Phạm vi ma trận (Chi nhánh nếu có, Môn học, Khối lớp): cùng lưới và mốc co với .sep-fields ngay trên,
+   để các ô dồn trái, thẳng cột với ô phía trên thay vì giãn hết hàng. */
+.sep-context { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px 24px; }
 .sep-context__hint { grid-column: 1 / -1; margin: -8px 0 0; }
 
 @media (max-width: 1200px) {
-  .sep-context { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sep-context { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 900px) {

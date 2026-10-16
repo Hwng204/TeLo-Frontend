@@ -1,6 +1,7 @@
 /**
- * Ngữ cảnh học thuật là tổ hợp của ba chiều: môn học, khối lớp, năm học (cộng chi nhánh).
- * Backend chỉ nhận một `academicContextId`, nên giao diện cho chọn ba ô rồi dò ngược ra id.
+ * Phạm vi ma trận là tổ hợp môn học + khối lớp (cộng chi nhánh). Ma trận không có năm học/học kỳ,
+ * nên các màn ma trận không cho chọn hai chiều đó (backend chỉ gán giả năm ACTIVE).
+ * Backend chỉ nhận một `academicContextId`, nên giao diện cho chọn từng ô rồi dò ngược ra id.
  *
  * Lọc theo kiểu facet: khi dựng danh sách lựa chọn cho một chiều, ta bỏ qua chính
  * chiều đó. Nhờ vậy đổi ý ở ô đầu tiên không bao giờ dẫn tới trạng thái không chọn được gì.
@@ -17,7 +18,6 @@ export type ContextSelection = Partial<Record<ContextDimension, number>> & {
 export const CONTEXT_DIMENSIONS: ContextDimension[] = [
   'subjectId',
   'gradeLevelId',
-  'academicYearId',
 ];
 
 /**
@@ -84,7 +84,7 @@ export const contextOptions = (
     .map(([id, label]) => ({ id, label }));
 };
 
-/** Chỉ chắc chắn khi ba chiều thu về đúng một ngữ cảnh. */
+/** Chỉ chắc chắn khi các chiều thu về đúng một ngữ cảnh. */
 export const resolveContextId = (
   contexts: AcademicContextOption[],
   selection: ContextSelection,
@@ -121,8 +121,7 @@ export const contextLabel = (contexts: AcademicContextOption[], id: number | nul
 
 /**
  * Đổi một chiều, rồi dọn các chiều khác đã trở nên vô nghĩa và tự điền chiều
- * chỉ còn đúng một lựa chọn (với dữ liệu một chi nhánh thì chọn một ô thường
- * đủ để ba ô kia tự điền).
+ * chỉ còn đúng một lựa chọn. Năm học không tự điền: người dùng phải chọn tay.
  */
 export const applyContextChange = (
   contexts: AcademicContextOption[],
@@ -138,7 +137,7 @@ export const applyContextChange = (
     if (next[other] !== undefined && !allowed.some((option) => option.id === next[other])) {
       next[other] = undefined;
     }
-    if (next[other] === undefined && allowed.length === 1) next[other] = allowed[0].id;
+    if (next[other] === undefined && allowed.length === 1 && other !== 'academicYearId') next[other] = allowed[0].id;
   }
   return next;
 };
@@ -154,7 +153,7 @@ export const applyBranchChange = (
     if (next[dimension] !== undefined && !allowed.some((option) => option.id === next[dimension])) {
       next[dimension] = undefined;
     }
-    if (next[dimension] === undefined && allowed.length === 1) next[dimension] = allowed[0].id;
+    if (next[dimension] === undefined && allowed.length === 1 && dimension !== 'academicYearId') next[dimension] = allowed[0].id;
   }
   return next;
 };

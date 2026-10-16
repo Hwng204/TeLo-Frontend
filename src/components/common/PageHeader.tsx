@@ -84,6 +84,7 @@ export const PageHeader = ({ title, onBack, badge, inline, actions }: Props) => 
       </h1>
       
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        {actions}
         <div className="sep-topbar__year" aria-live="polite" style={{ alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569', fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap' }}>
           <Icon name="calendar_month" size={18} />
           {activeAcademicYearLabel}

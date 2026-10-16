@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Field, Icon, PcbButton } from '../../../components/pcb';
-import { useAsync, useBusy, useOnline } from '../../../hooks';
+import { useAsync, useBusy, useOnline, type ArrivalState } from '../../../hooks';
 import { api } from '../../../services/api';
 import type { GridRow, MatrixImportPreview, SaveMatrixRequest } from '../../../types';
 import { contextLabel, resolveContextId, selectionFromContext } from '../../../utils/academicContext';
 import type { ContextSelection } from '../../../utils/academicContext';
 import { clearDraft, draftKeyFor, isDraftStale, loadDraft, saveDraft, serverFingerprint } from '../../../utils/draftStorage';
+import { canGoBack } from '../../../utils/history';
 import {
   formatScore,
   gridTotal,
@@ -14,6 +15,7 @@ import {
   liveCellErrors,
   REQUIRED_TOTAL_PERCENTAGE,
   requireNonEmpty,
+  rowErrorKey,
   toDetails,
   toGrid,
   totalScoreHint,
@@ -39,6 +41,7 @@ export const MatrixEditorPage = () => <MatrixEditor key={useLocation().pathname}
 
 const MatrixEditor = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -65,7 +68,7 @@ const MatrixEditor = () => {
 
   // Chưa ai chạm vào thì lấy giá trị từ server; chạm rồi thì giữ bản nháp của người dùng.
   // Bản nháp còn được lưu vào localStorage theo từng thay đổi, nên F5, đóng tab hay mất mạng không làm mất (xem draftStorage.ts).
-  const draftKey = draftKeyFor(useLocation().pathname);
+  const draftKey = draftKeyFor(location.pathname);
   const [restoredDraft, setRestoredDraft] = useState(() => loadDraft(draftKey));
   const [draftName, setDraftName] = useState<string | null>(restoredDraft?.name ?? null);
   const [draftSelection, setDraftSelection] = useState<ContextSelection | null>(restoredDraft?.selection ?? null);
@@ -128,7 +131,6 @@ const MatrixEditor = () => {
     };
   }, [selectedContextId]);
   const contexts = reference.data?.academicContexts ?? [];
-  const semesters = reference.data?.semesters ?? [];
 
   // Ma trận gắn nhiệm vụ: backend bỏ qua ngữ cảnh gửi lên và dùng ngữ cảnh của nhiệm vụ,
   // nên form phải điền sẵn và khoá lại, nếu không người dùng chọn sai sẽ nhận 422 InvalidReference.
@@ -173,6 +175,14 @@ const MatrixEditor = () => {
     ...serverErrors,
     ...(attempted ? validateGrid(rows, name, academicContextId) : liveCellErrors(rows)),
   };
+  // Bài đã lưu trữ không còn trong danh sách bài học (server sẽ trả 422 chung chung): chỉ rõ dòng phải xoá.
+  if (lessonData.data) {
+    for (const row of rows) {
+      if (row.lessonId && !lessons.some((lesson) => lesson.id === row.lessonId)) {
+        errors[rowErrorKey(row.key)] = 'Bài học đã được lưu trữ, hãy xoá dòng này.';
+      }
+    }
+  }
   if (totalRejected && !hasRequiredTotal(rows)) errors.total = validateTotalForSubmit(rows) ?? '';
   const totalScoreError = validateTotalScoreField(totalScore);
   if (attempted && totalScoreError) errors.totalScore = totalScoreError;
@@ -197,7 +207,10 @@ const MatrixEditor = () => {
         found.totalQuestions ??
         (Object.keys(found).length > 0 ? 'Vui lòng kiểm tra lại các ô được đánh dấu.' : null),
     );
-    return Object.keys(found).length === 0 && !empty && !totalError && !totalScoreError;
+    const ok = Object.keys(found).length === 0 && !empty && !totalError && !totalScoreError;
+    // Bước xem lại không có ô nhập: quay về bước soạn để thấy các ô được đánh dấu.
+    if (!ok && reviewing) setSearchParams({}, { replace: true });
+    return ok;
   };
 
   const handleFailure = (error: unknown) => {
@@ -244,13 +257,16 @@ const MatrixEditor = () => {
       // Ma trận đã nằm trong DB: bản nháp cục bộ hết ý nghĩa, dù bước tiếp theo (nộp/xác nhận) có lỗi hay không.
       clearDraft(draftKey);
 
+      let notice: string | undefined;
       try {
         if (then) await then(savedId);
       } catch (error) {
         // Ma trận ĐÃ được lưu. Tuyệt đối không tạo lại, nếu không sẽ đẻ ra bản trùng.
-        handleFailure(error);
+        // Lỗi nộp/xác nhận mang sang trang chi tiết, nếu không người dùng tưởng đã nộp xong.
+        // `then` chỉ là Nộp (lập theo nhiệm vụ) hoặc Xác nhận (PHT tự tạo).
+        notice = `Ma trận đã được lưu nhưng ${taskId ? 'chưa nộp' : 'chưa được xác nhận'}: ${toProblem(error).message}`;
       }
-      navigate(`/matrices/${savedId}`, { replace: true });
+      navigate(`/matrices/${savedId}`, { replace: true, state: { notice, fromEditor: true } satisfies ArrivalState });
     });
   };
 
@@ -267,11 +283,21 @@ const MatrixEditor = () => {
   };
 
   const title = reviewing ? 'Xem lại ma trận' : matrixId ? 'Sửa ma trận' : 'Tạo ma trận';
-  const back = () => (reviewing ? setSearchParams({}) : navigate(
-    matrixId ? `/matrices/${matrixId}` : taskId ? `/matrix-tasks/${taskId}` : '/matrices',
-  ));
+  const back = () => {
+    if (reviewing) {
+      // Bước xem lại là một mục lịch sử đẩy từ bước soạn: lùi lại thay vì đẩy thêm; mở thẳng link xem lại thì thay tại chỗ.
+      if (canGoBack()) navigate(-1);
+      else setSearchParams({}, { replace: true });
+      return;
+    }
+    // Đánh dấu để ← ở chi tiết ma trận không lùi về lại màn soạn này.
+    navigate(matrixId ? `/matrices/${matrixId}` : taskId ? `/matrix-tasks/${taskId}` : '/matrices', {
+      state: { fromEditor: true } satisfies ArrivalState,
+    });
+  };
 
-  if (detail.loading || reference.loading || (taskId && task.loading) || (academicContextId && lessonData.loading)) {
+  // Bài học chỉ chặn cả trang ở lần mở ma trận/nhiệm vụ có sẵn; đổi phạm vi trên form thì giữ form, nút "Thêm nội dung" tự khoá.
+  if (detail.loading || reference.loading || (taskId && task.loading) || (academicContextId && lessonData.loading && !draftSelection)) {
     return (
       <>
         <PageHeader title={title} onBack={back} />
@@ -291,6 +317,9 @@ const MatrixEditor = () => {
     );
   }
 
+  // Nhiệm vụ đã có ma trận (Back trình duyệt sau khi nộp, link cũ): lập lại chỉ nhận 409, mở ma trận đó.
+  if (taskId && task.data?.matrixId) return <Navigate to={`/matrices/${task.data.matrixId}`} replace />;
+
   if (matrixId && (!matrix || !matrix.allowedActions.includes('Update'))) {
     return (
       <>
@@ -308,7 +337,6 @@ const MatrixEditor = () => {
   // Chỉ khoá khi ĐÃ chọn xong ngữ cảnh và có dòng nội dung — nếu chưa chọn gì thì chưa
   // có gì để khoá, không thì người dùng thêm dòng trước sẽ không bao giờ chọn được ngữ cảnh.
   const lockContext = academicContextId !== null && rows.length > 0;
-  const semesterName = semesters.find((item) => item.id === selection.semesterId)?.name;
 
   return (
     <>
@@ -361,7 +389,6 @@ const MatrixEditor = () => {
             items={[
               { label: 'Tên ma trận', value: name || '—', span: 'full' },
               { label: 'Phạm vi', value: contextLabel(contexts, academicContextId), span: 'wide' },
-              { label: 'Học kỳ', value: semesterName ?? 'Không chọn' },
               {
                 label: 'Quy mô',
                 value: `${total.questions} câu · ${formatScore(totalScore)} điểm (${formatScore(total.percentage)}%)`,
@@ -399,12 +426,10 @@ const MatrixEditor = () => {
             <h2 className="sep-section-title">Phạm vi ma trận</h2>
             <ContextSelects
               contexts={contexts}
-              semesters={semesters}
               value={selection}
               emptyLabel="Chọn…"
               error={errors.academicContextId}
               disabled={lockContext || delegated}
-              semesterDisabled={delegated}
               disabledHint={
                 delegated
                   ? 'Ngữ cảnh do nhiệm vụ được giao quy định'
@@ -453,7 +478,7 @@ const MatrixEditor = () => {
 
         {!reviewing && !academicContextId && !importOpen && (
           <div className="sep-alert sep-alert--info">
-            Chọn đủ Môn học, Khối lớp và Năm học để hiện danh sách bài học.
+            Chọn đủ Môn học và Khối lớp để hiện danh sách bài học.
           </div>
         )}
 
@@ -470,10 +495,6 @@ const MatrixEditor = () => {
       <div className="sep-actions">
         {reviewing ? (
           <>
-            <PcbButton variant="ghost" onClick={() => setSearchParams({})}>
-              Chỉnh sửa
-            </PcbButton>
-
             {matrixId ? (
               // Ma trận đang Đã nộp thì sửa xong vẫn phải đúng 10; ma trận Nháp thì lưu ở mọi tổng.
               <PcbButton

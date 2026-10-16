@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Icon, PcbButton } from '../../../components/pcb';
-import { useAsync, useBusy } from '../../../hooks';
+import { useArrivalNotice, useAsync, useBusy, type ArrivalState } from '../../../hooks';
 import { api } from '../../../services/api';
-import type { Matrix, MatrixAction } from '../../../types';
+import type { LessonOption, Matrix, MatrixAction } from '../../../types';
 import { contextLabel } from '../../../utils/academicContext';
 import { saveBlob } from '../../../utils/download';
+import { canGoBack } from '../../../utils/history';
 import { formatScore, gridTotal, REQUIRED_TOTAL_PERCENTAGE, toGrid } from '../../../utils/matrixGrid';
 import { personLabel } from '../../../utils/formatters';
 import { isPht, isTeamLead } from '../../../utils/jwt';
@@ -34,9 +35,14 @@ const titleFor = (matrix: Matrix | undefined) => {
 
 export const MatrixDetailPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const matrixId = Number(useParams().id);
 
-  const [notice, setNotice] = useState<{ message: string; kind: 'error' | 'info' } | null>(null);
+  // Màn soạn lưu được nhưng nộp/xác nhận lỗi thì chuyển sang đây kèm lý do.
+  const arrival = useArrivalNotice();
+  const [notice, setNotice] = useState<{ message: string; kind: 'error' | 'info' } | null>(
+    arrival ? { message: arrival, kind: 'error' } : null,
+  );
   const [busy, runExclusive] = useBusy();
   const [rejecting, setRejecting] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -53,8 +59,25 @@ export const MatrixDetailPage = () => {
     [matrix?.academicContextId],
   );
   const contexts = reference.data?.academicContexts ?? [];
-  const lessons = reference.data?.lessons ?? [];
-  const semester = reference.data?.semesters.find((item) => item.id === matrix?.semesterId);
+  // Bài đã lưu trữ không còn trong reference data: dựng lại từ tên backend gửi kèm chi tiết ma trận.
+  const lessons = useMemo(() => {
+    const known = reference.data?.lessons ?? [];
+    const archived = new Map<number, LessonOption>();
+    for (const detail of matrix?.details ?? []) {
+      if (!detail.lessonTitle || known.some((lesson) => lesson.id === detail.lessonId)) continue;
+      archived.set(detail.lessonId, {
+        id: detail.lessonId,
+        contextId: matrix?.academicContextId ?? 0,
+        chapterId: detail.chapterId ?? 0,
+        title: detail.lessonTitle,
+        sortOrder: detail.lessonNumber ?? 0,
+        code: detail.lessonNumber != null ? String(detail.lessonNumber) : undefined,
+        chapterCode: detail.chapterNumber != null ? String(detail.chapterNumber) : undefined,
+        chapterTitle: detail.chapterTitle ?? undefined,
+      });
+    }
+    return [...known, ...archived.values()];
+  }, [reference.data, matrix]);
 
   const can = (action: MatrixAction) => matrix?.allowedActions.includes(action) ?? false;
 
@@ -62,7 +85,7 @@ export const MatrixDetailPage = () => {
   // không lưu người tạo. Hai chặn dưới đây chỉ là ràng buộc phía giao diện, chưa đủ chặt.
   // ponytail: cần backend thêm createdByUserId + siết CanHardDelete/AllowedActions, xem báo cáo.
   const asPht = isPht() && !isTeamLead();
-  // Tổ trưởng không vào được /matrices (RequireRole đẩy sang /dashboard), nên "về danh sách" của họ là danh sách nhiệm vụ.
+  // Tổ trưởng không vào được /matrices, nên "về danh sách" của họ là danh sách nhiệm vụ.
   const listPath = isTeamLead() ? '/matrix-tasks' : '/matrices';
   // PHT không "nộp cho chính mình": họ dùng Xác nhận. Nộp là việc của Tổ trưởng.
   const canSubmit = can('Submit') && !asPht;
@@ -87,7 +110,10 @@ export const MatrixDetailPage = () => {
         setNotice({ message: failureMessage ?? problem.message, kind: 'error' });
         // 409 nghĩa là người khác vừa đổi trạng thái; tải lại để allowedActions đúng trở lại.
         if (problem.status === 409) detail.reload();
-        if (problem.status === 404 || problem.status === 403) navigate(listPath, { replace: true });
+        // Rời trang thì mang lý do theo, nếu không người dùng không biết vì sao bị đẩy ra.
+        if (problem.status === 404 || problem.status === 403) {
+          navigate(listPath, { replace: true, state: { notice: failureMessage ?? problem.message } });
+        }
       }
     });
 
@@ -103,7 +129,10 @@ export const MatrixDetailPage = () => {
       false,
     );
 
-  const back = () => navigate(listPath);
+  // Về đúng chỗ vừa đến (chi tiết nhiệm vụ, danh sách…). Mở thẳng bằng link, hoặc vừa từ màn soạn sang
+  // (lùi lại sẽ vào lại màn soạn, rồi ← của màn soạn lại về đây) thì về danh sách.
+  const fromEditor = (location.state as ArrivalState | null)?.fromEditor;
+  const back = () => (canGoBack() && !fromEditor ? navigate(-1) : navigate(listPath));
 
   if (detail.loading || (matrix && reference.loading)) {
     return (
@@ -139,7 +168,6 @@ export const MatrixDetailPage = () => {
       ? [{ label: 'Xác nhận bởi', value: personLabel(matrix.approvedBy), span: 'wide' as const }]
       : []),
     { label: 'Phạm vi', value: contextLabel(contexts, matrix.academicContextId), span: 'wide' },
-    { label: 'Học kỳ', value: semester?.name ?? 'Không chọn' },
     { label: 'Quy mô', value: `${matrix.totalQuestions} câu · ${formatScore(matrix.totalScore)} điểm` },
   ];
 
@@ -149,6 +177,12 @@ export const MatrixDetailPage = () => {
         title={titleFor(matrix)}
         onBack={back}
         badge={<span className={`sep-status sep-status--${matrix.status}`}>{matrix.statusLabel}</span>}
+        actions={can('Export') && (
+          <PcbButton variant="secondary" className="sep-topbar__action" disabled={busy} aria-label="Xuất Excel" onClick={() => { setNotice(null); setExporting(true); }}>
+            <Icon name="download" size={20} />
+            <span className="sep-topbar__action-label">Xuất Excel</span>
+          </PcbButton>
+        )}
       />
 
       <div className="sep-page">
@@ -188,14 +222,8 @@ export const MatrixDetailPage = () => {
       </section>
 
       <div className="sep-actions">
-        {/* Việc phụ (xuất, sửa) dồn trái; bên phải chỉ còn các quyết định, để Từ chối và Xác nhận đứng cạnh nhau. */}
+        {/* Việc phụ (Sửa) dồn trái; bên phải chỉ còn các quyết định, để Từ chối và Xác nhận đứng cạnh nhau. */}
         <div className="sep-actions__lead">
-          {can('Export') && (
-            <PcbButton variant="secondary" disabled={busy} onClick={() => { setNotice(null); setExporting(true); }}>
-              <Icon name="download" size={20} />
-              Xuất Excel
-            </PcbButton>
-          )}
           {can('Update') && (
             <PcbButton variant="ghost" disabled={busy} onClick={() => navigate(`/matrices/${matrixId}/edit`)}>
               <Icon name="edit" size={20} />
@@ -281,7 +309,8 @@ export const MatrixDetailPage = () => {
           void run(
             async () => {
               await api.matrix.remove(matrixId);
-              navigate(listPath, { replace: true });
+              // Tổ trưởng xoá bản nháp của nhiệm vụ thì về lại nhiệm vụ đó.
+              navigate(matrix.taskId != null ? `/matrix-tasks/${matrix.taskId}` : listPath, { replace: true });
             },
             undefined,
             undefined,

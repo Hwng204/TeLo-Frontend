@@ -89,7 +89,7 @@ const router = createBrowserRouter(createRoutesFromElements(
 
         {/* Khung chung, sidebar theo vai trò */}
         <Route element={<AppShell />}>
-          <Route element={<RequireRole allow={PHT} />}>
+          <Route element={<RequireRole allow={PHT} fallback="/matrix-tasks" />}>
             <Route path="/matrices" element={<MatrixListPage />} />
             <Route path="/matrices/new" element={<MatrixEditorPage />} />
             <Route path="/exams" element={<ExamListPage />} />
@@ -109,12 +109,13 @@ const router = createBrowserRouter(createRoutesFromElements(
           </Route>
 
           {/* Mở cho cả hai vai: Tổ trưởng phải xem lại được ma trận mình vừa nộp. */}
-          <Route element={<RequireRole allow={BOTH} />}>
+          <Route element={<RequireRole allow={BOTH} fallback="/matrix-tasks" />}>
             <Route path="/matrices/:id" element={<MatrixDetailPage />} />
             <Route path="/matrices/:id/edit" element={<MatrixEditorPage />} />
-            <Route path="/matrix-tasks/:taskId/matrix/new" element={<MatrixEditorPage />} />
           </Route>
+          {/* Chỉ Tổ trưởng được giao mới lập ma trận cho nhiệm vụ; PHT giao việc không lập thay. */}
           <Route element={<RequireRole allow={TEAM_LEAD} fallback="/matrix-tasks" />}>
+            <Route path="/matrix-tasks/:taskId/matrix/new" element={<MatrixEditorPage />} />
             <Route path="/matrix-tasks/new/question" element={<QuestionTaskFormPage />} />
           </Route>
 

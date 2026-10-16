@@ -7,9 +7,6 @@
 /* Ô tìm của màn Nhiệm vụ rộng như bản thiết kế để đọc hết "Tìm nội dung nhiệm vụ". */
 .sep-toolbar__filters > .sep-toolbar__search.sep-task-search { width: 260px; }
 
-/* Phạm vi ma trận trong form nhiệm vụ: 4 ô chia đều cả hàng (màn soạn ma trận giữ lưới 5 cột của matrix.css). */
-.sep-context.sep-task-context { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-
 /* Danh sách: độ rộng cột cố định để bảng không nhảy khi đổi bộ lọc hay rỗng; Nội dung lấy phần còn lại.
    Độ rộng tính phần chữ, cộng thêm 20px đệm của .sep-table--dense. Hành động vừa 3 icon 34px. */
 .pcb-table.sep-task-list { table-layout: fixed; }
@@ -69,14 +66,9 @@
   .sep-task-list .sep-task-col-wide { display: none; }
 }
 
-@media (max-width: 1200px) {
-  .sep-context.sep-task-context { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
 @media (max-width: 900px) {
   .sep-toolbar__filters > .sep-toolbar__search.sep-task-search { width: 100%; }
   .sep-task-row, .sep-fields.sep-task-row { grid-auto-flow: row; grid-auto-columns: auto; }
-  .sep-context.sep-task-context { grid-template-columns: 1fr; }
   /* Bảng rỗng chỉ còn dòng tiêu đề cột, rộng hơn màn hẹp: ẩn đi để trạng thái rỗng không kéo theo thanh cuộn ngang. */
   .pcb-table.sep-task-list--empty { display: none; }
   .sep-level-table { table-layout: auto; min-width: 320px; }

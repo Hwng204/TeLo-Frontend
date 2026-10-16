@@ -1,5 +1,5 @@
 import { SelectField } from '../../../components/pcb';
-import type { AcademicContextOption, SemesterOption } from '../../../types';
+import type { AcademicContextOption } from '../../../types';
 import {
   CONTEXT_DIMENSIONS,
   applyBranchChange,
@@ -18,24 +18,17 @@ const LABELS: Record<ContextDimension, string> = {
 
 type Props = {
   contexts: AcademicContextOption[];
-  semesters: SemesterOption[];
   value: ContextSelection;
   onChange: (next: ContextSelection) => void;
   /** Khoá lại khi đổi ngữ cảnh sẽ làm hỏng các dòng chi tiết đang có. */
   disabled?: boolean;
   disabledHint?: string;
-  /**
-   * Học kỳ không nằm trong 3 chiều tạo nên `academicContextId` (không ảnh hưởng danh sách bài
-   * học), nên khoá `disabled` không áp cho nó — trừ khi truyền riêng. Mặc định theo `disabled`
-   * để các nơi gọi cũ (danh sách, bộ lọc) không phải đổi gì.
-   */
-  semesterDisabled?: boolean;
   /** Chữ của lựa chọn rỗng; hàm nhận tên chiều để ghi cụ thể ("Chọn môn học"). */
   emptyLabel?: string | ((label: string) => string);
   error?: string;
-  /** Lỗi riêng từng chiều, hiện ngay dưới ô đó (thắng `error` ở ô Năm học). */
+  /** Lỗi riêng từng chiều, hiện ngay dưới ô đó (thắng `error` ở ô Khối lớp). */
   errors?: Partial<Record<ContextDimension, string>>;
-  /** Thêm dấu * vào nhãn Môn học, Khối lớp, Năm học. */
+  /** Thêm dấu * vào nhãn Môn học, Khối lớp. */
   required?: boolean;
   /** Lớp thêm cho lưới `.sep-context`. */
   className?: string;
@@ -46,14 +39,13 @@ type Props = {
   toolbar?: boolean;
 };
 
+/** Ô chọn phạm vi ma trận: Môn học · Khối lớp (chi nhánh nếu có nhiều). Ma trận không có năm học, học kỳ. */
 export const ContextSelects = ({
   contexts,
-  semesters,
   value,
   onChange,
   disabled,
   disabledHint,
-  semesterDisabled,
   emptyLabel = 'Tất cả',
   error,
   errors,
@@ -61,24 +53,13 @@ export const ContextSelects = ({
   className,
   toolbar,
 }: Props) => {
-  const semesterLocked = semesterDisabled ?? disabled;
   const empty = (label: string) =>
     toolbar ? `Tất cả ${label.toLowerCase()}` : typeof emptyLabel === 'function' ? emptyLabel(label) : emptyLabel;
   const allBranches = contextBranchOptions(contexts, {});
   const branches = contextBranchOptions(contexts, value);
-  const availableSemesters = value.academicYearId
-    ? semesters.filter((semester) => semester.academicYearId === value.academicYearId)
-    : semesters;
 
-  const changeDimension = (dimension: ContextDimension, raw: string) => {
-    const next = applyContextChange(contexts, value, dimension, raw ? Number(raw) : undefined);
-    // Đổi năm học thì học kỳ đang chọn có thể không còn thuộc năm đó nữa.
-    const stillValid = semesters.some(
-      (semester) => semester.id === next.semesterId && semester.academicYearId === next.academicYearId,
-    );
-    if (next.semesterId && !stillValid) next.semesterId = undefined;
-    onChange(next);
-  };
+  const changeDimension = (dimension: ContextDimension, raw: string) =>
+    onChange(applyContextChange(contexts, value, dimension, raw ? Number(raw) : undefined));
 
   const fields = (
     <>
@@ -113,7 +94,7 @@ export const ContextSelects = ({
           value={value[dimension] ?? ''}
           disabled={disabled}
           title={disabled ? disabledHint : undefined}
-          error={errors?.[dimension] ?? (dimension === 'academicYearId' ? error : undefined)}
+          error={errors?.[dimension] ?? (dimension === 'gradeLevelId' ? error : undefined)}
           onChange={(event) => changeDimension(dimension, event.target.value)}
         >
           <option value="">{empty(LABELS[dimension])}</option>
@@ -124,25 +105,6 @@ export const ContextSelects = ({
           ))}
         </SelectField>
       ))}
-
-      <SelectField
-        label="Học kỳ"
-        hideLabel={toolbar}
-        placeholder={toolbar ? 'Học kỳ' : undefined}
-        value={value.semesterId ?? ''}
-        disabled={semesterLocked}
-        title={semesterLocked ? disabledHint : undefined}
-        onChange={(event) =>
-          onChange({ ...value, semesterId: event.target.value ? Number(event.target.value) : undefined })
-        }
-      >
-        <option value="">{empty('Học kỳ')}</option>
-        {availableSemesters.map((semester) => (
-          <option key={semester.id} value={semester.id}>
-            {semester.name}
-          </option>
-        ))}
-      </SelectField>
 
       {/* `title` chỉ hiện khi rê chuột, dễ bị bỏ sót; khoá cả cụm thì phải nói rõ vì sao ngay trên trang. */}
       {disabled && disabledHint && <p className="pcb-hint sep-context__hint">{disabledHint}</p>}

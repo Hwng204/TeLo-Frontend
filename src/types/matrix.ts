@@ -43,6 +43,13 @@ export interface MatrixDetail extends MatrixDetailRequest {
   questionType: string;
   /** Suy ra từ backend = matrix.totalScore * percentage / 100, để tránh lệch làm tròn. */
   cellScore: number;
+  // Tên bài/chương lúc đọc, kể cả khi đã lưu trữ (reference data chỉ có bài ACTIVE).
+  // Không bắt buộc vì backend cũ chưa trả về.
+  lessonTitle?: string | null;
+  lessonNumber?: number | null;
+  chapterId?: number | null;
+  chapterTitle?: string | null;
+  chapterNumber?: number | null;
 }
 
 /** Một người dùng hiển thị cạnh ma trận/nhiệm vụ. `roleLabel` là null nếu họ không có vai trò ma trận. */
