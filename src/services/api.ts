@@ -116,8 +116,12 @@ const filenameFrom = (header: unknown, fallback = 'ma-tran.xlsx'): string => {
   const plain = /filename="?([^";]+)"?/i.exec(header);
   return plain ? plain[1] : fallback;
 };
-const post = async <T>(url: string, body?: object): Promise<T> => (await apiClient.post<T>(url, body)).data;
-const put = async <T>(url: string, body?: object): Promise<T> => (await apiClient.put<T>(url, body)).data;
+const post = async <T>(url: string, body?: object, timeout?: number): Promise<T> =>
+  (await apiClient.post<T>(url, body, { timeout })).data;
+const put = async <T>(url: string, body?: object, timeout?: number): Promise<T> =>
+  (await apiClient.put<T>(url, body, { timeout })).data;
+// Lưu ma trận: mạng chập chờn thì báo lỗi sau 30 giây thay vì treo nút "Đang lưu" mãi.
+const MATRIX_SAVE_TIMEOUT_MS = 30_000;
 const patch = async <T>(url: string, body?: object): Promise<T> => (await apiClient.patch<T>(url, body)).data;
 const del = async <T>(url: string): Promise<T> => (await apiClient.delete<T>(url)).data;
 
@@ -206,8 +210,8 @@ export const api = {
   matrix: {
     list: (query: MatrixListQuery = {}) => get<Page<MatrixListItem>>('/matrices', query),
     get: (id: number) => get<Matrix>(`/matrices/${id}`),
-    create: (body: SaveMatrixRequest) => post<Matrix>('/matrices', body),
-    update: (id: number, body: SaveMatrixRequest) => put<Matrix>(`/matrices/${id}`, body),
+    create: (body: SaveMatrixRequest) => post<Matrix>('/matrices', body, MATRIX_SAVE_TIMEOUT_MS),
+    update: (id: number, body: SaveMatrixRequest) => put<Matrix>(`/matrices/${id}`, body, MATRIX_SAVE_TIMEOUT_MS),
     remove: (id: number) => del<void>(`/matrices/${id}`),
 
     // Chuyển trạng thái; backend trả 409 khi ma trận đã bị thao tác khác thay đổi.

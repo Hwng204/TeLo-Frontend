@@ -8,6 +8,7 @@ if (import.meta.env.DEV) {
   void import('./utils/formatters.selfcheck').then((m) => m.formattersSelfCheck())
   void import('./utils/matrixImport.selfcheck').then((m) => m.matrixImportSelfCheck())
   void import('./utils/curriculumFilter.selfcheck').then((m) => m.curriculumFilterSelfCheck())
+  void import('./utils/draftStorage.selfcheck').then((m) => m.draftStorageSelfCheck())
 }
 import App from './App.tsx'
 

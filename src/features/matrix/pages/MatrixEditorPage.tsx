@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Field, Icon, PcbButton } from '../../../components/pcb';
-import { useAsync, useBusy } from '../../../hooks';
+import { useAsync, useBusy, useOnline } from '../../../hooks';
 import { api } from '../../../services/api';
 import type { GridRow, MatrixImportPreview, SaveMatrixRequest } from '../../../types';
 import { contextLabel, resolveContextId, selectionFromContext } from '../../../utils/academicContext';
 import type { ContextSelection } from '../../../utils/academicContext';
-import { clearDraft, draftKeyFor, loadDraft, saveDraft } from '../../../utils/draftStorage';
+import { clearDraft, draftKeyFor, isDraftStale, loadDraft, saveDraft, serverFingerprint } from '../../../utils/draftStorage';
 import {
   formatScore,
   gridTotal,
@@ -54,25 +54,49 @@ const MatrixEditor = () => {
   // Đã thử Nộp/Xác nhận mà tổng chưa đủ 10: lúc đó mới tô đỏ ô Tổng điểm (lưu Nháp thì không bao giờ).
   const [totalRejected, setTotalRejected] = useState(false);
   const [busy, runExclusive] = useBusy();
+  // Mất mạng thì khoá các nút lưu; nội dung đang soạn vẫn nằm trong bản nháp cục bộ.
+  const online = useOnline();
+  const saveBlocked = busy || !online;
+  // Lần tạo trước không nhận được phản hồi: có thể máy chủ đã tạo rồi, tạo lại sẽ ra bản trùng.
+  const [createUnsure, setCreateUnsure] = useState(false);
 
   const detail = useAsync(async () => (matrixId ? api.matrix.get(matrixId) : null), [matrixId]);
   const matrix = detail.data;
 
   // Chưa ai chạm vào thì lấy giá trị từ server; chạm rồi thì giữ bản nháp của người dùng.
-  // Bản nháp còn được lưu vào sessionStorage theo từng thay đổi, nên F5 không làm mất (xem draftStorage.ts).
+  // Bản nháp còn được lưu vào localStorage theo từng thay đổi, nên F5, đóng tab hay mất mạng không làm mất (xem draftStorage.ts).
   const draftKey = draftKeyFor(useLocation().pathname);
-  const [restoredDraft] = useState(() => loadDraft(draftKey));
+  const [restoredDraft, setRestoredDraft] = useState(() => loadDraft(draftKey));
   const [draftName, setDraftName] = useState<string | null>(restoredDraft?.name ?? null);
   const [draftSelection, setDraftSelection] = useState<ContextSelection | null>(restoredDraft?.selection ?? null);
   const [draftRows, setDraftRows] = useState<GridRow[] | null>(restoredDraft?.rows ?? null);
   const [draftTotalScore, setDraftTotalScore] = useState<number | null>(restoredDraft?.totalScore ?? null);
   const [restored, setRestored] = useState(restoredDraft !== null);
+  const [staleDraft, setStaleDraft] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importNotice, setImportNotice] = useState<string | null>(null);
 
+  // Xét một lần, khi bản server vừa tải: bản nháp soạn trên bản cũ hơn (có người lưu sau đó) thì bỏ, giữ bản server,
+  // nếu không bấm Lưu sẽ ghi đè nội dung người khác. Ma trận mới (chưa có trên server) khôi phục như thường.
+  if (matrix && restoredDraft) {
+    setRestoredDraft(null);
+    if (isDraftStale(restoredDraft, matrix)) {
+      setDraftName(null);
+      setDraftSelection(null);
+      setDraftRows(null);
+      setDraftTotalScore(null);
+      setRestored(false);
+      setStaleDraft(true);
+    }
+  }
+  // Bản server mà bản nháp đang dựa vào; lúc chưa tải xong thì giữ dấu cũ của bản nháp vừa khôi phục.
+  const draftBase = matrix ? serverFingerprint(matrix) : (restoredDraft?.base ?? null);
+
   useEffect(() => {
-    saveDraft(draftKey, { name: draftName, selection: draftSelection, rows: draftRows, totalScore: draftTotalScore });
-  }, [draftKey, draftName, draftSelection, draftRows, draftTotalScore]);
+    // Bản server đang tải (lại): chưa biết bản nháp dựa vào bản nào, đừng ghi đè dấu đã lưu bằng null.
+    if (matrixId && draftBase === null) return;
+    saveDraft(draftKey, { name: draftName, selection: draftSelection, rows: draftRows, totalScore: draftTotalScore, base: draftBase });
+  }, [matrixId, draftKey, draftName, draftSelection, draftRows, draftTotalScore, draftBase]);
 
   const discardDraft = () => {
     clearDraft(draftKey);
@@ -190,6 +214,14 @@ const MatrixEditor = () => {
   /** Lưu rồi chạy tiếp một hành động trên ma trận vừa lưu. */
   const save = (then?: (id: number) => Promise<unknown>, requireFull = false) => {
     if (!validate(requireFull)) return;
+    if (
+      !matrixId &&
+      createUnsure &&
+      !window.confirm(
+        'Lần lưu trước không nhận được phản hồi nên ma trận có thể đã được tạo. ' +
+          'Hãy kiểm tra danh sách Ma trận đề trước. Vẫn tạo mới?',
+      )
+    ) return;
 
     return runExclusive(async () => {
       setProblem(null);
@@ -202,6 +234,10 @@ const MatrixEditor = () => {
         savedId = saved.id;
       } catch (error) {
         handleFailure(error);
+        if (!matrixId && toProblem(error).status === 0) {
+          setCreateUnsure(true);
+          setProblem('Không nhận được phản hồi từ máy chủ. Ma trận có thể đã được lưu: kiểm tra danh sách Ma trận đề trước khi lưu lại.');
+        }
         return;
       }
 
@@ -280,6 +316,18 @@ const MatrixEditor = () => {
 
       <div className="sep-page">
       {problem && <div className="sep-alert" role="alert">{problem}</div>}
+
+      {!online && (
+        <div className="sep-alert sep-alert--warn" role="status">
+          Mất kết nối mạng. Nội dung đang soạn vẫn được giữ trên máy này, có mạng lại thì lưu tiếp.
+        </div>
+      )}
+
+      {staleDraft && (
+        <div className="sep-alert sep-alert--info" role="status">
+          Ma trận đã được cập nhật sau lần bạn soạn trước; đang hiển thị bản mới nhất, bản nháp trên máy đã bỏ.
+        </div>
+      )}
 
       {restored && (
         <div className="sep-alert sep-alert--info" role="status">
@@ -429,7 +477,7 @@ const MatrixEditor = () => {
             {matrixId ? (
               // Ma trận đang Đã nộp thì sửa xong vẫn phải đúng 10; ma trận Nháp thì lưu ở mọi tổng.
               <PcbButton
-                disabled={busy || (submittedEdit && !totalOk)}
+                disabled={saveBlocked || (submittedEdit && !totalOk)}
                 title={submittedEdit && !totalOk ? `Cần đúng ${REQUIRED_TOTAL_PERCENTAGE}% mới lưu được` : undefined}
                 onClick={() => void save(undefined, submittedEdit)}
               >
@@ -437,12 +485,12 @@ const MatrixEditor = () => {
               </PcbButton>
             ) : (
               <>
-                <PcbButton variant="secondary" disabled={busy} onClick={() => void save()}>
+                <PcbButton variant="secondary" disabled={saveBlocked} onClick={() => void save()}>
                   Lưu nháp
                 </PcbButton>
                 {taskId ? (
                   <PcbButton
-                    disabled={busy || !totalOk}
+                    disabled={saveBlocked || !totalOk}
                     title={totalOk ? undefined : `Cần đúng ${REQUIRED_TOTAL_PERCENTAGE}% mới nộp được`}
                     onClick={() => void save((id) => api.matrix.submit(id), true)}
                   >
@@ -451,7 +499,7 @@ const MatrixEditor = () => {
                 ) : (
                   // PHT tự tạo: backend cần tạo Nháp rồi xác nhận, người dùng chỉ thấy kết quả đã duyệt.
                   <PcbButton
-                    disabled={busy || !totalOk}
+                    disabled={saveBlocked || !totalOk}
                     title={totalOk ? undefined : `Cần đúng ${REQUIRED_TOTAL_PERCENTAGE}% mới tạo được`}
                     onClick={() => void save((id) => api.matrix.confirm(id), true)}
                   >
@@ -477,7 +525,7 @@ const MatrixEditor = () => {
               "đã được thực hiện": từ đó PHT không xoá nhiệm vụ được nữa. Ma trận Đã nộp không lưu dở được.
             */}
             {!submittedEdit && (
-              <PcbButton variant="secondary" disabled={busy} onClick={() => void save()}>
+              <PcbButton variant="secondary" disabled={saveBlocked} onClick={() => void save()}>
                 Lưu nháp
               </PcbButton>
             )}

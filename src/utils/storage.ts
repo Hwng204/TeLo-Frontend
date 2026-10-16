@@ -122,10 +122,20 @@ export const storage = {
     window.dispatchEvent(new Event('branch_changed'));
   },
 
-  clearAuth: (): void => {
+  /** `keepDrafts`: hết phiên (401) thì giữ bản nháp ma trận để chính người đó đăng nhập lại còn thấy. */
+  clearAuth: (keepDrafts = false): void => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     storage.clearSelectedBranch();
+    if (!keepDrafts) {
+      try {
+        Object.keys(localStorage)
+          .filter((key) => key.startsWith('matrix-draft:'))
+          .forEach((key) => localStorage.removeItem(key));
+      } catch {
+        // localStorage bị chặn: không có gì để dọn.
+      }
+    }
     // Đăng xuất/hết hạn không được để lại bản nháp chưa lưu của người trước trên máy dùng chung.
     try {
       Object.keys(sessionStorage)
