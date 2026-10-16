@@ -241,27 +241,3 @@ export interface MatrixImportPreview {
   details: MatrixDetailRequest[];
   errors: { rowNumber: number | null; message: string }[];
 }
-
-// --- Helpers đọc/ghi .xlsx và kiểm tra định dạng cũ ---
-
-/** Một ô khi ghi file .xlsx; `bold` cho dòng tiêu đề. */
-export type XlsxCell = string | number | null | { value: string | number; bold?: boolean };
-
-export interface MatrixImportIssue {
-  /** Số dòng trong file Excel (đếm từ 1), null nếu lỗi của cả file. */
-  line: number | null;
-  message: string;
-  /** true: dòng không đưa vào bảng (không nhận ra bài học/mức). false: vẫn đưa vào, cần sửa số liệu. */
-  skipped: boolean;
-}
-
-export interface MatrixImportResult {
-  /** Mỗi dòng một bài học, đã gom ba mức nhận thức; dùng thẳng cho lưới soạn. */
-  rows: GridRow[];
-  /** "Tên ma trận" / "Tổng điểm" ghi trong file (có ở file mẫu và file Xuất Excel). */
-  name: string | null;
-  totalScore: number | null;
-  issues: MatrixImportIssue[];
-  /** Số dòng trong file có điền Số câu hoặc Tỷ lệ %. */
-  filledLines: number;
-}

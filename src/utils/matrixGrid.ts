@@ -27,15 +27,6 @@ export const LEVEL_LABELS: Record<CognitiveLevel, string> = {
   VAN_DUNG: 'Vận dụng',
 };
 
-/**
- * Nhãn duy nhất của một bài: "Bài 9. Luyện tập chung — Chương 1. Ôn tập và bổ sung".
- * Tên bài trơn không đủ vì cùng một tên có thể xuất hiện ở nhiều chương.
- */
-export const lessonLabel = (lesson: LessonOption): string =>
-  lesson.chapterTitle
-    ? `Bài ${lesson.code}. ${lesson.title} — Chương ${lesson.chapterCode}. ${lesson.chapterTitle}`
-    : lesson.title;
-
 export const rowChapterId = (row: GridRow, lessons: LessonOption[]): number =>
   lessons.find((lesson) => lesson.id === row.lessonId)?.chapterId ?? row.chapterId ?? 0;
 
