@@ -73,9 +73,7 @@ export interface Matrix {
   rejectedByUserId: number | null;
   /** Null với ma trận cũ không có dữ liệu người lập. */
   createdBy: MatrixPerson | null;
-  createdAt: string | null;
   approvedBy: MatrixPerson | null;
-  approvedAt: string | null;
 }
 
 /** Hàng trong danh sách. KHÔNG có `allowedActions` — chỉ `Matrix` mới có. */
@@ -89,9 +87,7 @@ export interface MatrixListItem {
   totalQuestions: number;
   totalScore: number;
   createdBy: MatrixPerson | null;
-  createdAt: string | null;
   approvedBy: MatrixPerson | null;
-  approvedAt: string | null;
   subjectName: string;
   gradeLevelName: string;
 }
@@ -175,7 +171,6 @@ export interface MatrixReferenceData {
   /** Rỗng trừ khi request truyền `academicContextId`. */
   lessons: LessonOption[];
   teamLeads: TeamLeadOption[];
-  cognitiveLevels: { code: CognitiveLevel; label: string }[] | null;
 }
 
 // --- Kiểu chỉ dùng cho giao diện lưới chi tiết ---
