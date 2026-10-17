@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Field, PcbButton, SelectField } from '../../../components/pcb';
+import { Field, Icon, PcbButton, SelectField } from '../../../components/pcb';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { useAsync, useBusy } from '../../../hooks';
 import { api } from '../../../services/api';
@@ -12,6 +12,7 @@ import { ContextSelects } from '../../matrix/components/ContextSelects';
 import { focusFirstError } from '../focusFirstError';
 import '../../matrix/matrix.css';
 import '../tasks.css';
+import '../../../styles/authoring.css';
 
 /** M01-A giao nhiệm vụ lập ma trận; có `task` là NV04-M sửa nhiệm vụ. Ngày giao do server tự ghi. */
 export const MatrixTaskForm = ({ task }: { task?: TaskDetail }) => {
@@ -98,7 +99,7 @@ export const MatrixTaskForm = ({ task }: { task?: TaskDetail }) => {
     <>
       <PageHeader title={task ? 'Chỉnh sửa nhiệm vụ lập ma trận' : 'Giao nhiệm vụ lập ma trận'} onBack={back} />
 
-      <div className="sep-page">
+      <div className="sep-page sep-authoring-page matrix-task-form">
         {problem && <div className="sep-alert" role="alert">{problem}</div>}
         {locked && (
           <div className="sep-alert sep-alert--info">
@@ -182,9 +183,11 @@ export const MatrixTaskForm = ({ task }: { task?: TaskDetail }) => {
 
         <div className="sep-actions sep-task-actions">
           <PcbButton variant="ghost" onClick={back}>
+            <Icon name="close" />
             Hủy
           </PcbButton>
           <PcbButton disabled={busy || reference.loading} onClick={() => void submit()}>
+            <Icon name={task ? 'save' : 'assignment_ind'} />
             {busy ? 'Đang lưu…' : task ? 'Lưu thay đổi' : 'Giao nhiệm vụ'}
           </PcbButton>
         </div>

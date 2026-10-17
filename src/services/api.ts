@@ -123,7 +123,7 @@ const put = async <T>(url: string, body?: object, timeout?: number): Promise<T> 
 // Lưu ma trận: mạng chập chờn thì báo lỗi sau 30 giây thay vì treo nút "Đang lưu" mãi.
 const MATRIX_SAVE_TIMEOUT_MS = 30_000;
 const patch = async <T>(url: string, body?: object): Promise<T> => (await apiClient.patch<T>(url, body)).data;
-const del = async <T>(url: string): Promise<T> => (await apiClient.delete<T>(url)).data;
+const del = async <T>(url: string, params?: object): Promise<T> => (await apiClient.delete<T>(url, { params })).data;
 
 /** Bóc lớp vỏ ApiResponse của các API danh bạ; lỗi đã được apiClient ném ra trước khi tới đây. */
 const unwrap = async <T>(request: Promise<ApiResponse<T>>): Promise<T> => (await request).data as T;
@@ -195,7 +195,8 @@ export const api = {
     create: (body: SaveIdentityRequest) => unwrap(post<ApiResponse<ModuleItem>>('/modules', body)),
     update: (id: number, body: SaveIdentityRequest & { version: number }) => unwrap(put<ApiResponse<ModuleItem>>(`/modules/${id}`, body)),
     status: (id: number, status: IdentityStatus, version: number) => unwrap(patch<ApiResponse<ModuleItem>>(`/modules/${id}/status`, { status, version })),
-    remove: (id: number, version: number) => unwrap(del<ApiResponse<boolean>>(`/modules/${id}?version=${version}`)),
+    // Older DB v2 responses omit version; Axios leaves absent query params out.
+    remove: (id: number, version?: number) => unwrap(del<ApiResponse<boolean>>(`/modules/${id}`, { version })),
   },
   auth: {
     login: (credentials: LoginRequest) => post<LoginResponse>('/auth/login', credentials),

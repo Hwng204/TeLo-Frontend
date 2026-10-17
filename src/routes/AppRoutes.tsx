@@ -35,6 +35,8 @@ import { AcademicYearConfigPage } from '../features/academicYears/pages/Academic
 import { RoleListPage } from '../features/identity/pages/RoleListPage';
 import { ModuleListPage } from '../features/identity/pages/ModuleListPage';
 import { EmailManagementPage } from '../features/emails/pages/EmailManagementPage';
+import { NotificationProvider } from '../features/notifications/NotificationProvider';
+import { NotificationInboxPage } from '../features/notifications/NotificationInboxPage';
 import { UserListPage } from '../features/identity/pages/UserListPage';
 import { UserFormPage } from '../features/identity/pages/UserFormPage';
 import { ExamListPage } from '../features/exams/pages/ExamListPage';
@@ -82,7 +84,7 @@ import { StudentDashboardPage } from '../features/student/pages/StudentDashboard
 const STUDENT = ['STUDENT', 'HOC_SINH'];
 
 const router = createBrowserRouter(createRoutesFromElements(
-      <>
+      <Route element={<NotificationProvider><Outlet /></NotificationProvider>}>
         <Route>
           <Route path="/login" element={<LoginPage />} />
         </Route>
@@ -150,7 +152,10 @@ const router = createBrowserRouter(createRoutesFromElements(
 
 
         <Route element={<DirectoryShell />}>
-          <Route path="/emails" element={<EmailManagementPage />} />
+          <Route path="/notifications" element={<NotificationInboxPage />} />
+          <Route element={<RequireRole allow={ADMIN} />}>
+            <Route path="/emails" element={<EmailManagementPage />} />
+          </Route>
           <Route element={<RequireRole allow={[...PHT, ...TEACHER, ...ADMIN]} />}>
             <Route path="/classes" element={<ClassListPage />} />
             <Route path="/classes/:id" element={<ClassDetailPage />} />
@@ -195,7 +200,7 @@ const router = createBrowserRouter(createRoutesFromElements(
         </Route>
 
         <Route path="*" element={<Navigate to="/schools" replace />} />
-      </>
+      </Route>
 ));
 
 export const AppRoutes: React.FC = () => <RouterProvider router={router} />;

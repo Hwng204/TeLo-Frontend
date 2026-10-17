@@ -6,6 +6,7 @@ import { api } from '../services/api';
 import { useAsync } from '../hooks/useAsync';
 import { formatActiveAcademicYear } from '../utils/academicYear';
 import { storage } from '../utils/storage';
+import { NotificationBell } from '../features/notifications/NotificationBell';
 import '../styles/sep-ui.css';
 import './AppShell.css'; // Reuse AppShell styling
 
@@ -148,6 +149,7 @@ export const StudentLayout = () => {
             {Boolean(activeAcademicYear.error) && <button type="button" onClick={reloadActiveAcademicYear}>Thử lại</button>}
           </div>
 
+          <div className="nt-header-actions"><NotificationBell />
           <div className="sep-user" ref={userMenuRef} style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setShowUserMenu(!showUserMenu)}>
             <div className="sep-user__avatar">
               {initials}
@@ -195,6 +197,7 @@ export const StudentLayout = () => {
                 `}</style>
               </div>
             )}
+          </div>
           </div>
         </header>
 

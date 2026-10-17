@@ -13,6 +13,7 @@ import { focusFirstError } from '../focusFirstError';
 import { lessonsProblem, questionCount, type LessonDraft } from '../lessonDraft';
 import '../../matrix/matrix.css';
 import '../tasks.css';
+import '../../../styles/authoring.css';
 
 /** NV03-Q giao nhiệm vụ biên soạn câu hỏi; có `task` là NV04-Q sửa nhiệm vụ. */
 export const QuestionTaskForm = ({ task }: { task?: TaskDetail }) => {
@@ -112,7 +113,7 @@ export const QuestionTaskForm = ({ task }: { task?: TaskDetail }) => {
     <>
       <PageHeader title={task ? 'Chỉnh sửa nhiệm vụ biên soạn câu hỏi' : 'Giao nhiệm vụ biên soạn câu hỏi'} onBack={back} />
 
-      <div className="sep-page">
+      <div className="sep-page sep-authoring-page question-task-form">
         {problem && <div className="sep-alert" role="alert">{problem}</div>}
         {(options.error ?? curriculum.error) != null && (
           <div className="sep-alert" role="alert">{toProblem(options.error ?? curriculum.error).message}</div>
@@ -181,9 +182,11 @@ export const QuestionTaskForm = ({ task }: { task?: TaskDetail }) => {
 
         <div className="sep-actions sep-task-actions">
           <PcbButton variant="ghost" onClick={back}>
+            <Icon name="close" />
             Hủy
           </PcbButton>
           <PcbButton disabled={busy || options.loading || curriculum.loading} onClick={() => void submit()}>
+            <Icon name={task ? 'save' : 'assignment_ind'} />
             {busy ? 'Đang lưu…' : task ? 'Lưu thay đổi' : 'Giao nhiệm vụ'}
           </PcbButton>
         </div>

@@ -30,6 +30,7 @@ import { InfoGrid } from '../../../components/common/InfoGrid';
 import { MatrixGrid } from '../components/MatrixGrid';
 import { PageHeader } from '../../../components/common/PageHeader';
 import '../matrix.css';
+import '../../../styles/authoring.css';
 
 /**
  * Một trang phục vụ M02-D, M02-TL, M02-REVIEW (bước soạn) và M02-P, M02-TLP (bước xem lại).
@@ -330,7 +331,7 @@ const MatrixEditor = () => {
     <>
       <PageHeader title={title} onBack={back} />
 
-      <div className="sep-page">
+      <div className="sep-page sep-authoring-page matrix-editor-page">
       {problem && <div className="sep-alert" role="alert">{problem}</div>}
 
       {!online && (

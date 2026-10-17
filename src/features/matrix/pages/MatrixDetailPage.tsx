@@ -21,6 +21,7 @@ import { questionApi } from '../../questions/questionApi';
 import { QuestionPicker } from '../../questions/components/QuestionPicker';
 import '../../questions/questions.css';
 import '../matrix.css';
+import '../../../styles/authoring.css';
 
 /** M03 / M03-A / M03-B chỉ khác nhau ở tiêu đề và cụm nút, mà cụm nút đọc từ allowedActions. */
 const titleFor = (matrix: Matrix | undefined) => {
@@ -177,7 +178,7 @@ export const MatrixDetailPage = () => {
         )}
       />
 
-      <div className="sep-page">
+      <div className="sep-page sep-authoring-page matrix-detail-page">
       {notice && (
         <div className={notice.kind === 'error' ? 'sep-alert' : 'sep-alert sep-alert--success'} role="alert">
           {notice.message}
