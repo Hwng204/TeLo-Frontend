@@ -16,6 +16,8 @@ interface ConfirmDialogProps {
     loadingText?: string;
     /** Lớp thêm vào `.confirm-dialog` để màn riêng tự đổi giao diện. */
     className?: string;
+    /** Ẩn nút Hủy, chỉ còn một nút (dùng cho thông báo). Mặc định false. */
+    hideCancel?: boolean;
 }
 
 export const ConfirmDialog = ({
@@ -29,7 +31,8 @@ export const ConfirmDialog = ({
     type = 'danger',
     isLoading = false,
     loadingText = 'Đang xử lý...',
-    className
+    className,
+    hideCancel = false
 }: ConfirmDialogProps) => {
     const dialogRef = useRef<HTMLDialogElement>(null);
     const cancelRef = useRef<HTMLButtonElement>(null);
@@ -42,7 +45,7 @@ export const ConfirmDialog = ({
         if (!isOpen || !dialog) return;
         const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         if (!dialog.open) dialog.showModal();
-        cancelRef.current?.focus();
+        (cancelRef.current ?? dialog.querySelector<HTMLButtonElement>('.confirm-btn--confirm'))?.focus();
         return () => {
             if (dialog.open) dialog.close();
             if (opener?.isConnected) opener.focus();
@@ -78,7 +81,7 @@ export const ConfirmDialog = ({
                     {message}
                 </div>
                 <div className="confirm-footer">
-                    <button 
+                    {!hideCancel && <button
                         ref={cancelRef}
                         type="button" 
                         className="confirm-btn confirm-btn--cancel" 
@@ -86,7 +89,7 @@ export const ConfirmDialog = ({
                         disabled={isLoading}
                     >
                         {cancelText}
-                    </button>
+                    </button>}
                     <button 
                         type="button" 
                         className={`confirm-btn confirm-btn--confirm confirm-btn--${type}`}

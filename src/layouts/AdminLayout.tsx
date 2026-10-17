@@ -7,6 +7,7 @@ import { AdminAcademicYearSelect } from '../components/common/AdminAcademicYearS
 import { formatActiveAcademicYear } from '../utils/academicYear';
 import { storage } from '../utils/storage';
 import { BranchSelectModal } from '../components/common/BranchSelectModal';
+import { NotificationBell } from '../features/notifications/NotificationBell';
 // Cùng khung và mẫu giao diện với AppShell để các màn quản trị trông thống nhất.
 import '../styles/sep-ui.css';
 import './AppShell.css';
@@ -499,6 +500,7 @@ export const AdminLayout = () => {
             )}
           </div>
 
+          <div className="nt-header-actions"><NotificationBell />
           <div className="sep-user" ref={userMenuRef} style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }} onClick={() => setShowUserMenu(!showUserMenu)}>
             <div className="sep-user__avatar">
               {initials}
@@ -546,6 +548,7 @@ export const AdminLayout = () => {
                 `}</style>
               </div>
             )}
+          </div>
           </div>
         </header>
 

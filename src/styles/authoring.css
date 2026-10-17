@@ -1,0 +1,69 @@
+@import './assessment-tokens.css';
+
+/* Only opt-in matrix/question assignment forms use this presentation. */
+.sep-page.sep-authoring-page {
+  --pcb-color-bg-accent: var(--assessment-primary);
+  --pcb-color-bg-accent-hover: var(--assessment-primary-hover);
+  --pcb-color-bg-accent-active: var(--assessment-primary-active);
+  --pcb-color-text-brand: var(--assessment-brand);
+  --authoring-heading: var(--assessment-heading);
+  --authoring-muted: var(--assessment-muted);
+  width: 100%; min-width: 0; max-width: none; margin: 0; box-sizing: border-box;
+  padding: 20px 24px 28px; gap: 16px; background: var(--sep-bg-canvas);
+  counter-reset: authoring-section;
+}
+.sep-authoring-page > .sep-section {
+  min-width: 0; box-sizing: border-box; margin: 0; padding: 20px;
+  border: 1px solid var(--pcb-color-border-default); border-radius: 10px;
+  background: var(--pcb-color-bg-surface); gap: 16px; counter-increment: authoring-section;
+}
+.sep-authoring-page > .sep-section > .sep-section-title,
+.sep-authoring-page > .sep-section > .sep-section-head > .sep-section-title {
+  display: flex; align-items: center; gap: 10px; color: var(--authoring-heading);
+  font-size: 17px; line-height: 26px; font-weight: 700;
+}
+.sep-authoring-page > .sep-section > .sep-section-title::before,
+.sep-authoring-page > .sep-section > .sep-section-head > .sep-section-title::before {
+  content: counter(authoring-section, decimal-leading-zero);
+  display: grid; place-items: center; flex: 0 0 32px; height: 32px;
+  border-radius: 7px; background: var(--assessment-brand-soft); color: var(--pcb-color-text-brand); font-size: 12px;
+}
+.sep-authoring-page .pcb-label { color: var(--authoring-heading); font-weight: 600; }
+.sep-authoring-page .pcb-hint, .sep-authoring-page .sep-muted { color: var(--authoring-muted); font-size: 12px; }
+.sep-authoring-page .pcb-control { background: var(--pcb-color-bg-surface); }
+.sep-authoring-page .pcb-control:has(input:focus), .sep-authoring-page .pcb-control:has(button:focus-visible) { border-color: var(--pcb-color-bg-accent); }
+.sep-authoring-page > .sep-actions {
+  padding: 14px 20px; margin: 0; border: 1px solid var(--pcb-color-border-default);
+  border-radius: 8px; background: var(--pcb-color-bg-surface);
+}
+.sep-authoring-page > .sep-actions > .pcb-btn--ghost { border: 1px solid var(--pcb-color-border-default); color: var(--authoring-muted); }
+.sep-authoring-page .sep-lesson-card { padding: 0; gap: 0; overflow: hidden; border-radius: 8px; }
+.sep-authoring-page .sep-lesson-card__head { padding: 12px 16px; background: var(--assessment-brand-soft); border-bottom: 1px solid var(--pcb-color-border-default); }
+.sep-authoring-page .sep-lesson-card__title { color: var(--pcb-color-text-brand); font-weight: 700; }
+.sep-authoring-page .sep-lesson-card__head .pcb-iconbtn { color: var(--pcb-color-text-danger); background: white; border: 1px solid var(--assessment-danger-border); border-radius: 6px; }
+.sep-authoring-page .sep-lesson-card > .sep-task-row { padding: 16px; }
+.sep-authoring-page .sep-lesson-card .sep-level-scroll { margin: 0 16px 16px; }
+.sep-authoring-page .sep-level-table th { font-size: 12px; font-weight: 600; }
+.sep-authoring-page .sep-level-table thead th:nth-child(2) { background: var(--assessment-brand-soft); color: var(--assessment-brand); }
+.sep-authoring-page .sep-level-table thead th:nth-child(3) { background: var(--assessment-success-soft); color: var(--assessment-success); }
+.sep-authoring-page .sep-level-table thead th:nth-child(4) { background: var(--assessment-warning-soft); color: var(--assessment-warning); }
+.sep-authoring-page .sep-level-table__total { background: var(--assessment-brand-soft); color: var(--assessment-brand); font-weight: 700; }
+.sep-authoring-page .sep-level-input { height: 40px; font-weight: 600; color: var(--authoring-heading); }
+.sep-authoring-page .sep-level-input:focus { border-color: var(--pcb-color-bg-accent); }
+.sep-authoring-page .sep-task-back { border-style: dashed; min-width: 180px; background: var(--assessment-surface-soft); }
+.sep-authoring-page .sep-matrix-table thead th { color: var(--authoring-heading); font-weight: 600; background: var(--assessment-surface-soft); }
+.sep-authoring-page .sep-matrix-table thead th:nth-child(3) { background: var(--assessment-brand-soft); color: var(--assessment-brand); }
+.sep-authoring-page .sep-matrix-table thead th:nth-child(4) { background: var(--assessment-success-soft); color: var(--assessment-success); }
+.sep-authoring-page .sep-matrix-table thead th:nth-child(5) { background: var(--assessment-warning-soft); color: var(--assessment-warning); }
+.sep-authoring-page .sep-matrix-table td { border-right: 1px solid var(--assessment-neutral-soft); }
+.sep-authoring-page .sep-matrix-table .sep-table-total td { color: var(--assessment-brand); background: var(--assessment-brand-soft); font-weight: 700; }
+.sep-authoring-page .sep-matrix-table .sep-col-actions .pcb-iconbtn { color: var(--pcb-color-text-danger); background: var(--assessment-danger-soft); border-radius: 6px; }
+.sep-authoring-page .sep-grid-input > span { color: var(--authoring-muted); font-size: 12px; }
+.sep-authoring-page .sep-panel__foot { background: var(--assessment-surface-soft); }
+.sep-authoring-page #task-description { height: 120px; min-height: 120px; resize: none; overflow-y: auto; }
+@media (max-width: 760px) {
+  .sep-page.sep-authoring-page { padding: 12px; gap: 12px; }
+  .sep-authoring-page > .sep-section { padding: 16px; }
+  .sep-authoring-page > .sep-actions { padding: 12px; }
+  .sep-authoring-page > .sep-actions > .pcb-btn { flex: 1; }
+}

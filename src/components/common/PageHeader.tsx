@@ -7,6 +7,7 @@ import { storage } from '../../utils/storage';
 import { api } from '../../services/api';
 import { useAsync } from '../../hooks/useAsync';
 import { formatActiveAcademicYear } from '../../utils/academicYear';
+import { NotificationBell } from '../../features/notifications/NotificationBell';
 
 type Props = {
   title: string;
@@ -46,6 +47,11 @@ export const PageHeader = ({ title, onBack, badge, inline, actions }: Props) => 
     navigate('/login');
   };
 
+  const activeAcademicYear = useAsync(() => inline ? Promise.resolve({ data: null }) : api.academicYear.current().catch(e => {
+    if (e?.response?.status === 404) return { data: null };
+    throw e;
+  }), [inline]);
+
   if (inline) {
     return (
       <div className="sep-pagehead" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -64,11 +70,6 @@ export const PageHeader = ({ title, onBack, badge, inline, actions }: Props) => 
   const username = getUsername();
   const role = roleLabel();
 
-  const activeAcademicYear = useAsync(() => api.academicYear.current().catch(e => {
-    if (e?.response?.status === 404) return { data: null };
-    throw e;
-  }), []);
-
   const activeAcademicYearLabel = activeAcademicYear.loading
     ? 'Đang tải năm học...'
     : activeAcademicYear.error
@@ -84,12 +85,14 @@ export const PageHeader = ({ title, onBack, badge, inline, actions }: Props) => 
       </h1>
       
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <div aria-live="polite" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569', fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+        {actions}
+        <div className="sep-topbar__year" aria-live="polite" style={{ alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#475569', fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap' }}>
           <Icon name="calendar_month" size={18} />
           {activeAcademicYearLabel}
           {Boolean(activeAcademicYear.error) && <button type="button" onClick={activeAcademicYear.reload}>Thử lại</button>}
         </div>
 
+        <NotificationBell />
         <div className="sep-user" ref={userMenuRef} style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setShowUserMenu(!showUserMenu)}>
         <span className="sep-user__avatar" aria-hidden="true">
           {(username || role || '?').charAt(0).toUpperCase()}

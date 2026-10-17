@@ -11,12 +11,16 @@ import type { PackageDetail } from '../types';
 export type PackageDialogMode = 'rename' | 'assign' | 'submit' | 'return';
 const titles: Record<PackageDialogMode, string> = { rename: 'Đổi tên đề', assign: 'Giao chỉnh sửa và review đề', submit: 'Gửi kết quả review', return: 'Trả lại để review' };
 
-export const ExamPackageActionDialog = ({ mode, data, busy, onClose, onSave }: { mode: PackageDialogMode; data: PackageDetail; busy: boolean; onClose: () => void; onSave: (action: () => Promise<PackageDetail>, message: string) => void }) => {
+export const ExamPackageActionDialog = ({ mode, data, busy, onClose, onSave, onDirty }: { mode: PackageDialogMode; data: PackageDetail; busy: boolean; onClose: () => void; onSave: (action: () => Promise<PackageDetail>, message: string) => void; onDirty: (dirty: boolean) => void }) => {
   const [name, setName] = useState(data.package.name);
   const [reviewer, setReviewer] = useState(data.reviewerUserId ? String(data.reviewerUserId) : '');
   const [dueAt, setDueAt] = useState(data.dueAt?.slice(0, 10) ?? '');
   const [comment, setComment] = useState('');
   const [attempted, setAttempted] = useState(false);
+  const markDirty = (next: { name?: string; reviewer?: string; dueAt?: string; comment?: string }) => onDirty(mode === 'rename'
+    ? (next.name ?? name) !== data.package.name : mode === 'assign'
+      ? (next.reviewer ?? reviewer) !== (data.reviewerUserId ? String(data.reviewerUserId) : '') || (next.dueAt ?? dueAt) !== (data.dueAt?.slice(0, 10) ?? '')
+      : (next.comment ?? comment).length > 0);
   const invalidName = attempted && (!name.trim() || name.trim().length > 255);
   const invalidReviewer = attempted && !reviewer;
   const invalidDue = attempted && (!dueAt || dueAt < localDateString());
@@ -40,18 +44,18 @@ export const ExamPackageActionDialog = ({ mode, data, busy, onClose, onSave }: {
   };
   return <FormDialog open title={titles[mode]} busy={busy} onClose={onClose}>
     <form noValidate onSubmit={submit}>
-      {mode === 'rename' && <Field label="Tên đề" required invalid={invalidName} maxLength={255} value={name} disabled={busy} onChange={e => setName(e.target.value)} />}
+      {mode === 'rename' && <Field label="Tên đề" required invalid={invalidName} maxLength={255} value={name} disabled={busy} onChange={e => { const value = e.currentTarget.value; setName(value); markDirty({ name: value }); }} />}
       {mode === 'assign' && <>
         <p className="sep-muted">Chọn giáo viên hoặc tổ trưởng chỉnh sửa và review đề đã tạo. Người được giao chỉ thay câu đúng ô ma trận rồi gửi lại; PHT review cuối và chốt đề.</p>
         {options.loading && <p role="status">Đang tải người review…</p>}
         {Boolean(options.error) && <p role="alert" className="sep-alert">{toProblem(options.error).message}<PcbButton variant="ghost" onClick={options.reload}>Thử lại</PcbButton></p>}
-        <SelectField label="Người review" required invalid={invalidReviewer} value={reviewer} disabled={busy || options.loading} onChange={e => setReviewer(e.target.value)}><option value="">Chọn giáo viên hoặc tổ trưởng</option>{options.data?.reviewers.map(person => <option key={person.id} value={person.id}>{person.fullName} · {person.username}</option>)}</SelectField>
+        <SelectField label="Người review" required invalid={invalidReviewer} value={reviewer} disabled={busy || options.loading} onChange={e => { const value = e.target.value; setReviewer(value); markDirty({ reviewer: value }); }}><option value="">Chọn giáo viên hoặc tổ trưởng</option>{options.data?.reviewers.map(person => <option key={person.id} value={person.id}>{person.fullName} · {person.username}</option>)}</SelectField>
         {!options.loading && options.data?.reviewers.length === 0 && <p className="sep-muted">Chưa có giáo viên hoặc tổ trưởng đang hoạt động phù hợp trong phân hiệu.</p>}
-        <Field label="Hạn hoàn thành" required invalid={invalidDue} type="date" min={localDateString()} value={dueAt} disabled={busy} onChange={e => setDueAt(e.target.value)} />
+        <Field label="Hạn hoàn thành" required invalid={invalidDue} type="date" min={localDateString()} value={dueAt} disabled={busy} onChange={e => { const value = e.currentTarget.value; setDueAt(value); markDirty({ dueAt: value }); }} />
       </>}
       {(mode === 'submit' || mode === 'return') && <><p className="sep-muted">{mode === 'submit' ? 'Sau khi gửi, đề sẽ chờ PHT chốt và bạn không thể thay câu cho đến khi được trả lại.' : 'Người được giao sẽ nhận lại đề để kiểm tra và chỉnh sửa.'}</p><div className="pcb-field">
         <label className="pcb-label" htmlFor="exam-package-comment"><RequiredLabel required={mode === 'return'}>{mode === 'return' ? 'Lý do trả lại' : 'Nhận xét review'}</RequiredLabel></label>
-        <textarea id="exam-package-comment" className="sep-textarea" aria-invalid={invalidComment || undefined} rows={4} maxLength={2000} required={mode === 'return'} value={comment} disabled={busy} placeholder={mode === 'return' ? 'Nêu rõ nội dung người review cần kiểm tra hoặc chỉnh sửa.' : 'Nhập nhận xét về cấu trúc, câu hỏi và đáp án của đề.'} onChange={e => setComment(e.target.value)} />
+        <textarea id="exam-package-comment" className="sep-textarea" aria-invalid={invalidComment || undefined} rows={4} maxLength={2000} required={mode === 'return'} value={comment} disabled={busy} placeholder={mode === 'return' ? 'Nêu rõ nội dung người review cần kiểm tra hoặc chỉnh sửa.' : 'Nhập nhận xét về cấu trúc, câu hỏi và đáp án của đề.'} onChange={e => { const value = e.currentTarget.value; setComment(value); markDirty({ comment: value }); }} />
         <span className="pcb-hint">{comment.length}/2.000 ký tự</span>
       </div></>}
       <div className="sep-actions"><PcbButton variant="ghost" disabled={busy} onClick={onClose}>Hủy</PcbButton><PcbButton type="submit" disabled={busy || mode === 'assign' && (options.loading || Boolean(options.error))}>{busy ? 'Đang lưu…' : mode === 'assign' ? 'Giao review' : mode === 'rename' ? 'Lưu thay đổi' : mode === 'return' ? 'Trả lại đề' : 'Gửi kết quả review'}</PcbButton></div>

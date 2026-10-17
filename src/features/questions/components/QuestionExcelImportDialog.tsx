@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FormDialog } from '../../../components/common/FormDialog';
 import { Icon, PcbButton } from '../../../components/pcb';
 import { useBusy } from '../../../hooks';
@@ -8,12 +8,14 @@ import { displayToast } from '../../../utils/toast';
 import { questionApi } from '../questionApi';
 import type { QuestionPackage } from '../types';
 
-export const QuestionExcelImportDialog = ({ taskId, version, onClose, onImported }: { taskId: number; version: number; onClose: () => void; onImported: (value: QuestionPackage) => void }) => {
+export const QuestionExcelImportDialog = ({ taskId, version, onClose, onImported, onDirty, onBusy }: { taskId: number; version: number; onClose: () => void; onImported: (value: QuestionPackage) => void; onDirty?: (dirty: boolean) => void; onBusy?: (busy: boolean) => void }) => {
   const input = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<Awaited<ReturnType<typeof questionApi.import>> | null>(null);
   const [problem, setProblem] = useState('');
   const [busy, runExclusive] = useBusy();
+  useEffect(() => { onBusy?.(busy); }, [busy, onBusy]);
+  useEffect(() => () => onBusy?.(false), [onBusy]);
   const reportProblem = (message: string) => { setProblem(message); displayToast('error', 'Lỗi', message, 5); };
   const download = (guide: boolean) => void runExclusive(async () => {
     setProblem('');
@@ -25,8 +27,10 @@ export const QuestionExcelImportDialog = ({ taskId, version, onClose, onImported
   const check = (chosen: File) => {
     setFile(chosen); setPreview(null); setProblem('');
     if (!chosen.name.toLowerCase().endsWith('.xlsx') || chosen.size === 0 || chosen.size > 5 * 1024 * 1024) {
+      onDirty?.(false);
       reportProblem('Chọn file Excel .xlsx không rỗng, tối đa 5 MB.'); return;
     }
+    onDirty?.(true);
     void runExclusive(async () => {
       try {
         const result = await questionApi.import(taskId, version, chosen, false); setPreview(result);

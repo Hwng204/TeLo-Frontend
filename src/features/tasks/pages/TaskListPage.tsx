@@ -6,7 +6,7 @@ import { PageHeader } from '../../../components/common/PageHeader';
 import { Pager } from '../../../components/common/Pager';
 import { RowAction, RowActionButton } from '../../../components/common/RowAction';
 import { TableState } from '../../../components/common/TableState';
-import { useAsync, useBusy, useDebounce } from '../../../hooks';
+import { useArrivalNotice, useAsync, useBusy, useDebounce } from '../../../hooks';
 import { api } from '../../../services/api';
 import type { TaskListItem, TaskListQuery, TaskType } from '../../../types';
 import { getRoles, isPht, isTeacher, isTeamLead } from '../../../utils/jwt';
@@ -50,6 +50,8 @@ export const TaskListPage = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [pendingDelete, setPendingDelete] = useState<TaskListItem | null>(null);
+  // Chi tiết ma trận bị 404/403 khi thao tác thì đẩy Tổ trưởng về đây kèm lý do.
+  const arrival = useArrivalNotice();
   const [busy, runExclusive] = useBusy();
   const debouncedKeyword = useDebounce(keyword, 300);
 
@@ -168,6 +170,7 @@ export const TaskListPage = () => {
           )}
         </div>
 
+        {arrival && <div className="sep-alert" role="alert">{arrival}</div>}
         {list.error != null ? (
           <div className="sep-alert" role="alert">
             {toProblem(list.error).message}

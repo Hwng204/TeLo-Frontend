@@ -4,15 +4,16 @@
  * ponytail: use console.assert because this project has no test runner.
  */
 import type { AcademicContextOption } from '../types';
-import { resolveContextId, type ContextSelection } from './academicContext';
+import { applyContextChange, resolveContextId, type ContextSelection } from './academicContext';
 
 const context = (id: number, schoolBranchId: number): AcademicContextOption => ({
   id,
   label: `Toán - Lớp 5 - 2026-2027 - Trường / Chi nhánh ${schoolBranchId}`,
-  academicYearId: 4,
   schoolBranchId,
   subjectId: 2,
   gradeLevelId: 1,
+  subjectName: 'Toán',
+  gradeLevelName: 'Lớp 5',
 });
 
 export const academicContextSelfCheck = () => {
@@ -25,7 +26,6 @@ export const academicContextSelfCheck = () => {
   const complete: ContextSelection = {
     subjectId: 2,
     gradeLevelId: 1,
-    academicYearId: 4,
   };
   console.assert(
     resolveContextId(only, complete) === 10,
@@ -36,6 +36,17 @@ export const academicContextSelfCheck = () => {
   console.assert(
     resolveContextId(duplicated, { ...complete, schoolBranchId: 2 }) === 20,
     'academicContext self-check 3: chọn chi nhánh phải phân biệt được context trùng ba chiều',
+  );
+
+  const picked = applyContextChange(only, {}, 'subjectId', 2);
+  console.assert(
+    picked.gradeLevelId === 1,
+    'academicContext self-check 4: Khối lớp duy nhất tự điền',
+  );
+
+  console.assert(
+    resolveContextId(only, { subjectId: 2, gradeLevelId: 1 }) === 10,
+    'academicContext self-check 5: ma trận không có năm học, Môn học + Khối lớp phải đủ ra context',
   );
 
   console.info('[academicContext] self-check xong');

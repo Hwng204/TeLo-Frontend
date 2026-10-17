@@ -190,10 +190,8 @@ const matrixView = (task: TaskDetail, isPerformer: boolean, navigate: (path: str
         { label: 'Tổ trưởng nhận việc', value: personLabel(task.performer) },
         { label: 'Hạn hoàn thành', value: <Due value={task.dueAt} overdue={task.isOverdue} /> },
       ],
-      [
-        { label: 'Phạm vi', value: scope ? `${scope.subjectName} · ${scope.gradeLevelName} · ${scope.academicYearName}` : '—' },
-        { label: 'Học kỳ', value: scope?.semesterName ?? 'Không chọn' },
-      ],
+      // Ma trận không có năm học, học kỳ: phạm vi chỉ gồm môn và khối.
+      [{ label: 'Phạm vi', value: scope ? `${scope.subjectName} · ${scope.gradeLevelName}` : '—' }],
       [{ label: 'Yêu cầu công việc', value: task.description || 'Không có yêu cầu thêm.', text: true }],
     ],
     section: (

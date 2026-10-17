@@ -1,40 +1,27 @@
 /**
- * Ngữ cảnh học thuật là tổ hợp của ba chiều: môn học, khối lớp, năm học (cộng chi nhánh).
- * Backend chỉ nhận một `academicContextId`, nên giao diện cho chọn ba ô rồi dò ngược ra id.
+ * Phạm vi ma trận là tổ hợp môn học + khối lớp (cộng chi nhánh). Ma trận không có năm học/học kỳ,
+ * nên các màn ma trận không cho chọn hai chiều đó (backend chỉ gán giả năm ACTIVE).
+ * Backend chỉ nhận một `academicContextId`, nên giao diện cho chọn từng ô rồi dò ngược ra id.
  *
  * Lọc theo kiểu facet: khi dựng danh sách lựa chọn cho một chiều, ta bỏ qua chính
  * chiều đó. Nhờ vậy đổi ý ở ô đầu tiên không bao giờ dẫn tới trạng thái không chọn được gì.
  */
 import type { AcademicContextOption } from '../types';
 
-export type ContextDimension = 'subjectId' | 'gradeLevelId' | 'academicYearId';
+export type ContextDimension = 'subjectId' | 'gradeLevelId';
 
 export type ContextSelection = Partial<Record<ContextDimension, number>> & {
   schoolBranchId?: number;
-  semesterId?: number;
 };
 
 export const CONTEXT_DIMENSIONS: ContextDimension[] = [
   'subjectId',
   'gradeLevelId',
-  'academicYearId',
 ];
 
-/**
- * Chỗ duy nhất lấy tên hiển thị của từng chiều.
- *
- * ponytail: nhánh `||` là dự phòng khi backend chưa trả các trường tên, tách tạm từ
- * `label` dạng "Môn - Khối - Năm - Trường / Chi nhánh". Xoá sau khi mọi môi trường
- * đã chạy bản backend có subjectName/gradeLevelName/academicYearName.
- */
-export const contextNames = (context: AcademicContextOption) => {
-  const parts = context.label.split(' - ');
-  return {
-    subjectId: context.subjectName || parts[0] || `Môn #${context.subjectId}`,
-    gradeLevelId: context.gradeLevelName || parts[1] || `Khối #${context.gradeLevelId}`,
-    academicYearId: context.academicYearName || parts[2] || `Năm #${context.academicYearId}`,
-  } satisfies Record<ContextDimension, string>;
-};
+/** Chỗ duy nhất lấy tên hiển thị của từng chiều. */
+export const contextNames = (context: AcademicContextOption): Record<ContextDimension, string> =>
+  ({ subjectId: context.subjectName, gradeLevelId: context.gradeLevelName });
 
 const candidates = (
   contexts: AcademicContextOption[],
@@ -84,7 +71,7 @@ export const contextOptions = (
     .map(([id, label]) => ({ id, label }));
 };
 
-/** Chỉ chắc chắn khi ba chiều thu về đúng một ngữ cảnh. */
+/** Chỉ chắc chắn khi các chiều thu về đúng một ngữ cảnh. */
 export const resolveContextId = (
   contexts: AcademicContextOption[],
   selection: ContextSelection,
@@ -98,17 +85,13 @@ export const resolveContextId = (
 export const selectionFromContext = (
   contexts: AcademicContextOption[],
   academicContextId: number | null,
-  semesterId?: number | null,
 ): ContextSelection => {
-  const base: ContextSelection = semesterId ? { semesterId } : {};
   const context = contexts.find((item) => item.id === academicContextId);
-  if (!context) return base;
+  if (!context) return {};
   return {
-    ...base,
     schoolBranchId: context.schoolBranchId,
     subjectId: context.subjectId,
     gradeLevelId: context.gradeLevelId,
-    academicYearId: context.academicYearId,
   };
 };
 
@@ -121,8 +104,7 @@ export const contextLabel = (contexts: AcademicContextOption[], id: number | nul
 
 /**
  * Đổi một chiều, rồi dọn các chiều khác đã trở nên vô nghĩa và tự điền chiều
- * chỉ còn đúng một lựa chọn (với dữ liệu một chi nhánh thì chọn một ô thường
- * đủ để ba ô kia tự điền).
+ * chỉ còn đúng một lựa chọn.
  */
 export const applyContextChange = (
   contexts: AcademicContextOption[],

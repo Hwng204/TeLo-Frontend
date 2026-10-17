@@ -1,0 +1,25 @@
+:where(.question-package, .exam-package-page, .sep-authoring-page, .question-history-dialog, .question-preview, .question-navigator, .question-content-panel, .question-editor, .question-picker-row) {
+  --assessment-heading: #19324d;
+  --assessment-text: #26364a;
+  --assessment-muted: #52657c;
+  --assessment-primary: #365fb8;
+  --assessment-primary-hover: #2b4f9d;
+  --assessment-primary-active: #234383;
+  --assessment-brand: #315ba9;
+  --assessment-brand-soft: #edf3ff;
+  --assessment-brand-border: #a1b7df;
+  --assessment-border: #dce6f0;
+  --assessment-neutral-soft: #edf1f7;
+  --assessment-surface-soft: #f5f8fc;
+  --assessment-success: #18734f;
+  --assessment-success-hover: #125e40;
+  --assessment-success-soft: #edf8f1;
+  --assessment-success-tag: #d9efdf;
+  --assessment-success-border: #79b990;
+  --assessment-warning: #8a5b10;
+  --assessment-warning-soft: #fff5df;
+  --assessment-warning-border: #be913c;
+  --assessment-danger: #b3403f;
+  --assessment-danger-soft: #fff5f5;
+  --assessment-danger-border: #e5bfc1;
+}

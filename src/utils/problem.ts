@@ -4,8 +4,8 @@
  * Quy ước xử lý theo status:
  *   401  bỏ qua — interceptor trong apiClient đã tự chuyển về trang đăng nhập.
  *   403  báo lỗi rồi quay về danh sách.
- *   404  quay về danh sách. Lưu ý 404 cũng xảy ra khi ma trận thuộc chi nhánh khác,
- *        không phải lúc nào cũng là "đã bị xoá".
+ *   404  quay về danh sách: không tìm thấy (thường là đã bị xoá). Ma trận thuộc chi nhánh
+ *        khác trả 403, không phải 404.
  *   409  hiện thông báo rồi gọi reload() của useAsync. Backend so trạng thái hiện tại
  *        chứ không dùng version token, nên tải lại là đủ để allowedActions đúng trở lại.
  *   422  backend chỉ nói sai cái gì chứ không nói dòng nào, nên hiện message chung

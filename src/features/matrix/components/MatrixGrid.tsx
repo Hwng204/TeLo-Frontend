@@ -92,7 +92,7 @@ export const MatrixGrid = ({ rows, lessons, matrixTotalScore, readOnly, renderAv
                       aria-label="Chương"
                       title={chapter ? chapterName(chapter) : undefined}
                       disabled={chapters.length === 0}
-                      error={!chapterId && lessonError ? 'Chọn chương cho dòng này.' : undefined}
+                      error={!chapterId && !row.lessonId && lessonError ? 'Chọn chương cho dòng này.' : undefined}
                       onChange={(event) => update(rows.map((item) =>
                         item.key === row.key ? changeRowChapter(item, Number(event.target.value), lessons) : item,
                       ))}
@@ -115,7 +115,8 @@ export const MatrixGrid = ({ rows, lessons, matrixTotalScore, readOnly, renderAv
                       aria-label="Bài học"
                       title={lesson ? lessonName(lessons, lesson.id) : undefined}
                       disabled={!chapterId}
-                      error={chapterId ? lessonError : undefined}
+                      // Bài đã lưu trữ: không có chương để chọn nhưng vẫn phải thấy lỗi của dòng.
+                      error={chapterId || row.lessonId ? lessonError : undefined}
                       onChange={(event) =>
                         update(
                           rows.map((item) =>

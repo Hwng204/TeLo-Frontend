@@ -8,7 +8,7 @@ import { questionApi } from '../questionApi';
 import type { QuestionItem } from '../types';
 import { QuestionPreview } from './QuestionPreview';
 
-export const QuestionPicker = ({ matrixId, detailId, onClose, onSelect, selectedIds = [], selectionLimit, selectLabel, busy = false }: { matrixId: number; detailId: number; onClose: () => void; onSelect?: (questions: QuestionItem[]) => void; selectedIds?: number[]; selectionLimit?: number; selectLabel?: string; busy?: boolean }) => {
+export const QuestionPicker = ({ matrixId, detailId, onClose, onSelect, onDirty, selectedIds = [], selectionLimit, selectLabel, busy = false }: { matrixId: number; detailId: number; onClose: () => void; onSelect?: (questions: QuestionItem[]) => void; onDirty?: (dirty: boolean) => void; selectedIds?: number[]; selectionLimit?: number; selectLabel?: string; busy?: boolean }) => {
   const [search, setSearch] = useState(''); const keyword = useDebounce(search, 300);
   const [page, setPage] = useState(1);
   const [chosen, setChosen] = useState<QuestionItem[]>([]);
@@ -17,9 +17,9 @@ export const QuestionPicker = ({ matrixId, detailId, onClose, onSelect, selected
     <Field label="Tìm câu hỏi" hideLabel type="search" placeholder="Tìm nội dung câu hỏi" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
     {list.loading && <p role="status">Đang tải…</p>}{Boolean(list.error) && <p className="sep-alert" role="alert">{toProblem(list.error).message}<PcbButton variant="ghost" onClick={list.reload}>Thử lại</PcbButton></p>}
     {list.data?.items.length === 0 && <p className="sep-muted">Chưa có câu hỏi phù hợp.</p>}
-    {list.data?.items.map(({ question }) => <details key={question.id} className="question-picker-row"><summary>
-      {onSelect && <input type="checkbox" aria-label={`Chọn câu ${question.content}`} disabled={busy || selectedIds.includes(question.id) || selectionLimit !== undefined && chosen.length >= selectionLimit && !chosen.some(q => q.id === question.id)} checked={selectedIds.includes(question.id) || chosen.some(q => q.id === question.id)} onClick={e => e.stopPropagation()} onChange={e => setChosen(e.target.checked ? [...chosen, question] : chosen.filter(q => q.id !== question.id))} />}
-      {' '}{question.content}</summary><QuestionPreview question={question} /></details>)}
+    {list.data?.items.map(({ question }) => <details key={question.id} className="question-picker-row"><summary><span className="question-picker-summary">
+      {onSelect && <input type="checkbox" aria-label={`Chọn câu ${question.content}`} disabled={busy || selectedIds.includes(question.id) || selectionLimit !== undefined && chosen.length >= selectionLimit && !chosen.some(q => q.id === question.id)} checked={selectedIds.includes(question.id) || chosen.some(q => q.id === question.id)} onClick={e => e.stopPropagation()} onChange={e => { const next = e.currentTarget.checked ? [...chosen, question] : chosen.filter(q => q.id !== question.id); setChosen(next); onDirty?.(next.length > 0); }} />}
+      <span className="question-list-content">{question.content}</span></span></summary><QuestionPreview question={question} /></details>)}
     <Pager page={page} pageSize={10} totalCount={list.data?.totalCount ?? 0} itemLabel="câu hỏi" onChange={setPage} onPageSizeChange={() => {}} pageSizes={[10]} />
     <div className="sep-actions"><PcbButton variant="ghost" disabled={busy} onClick={onClose}>Đóng</PcbButton>{onSelect && <PcbButton disabled={busy || chosen.length === 0 || selectionLimit !== undefined && chosen.length > selectionLimit} onClick={() => onSelect(chosen)}>{busy ? 'Đang lưu…' : selectLabel ?? `Thêm ${chosen.length} câu đã chọn`}</PcbButton>}</div>
   </FormDialog>;

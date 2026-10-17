@@ -19,6 +19,7 @@ import {
   totalScoreHint,
   validateGrid,
   validateTotalForSubmit,
+  validateTotalScoreField,
 } from './matrixGrid';
 
 const detail = (
@@ -135,6 +136,10 @@ export const selfCheck = () => {
   console.assert(formatPerQuestion(2, 3) === '≈ 0,6667', 'selfCheck 11: 2 / 3 phải là ≈ 0,6667', formatPerQuestion(2, 3));
   console.assert(formatPerQuestion(1, 7) === '≈ 0,1429', 'selfCheck 11: 1 / 7 phải là ≈ 0,1429', formatPerQuestion(1, 7));
   console.assert(formatPerQuestion(5, 0) === '', 'selfCheck 11: 0 câu không được chia');
+
+  // 12. Tổng điểm ma trận: backend chặn trên 999.
+  console.assert(validateTotalScoreField(999) === null, 'selfCheck 12: 999 điểm phải hợp lệ');
+  console.assert(validateTotalScoreField(1000) !== null, 'selfCheck 12: 1000 điểm phải bị chặn ở client');
 
   console.info('[matrixGrid] self-check xong');
   const countBoundary = toGrid([detail(1, 'NHAN_BIET', 4294967295, 50), detail(1, 'THONG_HIEU', 1, 50)], [1]);

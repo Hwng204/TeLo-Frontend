@@ -86,6 +86,7 @@ import type {
   ExamPage,
   Chapter,
   Curriculum,
+  CurriculumDeleteResult,
   CurriculumImportPreview,
   CurriculumImportResult,
   Lesson,
@@ -115,10 +116,14 @@ const filenameFrom = (header: unknown, fallback = 'ma-tran.xlsx'): string => {
   const plain = /filename="?([^";]+)"?/i.exec(header);
   return plain ? plain[1] : fallback;
 };
-const post = async <T>(url: string, body?: object): Promise<T> => (await apiClient.post<T>(url, body)).data;
-const put = async <T>(url: string, body?: object): Promise<T> => (await apiClient.put<T>(url, body)).data;
+const post = async <T>(url: string, body?: object, timeout?: number): Promise<T> =>
+  (await apiClient.post<T>(url, body, { timeout })).data;
+const put = async <T>(url: string, body?: object, timeout?: number): Promise<T> =>
+  (await apiClient.put<T>(url, body, { timeout })).data;
+// Lưu ma trận: mạng chập chờn thì báo lỗi sau 30 giây thay vì treo nút "Đang lưu" mãi.
+const MATRIX_SAVE_TIMEOUT_MS = 30_000;
 const patch = async <T>(url: string, body?: object): Promise<T> => (await apiClient.patch<T>(url, body)).data;
-const del = async <T>(url: string): Promise<T> => (await apiClient.delete<T>(url)).data;
+const del = async <T>(url: string, params?: object): Promise<T> => (await apiClient.delete<T>(url, { params })).data;
 
 /** Bóc lớp vỏ ApiResponse của các API danh bạ; lỗi đã được apiClient ném ra trước khi tới đây. */
 const unwrap = async <T>(request: Promise<ApiResponse<T>>): Promise<T> => (await request).data as T;
@@ -190,7 +195,8 @@ export const api = {
     create: (body: SaveIdentityRequest) => unwrap(post<ApiResponse<ModuleItem>>('/modules', body)),
     update: (id: number, body: SaveIdentityRequest & { version: number }) => unwrap(put<ApiResponse<ModuleItem>>(`/modules/${id}`, body)),
     status: (id: number, status: IdentityStatus, version: number) => unwrap(patch<ApiResponse<ModuleItem>>(`/modules/${id}/status`, { status, version })),
-    remove: (id: number, version: number) => unwrap(del<ApiResponse<boolean>>(`/modules/${id}?version=${version}`)),
+    // Older DB v2 responses omit version; Axios leaves absent query params out.
+    remove: (id: number, version?: number) => unwrap(del<ApiResponse<boolean>>(`/modules/${id}`, { version })),
   },
   auth: {
     login: (credentials: LoginRequest) => post<LoginResponse>('/auth/login', credentials),
@@ -205,8 +211,8 @@ export const api = {
   matrix: {
     list: (query: MatrixListQuery = {}) => get<Page<MatrixListItem>>('/matrices', query),
     get: (id: number) => get<Matrix>(`/matrices/${id}`),
-    create: (body: SaveMatrixRequest) => post<Matrix>('/matrices', body),
-    update: (id: number, body: SaveMatrixRequest) => put<Matrix>(`/matrices/${id}`, body),
+    create: (body: SaveMatrixRequest) => post<Matrix>('/matrices', body, MATRIX_SAVE_TIMEOUT_MS),
+    update: (id: number, body: SaveMatrixRequest) => put<Matrix>(`/matrices/${id}`, body, MATRIX_SAVE_TIMEOUT_MS),
     remove: (id: number) => del<void>(`/matrices/${id}`),
 
     // Chuyển trạng thái; backend trả 409 khi ma trận đã bị thao tác khác thay đổi.
@@ -327,12 +333,12 @@ export const api = {
       unwrap(post<ApiResponse<Chapter>>('/curriculum/chapters', body)),
     updateChapter: (id: number, body: SaveChapterRequest) =>
       unwrap(put<ApiResponse<Chapter>>(`/curriculum/chapters/${id}`, body)),
-    deleteChapter: (id: number) => del<unknown>(`/curriculum/chapters/${id}`),
+    deleteChapter: (id: number) => del<ApiResponse<CurriculumDeleteResult>>(`/curriculum/chapters/${id}`),
     createLesson: (chapterId: number, body: SaveLessonRequest) =>
       unwrap(post<ApiResponse<Lesson>>(`/curriculum/chapters/${chapterId}/lessons`, body)),
     updateLesson: (id: number, body: SaveLessonRequest) =>
       unwrap(put<ApiResponse<Lesson>>(`/curriculum/lessons/${id}`, body)),
-    deleteLesson: (id: number) => del<unknown>(`/curriculum/lessons/${id}`),
+    deleteLesson: (id: number) => del<ApiResponse<CurriculumDeleteResult>>(`/curriculum/lessons/${id}`),
     downloadTemplate: async (): Promise<{ blob: Blob; filename: string }> => {
       const response = await apiClient.get<Blob>('/curriculum/import/template.xlsx', { responseType: 'blob' });
       return { blob: response.data, filename: filenameFrom(response.headers['content-disposition'], 'mau-nhap-chuong-bai.xlsx') };

@@ -54,6 +54,7 @@
 .sep-topbar .pcb-iconbtn { width: 40px; height: 40px; margin-left: -8px; }
 .sep-topbar__title { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; font: 600 22px/30px 'Inter', sans-serif; letter-spacing: -.2px; color: var(--pcb-color-text-primary); }
 .sep-topbar__title > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sep-topbar__year { display: flex; }
 .sep-user { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .sep-user__avatar { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--sep-bg-brand-soft); color: var(--pcb-color-text-brand); font: 600 14px/1 'Inter', sans-serif; text-transform: uppercase; }
 .sep-user__text { display: flex; flex-direction: column; }
@@ -81,5 +82,12 @@
 
 @media (max-width: 480px) {
   /* Tiêu đề dài ("Chi tiết nhiệm vụ biên soạn câu hỏi") cắt một dòng thì mất nghĩa: cho tối đa 2 dòng. */
-  .sep-topbar__title > span:first-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; }
+  .sep-topbar__title > span:first-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; flex-basis: 100%; }
+  /* Nhãn trạng thái không co được: xuống dòng dưới tiêu đề để tiêu đề còn chỗ đọc. */
+  .sep-topbar__title { flex-wrap: wrap; row-gap: 4px; font-size: 16px; line-height: 22px; }
+  /* Ô năm học không xuống dòng, đẩy thanh trên rộng quá màn hình: điện thoại thì ẩn. */
+  .sep-topbar__year { display: none; }
+  /* Nút trên thanh trên chỉ còn icon (đã có aria-label) để không tràn ngang. */
+  .sep-topbar__action-label { display: none; }
+  .sep-topbar .sep-topbar__action { min-width: 0; width: 40px; height: 40px; padding: 0; }
 }

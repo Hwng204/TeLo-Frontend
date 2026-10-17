@@ -1,42 +1,28 @@
 import { SelectField } from '../pcb';
-import type { AcademicContextOption, SemesterOption } from '../../types';
+import type { AcademicContextOption } from '../../types';
 import { contextOptions } from '../../utils/academicContext';
 
 export type DimensionFilterValue = {
-  academicYearId?: number;
-  semesterId?: number;
   subjectId?: number;
   gradeLevelId?: number;
 };
 
 type Props = {
   contexts: AcademicContextOption[];
-  semesters: SemesterOption[];
   value: DimensionFilterValue;
   onChange: (next: DimensionFilterValue) => void;
 };
 
 /**
- * Bốn ô lọc trên thanh công cụ của hai màn danh sách: Năm học · Học kỳ · Môn học · Khối lớp.
+ * Hai ô lọc trên thanh công cụ của danh sách ma trận: Môn học · Khối lớp (ma trận không có năm học, học kỳ).
  * Mỗi ô gửi thẳng lên backend như một tham số riêng, nên không cần chọn đủ để ra một academicContextId.
  * Danh sách lựa chọn vẫn thu hẹp theo các ô còn lại để không chọn ra tổ hợp không tồn tại.
  */
-export const DimensionFilters = ({ contexts, semesters, value, onChange }: Props) => {
-  const set = (key: keyof DimensionFilterValue, raw: string) => {
-    const next = { ...value, [key]: raw ? Number(raw) : undefined };
-    // Học kỳ thuộc về một năm học: đổi năm thì bỏ học kỳ không còn khớp.
-    if (key === 'academicYearId' && next.academicYearId !== undefined) {
-      const semester = semesters.find((item) => item.id === next.semesterId);
-      if (semester && semester.academicYearId !== next.academicYearId) next.semesterId = undefined;
-    }
-    onChange(next);
-  };
+export const DimensionFilters = ({ contexts, value, onChange }: Props) => {
+  const set = (key: keyof DimensionFilterValue, raw: string) => onChange({ ...value, [key]: raw ? Number(raw) : undefined });
 
-  const dimension = (key: 'academicYearId' | 'subjectId' | 'gradeLevelId') =>
+  const dimension = (key: keyof DimensionFilterValue) =>
     contextOptions(contexts, { ...value, [key]: undefined }, key);
-  const semesterOptions = (
-    value.academicYearId ? semesters.filter((semester) => semester.academicYearId === value.academicYearId) : semesters
-  ).map((semester) => ({ id: semester.id, label: semester.name }));
 
   const select = (key: keyof DimensionFilterValue, label: string, options: { id: number; label: string }[]) => (
     <SelectField
@@ -57,8 +43,6 @@ export const DimensionFilters = ({ contexts, semesters, value, onChange }: Props
 
   return (
     <>
-      {select('academicYearId', 'Năm học', dimension('academicYearId'))}
-      {select('semesterId', 'Học kỳ', semesterOptions)}
       {select('subjectId', 'Môn học', dimension('subjectId'))}
       {select('gradeLevelId', 'Khối lớp', dimension('gradeLevelId'))}
     </>
